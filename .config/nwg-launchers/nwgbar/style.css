@@ -1,0 +1,25 @@
+#bar {
+    margin-top: 0px;
+    /* margin-top: 500px; */
+}
+
+image {
+    background: #1e1e2e;
+    border-style: double;
+    border-radius: 22px;
+    opacity: 0.8;
+}
+
+button {
+    background: #1e1e2e;
+    padding-left: 20px;
+    padding-right: 20px;
+    margin: 20px;
+    border-color: #DDb9f2;
+    border-radius: 10px;
+}
+
+button:focus {
+    box-shadow: 0 0 20px 15px #DDb9f2;
+    border-color: #DDb9f2;
+}

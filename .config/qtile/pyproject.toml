@@ -1,0 +1,6 @@
+[tool.black]
+line-length = 98
+[tool.isort]
+profile = "black"
+[tool.pyright]
+reportGeneralTypeIssues = false

@@ -1,0 +1,77 @@
+{
+    "0": [
+        "Alacritty",
+        "atom",
+        "brackets",
+        "caja",
+        "code-oss",
+        "code",
+        "evince",
+        "geany",
+        "MATLAB R2019b - academic use",
+        "notable",
+        "org.gnome.nautilus",
+        "sublime_text",
+        "sun-awt-X11-XFramePeer",
+        "terminator",
+        "vscodium",
+        "matplotlib"
+    ],
+    "1": [
+        "nautilus",
+        "nemo",
+        "pcmanfm-qt",
+        "pcmanfm",
+        "thunar"
+    ],
+    "2": [
+        "brave-browser",
+        "Navigator",
+        "chromium",
+        "google-chrome-beta",
+        "qbittorrent",
+        "transmission-qt",
+        "transmission-gtk"
+    ],
+    "3": [
+        "ferdium",
+        "discord",
+        "telegramDesktop",
+        "whatsapp-for-linux",
+        "whatsapp-nativefier-d40211",
+        "teams-for-linux"
+    ],
+    "4": [
+        "balena-etcher-electron",
+        "gnome-control-center",
+        "blueman-manager",
+        "nitrogen",
+        "pling-store",
+        "Xfce4-power-manager-settings",
+        "pavucontrol",
+        "lxappearance",
+        "lightdm-settings",
+        "qtile_yay_update"
+    ],
+    "5": [
+        "virt-manager",
+        "VirtualBox Machine",
+        "VirtualBox Manager",
+        "gimp-2.10",
+        "Gimp-2.10"
+    ],
+    "6": [
+        "jellyfinmediaplayer",
+        "gl",
+        "plexmediaplayer",
+        "pragha",
+        "clementine",
+        "deadbeef",
+        "audacious",
+        "anbox",
+        "vlc",
+        "mpv",
+        "obs",
+        "kdeconnect-app"
+    ]
+}
