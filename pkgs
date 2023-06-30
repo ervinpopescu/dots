@@ -1,5 +1,4 @@
 acestream-launcher
-aconfmgr-git
 acpi_call-dkms
 activate-linux
 alacritty
@@ -54,6 +53,7 @@ chaotic-mirrorlist
 choose
 chromium
 clipman
+cloc
 comparepdf
 conky
 cpu-x
@@ -296,7 +296,7 @@ python-black
 python-dasbus
 python-dbus-next
 python-exifread
-python-ffmpeg
+python-ffmpeg-python
 python-flufl-lock
 python-gitpython
 python-google-api-python-client
@@ -307,6 +307,7 @@ python-h5py
 python-imageio
 python-isort
 python-jsonpickle
+python-libcst
 python-matplotlib
 python-numba
 python-numpydoc
@@ -366,6 +367,7 @@ rofi-emoji
 rsync
 rtkit
 safecopy
+scc
 schedtool
 screen
 screenkey
@@ -377,8 +379,10 @@ shellcheck-bin
 shfmt
 shotwell
 simplescreenrecorder
+sloccount
 smartmontools
 socat
+spacer
 speedtest++
 spicetify-cli
 spotify
@@ -406,17 +410,17 @@ texlive-formatsextra
 texlive-games
 texlive-humanities
 texlive-latexextra
+texlive-mathscience
 texlive-music
 texlive-pictures
 texlive-pstricks
 texlive-publishers
-texlive-science
 the_silver_searcher
-tk
 tldr
 tlp
 tmux
 tmux-plugin-manager
+tokei
 tor
 tor-browser
 tracker3-miners
@@ -448,6 +452,8 @@ virtualbox-host-dkms
 vivid
 vlc
 vscodium-bin
+vscodium-bin-features
+vscodium-bin-marketplace
 vscodium-marketplace
 wavemon
 waybar
@@ -462,6 +468,7 @@ whois
 wireless-regdb
 wkhtmltopdf
 wl-clipboard
+wlroots
 wmctrl
 woff2
 wofi
@@ -541,6 +548,7 @@ yt-dlp
 z
 zathura
 zathura-pdf-mupdf
+zig
 zram-generator
 zsh
 zsh-autosuggestions
