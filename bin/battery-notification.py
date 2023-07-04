@@ -20,9 +20,8 @@ while True:
     with open(battery_percentage_filename, "r") as f:
         percentage = int(f.read())
     if percentage < 10:
-        if AC_online is False:
-            dunstify(notification="charge your laptop!", urgency="critical", id=notification_id)
-        elif AC_online is True:
+        if AC_online:
             subprocess.run(f"dunstify -C {notification_id}".split())
-            # playsound("/usr/share/sounds/freedesktop/stereo/power-plug.oga")
+        else:
+            dunstify(notification="charge your laptop!", urgency="critical", id=notification_id)
     time.sleep(10)

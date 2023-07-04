@@ -85,9 +85,8 @@ class TimedPopup(QLabel):
 	
     def closeEvent(self, event):
         # Delete topic file
-        if self.topicPath != None:
-            if os.path.isfile(self.topicPath):
-                os.remove(self.topicPath)
+        if self.topicPath != None and os.path.isfile(self.topicPath):
+            os.remove(self.topicPath)
         # Delete object
         self.mainwin.close()
         self.deleteLater()
@@ -96,22 +95,20 @@ def main():
 
     # Path to stylesheet file
     configPath = os.path.expanduser("~/.config/pop_report/")
-    userConfig = configPath + "style.qss"
-    
+    userConfig = f"{configPath}style.qss"
+
     # Parse command line arguments and declare variables
     args = parseArgs()
-    message = args.message 
+    message = args.message
     duration = args.duration
     styleO = args.override_style
-    extraStyle = ""
-    for option in styleO:
-        extraStyle += option + ";\n"
+    extraStyle = "".join(option + ";\n" for option in styleO)
     topicPath = None 
 
     # Check if there's a window already for current topic
     topic = args.topic
     if topic:
-        topicPath = os.path.expanduser(str("/tmp/report_" + topic))
+        topicPath = os.path.expanduser(str(f"/tmp/report_{topic}"))
         print(topicPath)
         if os.path.isfile(topicPath):
             print("Topic already has a window, will rewrite contents")
@@ -128,16 +125,11 @@ def main():
     popup.setText(str(message))
     window.setCentralWidget(popup)
 
-    # Set the style for the label
-    defaultStyle = str("border: 5px solid #ffffffff;\n"
-                       "background-color: #dd000000;\n"
-                       "color: #ffffffff;\n"
-                       "font-family: Monospace;\n"
-                       "font-size: 70px;\n"
-                       "padding: 20px;\n")
     if not os.path.isdir(configPath):
         os.makedirs(configPath)
     if not os.path.isfile(userConfig):
+            # Set the style for the label
+        defaultStyle = "border: 5px solid #ffffffff;\nbackground-color: #dd000000;\ncolor: #ffffffff;\nfont-family: Monospace;\nfont-size: 70px;\npadding: 20px;\n"
         with open(userConfig, "w") as userStyleSheet:
             userStyleSheet.write(defaultStyle)
     with open(userConfig, "r") as userStyleSheet:

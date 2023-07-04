@@ -60,7 +60,7 @@ class CellRendererTextWindow(Gtk.Window):
         self.add(sw)
 
 def get_schedule(refresh: bool):
-    if refresh is True:
+    if refresh:
         gc = gspread.oauth()
         sh = gc.open_by_url("https://docs.google.com/spreadsheets/d/1n-rQuzX04B-40f-xlXRoTUjcCqWrpj2qKNtjCUHER7c")
         worksheet = sh.worksheet("Orar")
@@ -107,7 +107,7 @@ def get_schedule(refresh: bool):
                             )
                         )
                     ]["list"].append(current[1:])
-                i = i + 1
+                i += 1
 
             for d in list_of_dicts:
                 d["dict"] = {}

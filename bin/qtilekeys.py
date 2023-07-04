@@ -100,14 +100,14 @@ def keyslist():
 
     for key in keys:
         if hasattr(key, "submappings"):
-            for subkey in key.submappings:
-                keyslist.append(
-                    [
-                        " + ".join(key.modifiers),
-                        arrow.join([key.key, subkey.key]),
-                        subkey.desc,
-                    ]
-                )
+            keyslist.extend(
+                [
+                    " + ".join(key.modifiers),
+                    arrow.join([key.key, subkey.key]),
+                    subkey.desc,
+                ]
+                for subkey in key.submappings
+            )
         else:
             keyslist.append([" + ".join(key.modifiers), key.key, key.desc])
 

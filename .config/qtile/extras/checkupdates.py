@@ -8,13 +8,18 @@ from modules.settings import colors
 
 def chkup():
     try:
-        num = str(len(subprocess.check_output("checkupdates").decode("utf-8").splitlines()))
-        return num
+        return str(
+            len(
+                subprocess.check_output("checkupdates")
+                .decode("utf-8")
+                .splitlines()
+            )
+        )
     except subprocess.CalledProcessError as e:
-        if e.returncode == 2:
-            return "0"
-        elif e.returncode == 0:
+        if e.returncode == 0:
             return num
+        elif e.returncode == 2:
+            return "0"
         else:
             return "Error"
 
@@ -33,8 +38,5 @@ class CheckUpdates(widget.GenPollText):
 
     def poll(self):
         data = chkup()
-        if data == "0":
-            self.foreground = colors["lightgreen"]
-        else:
-            self.foreground = colors["red"]
+        self.foreground = colors["lightgreen"] if data == "0" else colors["red"]
         return data

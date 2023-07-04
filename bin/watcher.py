@@ -22,7 +22,7 @@ class Watcher(Observer):
         try:
             while True:
                 time.sleep(1)
-        except:
+        except Exception:
             self.observer.stop()
             print("RuntimeError")
 
@@ -44,7 +44,7 @@ class Handler(FileSystemEventHandler):
             and not cpython_condition
         ):
             # Take any action here when a file is first created.
-            print("Received created event - %s." % event.src_path)
+            print(f"Received created event - {event.src_path}.")
             c.reload_config()
 
         elif (
@@ -53,7 +53,7 @@ class Handler(FileSystemEventHandler):
             and not cpython_condition
         ):
             # Taken any action here when a file is modified.
-            print("Received modified event - %s." % event.src_path)
+            print(f"Received modified event - {event.src_path}.")
             c.reload_config()
 
 

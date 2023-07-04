@@ -36,22 +36,19 @@ def toggle_minimize_all(qtile, current_group: bool = False):
         for group in qtile.groups:
             for win in group.windows:
                 win.minimized = not win.minimized
-                if win.minimized is False:
+                if not win.minimized:
                     group.layout_all()
     else:
         for win in qtile.current_group.windows:
             win.minimized = not win.minimized
-            if win.minimized is False:
+            if not win.minimized:
                 group.layout_all()
 
 
 @lazy.function
 def groupbox_disable_drag(qtile):
     widget = qtile.widgets_map["groupbox"]
-    if widget.disable_drag is True:
-        widget.disable_drag = False
-    else:
-        widget.disable_drag = True
+    widget.disable_drag = widget.disable_drag is not True
 
 
 def location():
@@ -84,7 +81,7 @@ def set_layout_all(qtile):
         if g.eval("self.layout.name")[1] == "max":
             count = count + 1
 
-    if count is not len(groups):
+    if count != len(groups):
         for g in groups:
             g.setlayout("max")
     else:
@@ -118,20 +115,14 @@ def toggle_gaps(qtile):
             if hasattr(current_layout, "single_margin"):
                 current_layout.single_margin = 0
             for bar in bars:
-                if isinstance(bar.margin, list):
-                    bar.margin = [0] * 4
-                else:
-                    bar.margin = 0
+                bar.margin = [0] * 4 if isinstance(bar.margin, list) else 0
                 bar.draw()
         else:
             current_layout.margin = ms
             if hasattr(current_layout, "single_margin"):
                 current_layout.single_margin = ms
             for bar in bars:
-                if isinstance(bar.margin, list):
-                    bar.margin = [ms] * 4
-                else:
-                    bar.margin = ms
+                bar.margin = [ms] * 4 if isinstance(bar.margin, list) else ms
                 bar.draw()
         group.layout_all()
 

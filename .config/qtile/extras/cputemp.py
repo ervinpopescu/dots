@@ -23,8 +23,5 @@ class CPUTemp(widget.GenPollText):
 
     def poll(self):
         data = int(cpu_temp())
-        if data > 65:
-            self.foreground = colors["red"]
-        else:
-            self.foreground = colors["lightgreen"]
-        return str(data) + "°C"
+        self.foreground = colors["red"] if data > 65 else colors["lightgreen"]
+        return f"{data}°C"

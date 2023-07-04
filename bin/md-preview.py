@@ -35,7 +35,7 @@ parser.add_argument("url", action="store", help="url to open in browser window")
 args = parser.parse_args()
 if check_if_process_running("qt_html.py"):
     subprocess.run(["pkill", "-9", "qt_html.py"])
-browser = "qt_html.py " + args.url
+browser = f"qt_html.py {args.url}"
 c.spawn(browser)
 c.group.setlayout("monadtall")
 sleep(1)

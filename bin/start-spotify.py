@@ -10,12 +10,8 @@ current_group = c.group.info()["name"]
 
 if current_group != "media":
     c.screen.toggle_group("media")
-    # c.spawn("glava -r 'mod bars-left'")
-    # c.spawn("glava -r 'mod bars-right'")
-    subprocess.call("dex /usr/share/applications/spotify.desktop", shell=True)
     # c.group["media"].layout.set_ratio(0.8)
-else:
-    # c.spawn("glava -r 'mod bars-right'")
-    # c.spawn("glava -r 'mod bars-left'")
-    subprocess.call("dex /usr/share/applications/spotify.desktop", shell=True)
+# c.spawn("glava -r 'mod bars-left'")
+# c.spawn("glava -r 'mod bars-right'")
+subprocess.call("dex /usr/share/applications/spotify.desktop", shell=True)
     # c.group["media"].layout.set_ratio(0.8)

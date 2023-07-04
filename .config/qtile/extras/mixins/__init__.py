@@ -34,7 +34,7 @@ class ThumbnailMixin(_BaseMixin):
         self.filename = os.path.expanduser(self.filename)
 
         if not os.path.exists(self.filename):
-            logger.warning("Image does not exist: {}".format(self.filename))
+            logger.warning(f"Image does not exist: {self.filename}")
             return
 
         img = Img.from_path(self.filename)
@@ -59,8 +59,9 @@ class ThumbnailMixin(_BaseMixin):
             if isinstance(self.thumbnail_padding, int):
                 self._thumbnail_padding = [self.thumbnail_padding] * 2
 
-            elif not (
-                isinstance(self.thumbnail_padding, list) and len(self.thumbnail_padding) >= 2
+            elif (
+                not isinstance(self.thumbnail_padding, list)
+                or len(self.thumbnail_padding) < 2
             ):
                 logger.warning("Invalid thumbnail padding. Defaulting to [4, 4]")
                 self._thumbnail_padding = [4, 4]
@@ -83,9 +84,8 @@ class ThumbnailMixin(_BaseMixin):
         self._thumbnail.text = self.thumbnail_text
 
         height = self._thumbnail.layout.height + (2 * self._thumbnail.vertical_padding)
-        width = self._thumbnail.layout.width + (2 * self._thumbnail.horizontal_padding)
-
         self._thumbnail.height = height
+        width = self._thumbnail.layout.width + (2 * self._thumbnail.horizontal_padding)
         self._thumbnail.width = width
 
         # Position the thumbnail depending on bar position and orientation

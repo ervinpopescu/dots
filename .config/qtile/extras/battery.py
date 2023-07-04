@@ -26,26 +26,23 @@ class Battery(widget.GenPollText):
         self.percent = int(sensors_battery().percent)
         dbus = pydbus.SystemBus()
         adapter = dbus.get("org.bluez", "/org/bluez/hci0")
-        text = str(
-            str(self.percent)
-            + "%"
+        return str(
+            f"{self.percent}%"
             + (" " if sensors_battery().power_plugged else "")
             + str(
-                subprocess.check_output(os.path.join(os.environ["HOME"], "bin", "bt-bat.sh"))
+                subprocess.check_output(
+                    os.path.join(os.environ["HOME"], "bin", "bt-bat.sh")
+                )
                 .decode("utf-8")
                 .strip("\n")
                 if adapter.Powered
                 else ""
             )
         )
-        return text
 
     def poll(self):
         if not self.func:
             return "You need a poll function"
         data = self.func()
-        if self.percent > 10:
-            self.foreground = colors["lightgreen"]
-        else:
-            self.foreground = colors["red"]
+        self.foreground = colors["lightgreen"] if self.percent > 10 else colors["red"]
         return data

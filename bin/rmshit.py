@@ -4,6 +4,17 @@ import glob
 import os
 import shutil
 
+globs = [
+    # "~/Matlab*",
+    "~/java.*",
+    "~/.local/share/gegl-*",
+]
+
+shittyglobs = []
+
+for g in globs:
+    shittyglobs.extend(glob.glob(os.path.expanduser(g)))
+
 shittyfiles = [
     "~/.ACEStream",
     "~/.FRD/links.txt",
@@ -39,7 +50,7 @@ shittyfiles = [
     "~/.jssc/",
     "~/.lesshst",
     "~/.macromedia",
-    "~/.mysql" "~/.npm/",
+    "~/.mysql~/.npm/",
     "~/.nv/",
     "~/.npm/",
     "~/.nvidia-settings-rc",
@@ -79,36 +90,19 @@ shittyfiles = [
     "~/nvvp_workspace/",
     "~/octave-workspace",
     "~/unison.log",
+    *shittyglobs,
 ]
-
-globs = [
-    # "~/Matlab*",
-    "~/java.*",
-    "~/.local/share/gegl-*",
-]
-
-shittyglobs = []
-
-for g in globs:
-    shittyglobs.extend(glob.glob(os.path.expanduser(g)))
-
-shittyfiles.extend(shittyglobs)
 
 
 def yesno(question, default="y"):
     """Asks the user for YES or NO, always case insensitive.
     Returns True for YES and False for NO.
     """
-    prompt = "%s (Y/n) " % question
+    prompt = f"{question} (Y/n) "
 
-    ans = input(prompt).strip().lower()
+    ans = input(prompt).strip().lower() or default
 
-    if not ans:
-        ans = default
-
-    if ans == "y":
-        return True
-    return False
+    return ans == "y"
 
 
 def rmshit():
@@ -117,9 +111,9 @@ def rmshit():
         absf = os.path.expanduser(f)
         if os.path.exists(absf):
             found.append(absf)
-            print("    %s" % f)
+            print(f"    {f}")
 
-    if len(found) == 0:
+    if not found:
         print("No shitty files found :)")
         return
 

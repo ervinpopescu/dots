@@ -6,11 +6,10 @@ import subprocess
 
 import psutil
 from libqtile import hook, qtile
-from libqtile.core.manager import Qtile
 from libqtile.backend.base import Window
+from libqtile.core.manager import Qtile
 
 from modules.matches import d
-
 from modules.path import qtile_path
 from modules.settings import bar_height, margin_size
 
@@ -36,7 +35,7 @@ def check_if_process_running(process_name):
 
 @hook.subscribe.startup_once
 async def autostart():
-    autostart = os.path.expanduser("~/bin/autostart.sh.bak")
+    autostart = os.path.expanduser("~/bin/autostart.sh")
     with open(os.path.join(qtile_path, "autostart.log"), "w") as autostart_log_file:
         subprocess.call(
             [autostart],
@@ -101,7 +100,7 @@ def resize_and_move_client(client):
     if wm_class == "qtilekeys.py":
         client.set_size_floating(w=1384, h=1400)
         client.center()
-    if role == "devtools" or role == "toolbox":
+    if role in ["devtools", "toolbox"]:
         client.set_size_floating(w=1440, h=1400)
         client.center()
     if wm_class == "orar.py":
@@ -132,7 +131,9 @@ def kill_all_autostarted_programs():
     if check_if_process_running("plank"):
         for win in qtile.windows_map.values():
             if win.name == "plank":
-                os.kill(int(win.eval("self.window.get_net_wm_pid()")[1]), signal.SIGKILL)
+                os.kill(
+                    int(win.eval("self.window.get_net_wm_pid()")[1]), signal.SIGKILL
+                )
 
 
 # noswallow = ["min", "Navigator", "vlc", "qtilekeys.py", "Alacritty"]

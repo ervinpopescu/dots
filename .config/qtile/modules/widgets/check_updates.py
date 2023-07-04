@@ -11,7 +11,7 @@ def check_updates():
         fmt="{}",
         mouse_callbacks={
             "Button1": lazy.spawn(cmds["update"]),
-            "Button3": lazy.widget["CheckUpdates"].force_update(),
+            "Button3": lazy.widget["checkupdates"].force_update(),
         },
         padding=10,
         update_interval=60,

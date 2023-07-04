@@ -55,15 +55,13 @@ if (
     outfile = open("/home/ervin/data/corona_tables/corona.md", "w")
     outfile.write(table)
     outfile.write("\n")
-    outfile.close()
 else:
-    l = []
-    for i in needed:
-        l.append(data[i])
+    l = [data[i] for i in needed]
     l[0] = time.strftime("%Y-%m-%d %H:%M", time.localtime(int(str(l[0])[:-3])))
     l[:0] = [time.strftime("%Y-%m-%d %H:%M", time.localtime())]
     string = "|" + " | ".join(map(str, l))
     outfile = open("/home/ervin/data/corona_tables/corona.md", "a")
     outfile.write("\n")
     outfile.write(string)
-    outfile.close()
+
+outfile.close()

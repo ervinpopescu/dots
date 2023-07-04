@@ -68,7 +68,7 @@ class DropArea(Gtk.Grid):
 
     def on_drag_data_received(self, widget, drag_context, x, y, data, info, time):
         text = data.get_text()
-        print("Received text: %s" % text)
+        print(f"Received text: {text}")
 
         label = Gtk.Label(label=text)
         self.attach(label, 1, 1, 1, 1)

@@ -69,52 +69,53 @@ def slash_right():
     )
 
 
-widget_box_1 = WidgetBox(
-    fontsize=40,
-    foreground=colors["darkblue"],
-    padding=10,
-    # start_opened=True,
-    text_closed="",
-    text_open="",
-    widgets=[
-        small_spacer(),
-        check_updates(),
-        small_spacer(),
-        weather(),
-    ],
-)
+# widget_box_1 = WidgetBox(
+#     fontsize=40,
+#     foreground=colors["darkblue"],
+#     padding=10,
+#     # start_opened=True,
+#     text_closed="",
+#     text_open="",
+#     widgets=[
+#         small_spacer(),
+#         check_updates(),
+#         small_spacer(),
+#         data(),
+#     ],
+# )
 
-widget_box_2 = WidgetBox(
-    fontsize=40,
-    close_button_location="right",
-    foreground=colors["darkblue"],
-    padding=10,
-    # start_opened=True,
-    text_closed="",
-    text_open="",
-    widgets=[
-        cpu_temp(),
-        small_spacer(),
-        data(),
-        small_spacer(),
-        kbd_layout(),
-        kbd_layout_icon(),
-        small_spacer(),
-    ],
-)
+# widget_box_2 = WidgetBox(
+#     fontsize=40,
+#     close_button_location="right",
+#     foreground=colors["darkblue"],
+#     padding=10,
+#     # start_opened=True,
+#     text_closed="",
+#     text_open="",
+#     widgets=[
+#         small_spacer(),
+#         weather(),
+#         small_spacer(),
+#         cpu_temp(),
+#         small_spacer(),
+#         kbd_layout(),
+#         kbd_layout_icon(),
+#         small_spacer(),
+#     ],
+# )
 
 
-for w in widget_box_1.widgets:
-    if not isinstance(w, (widget.Spacer, widget.TextBox, widget.KeyboardLayout)):
-        w.decorations = decor["decorations"]
-    if isinstance(w, (widget.TextBox, widget.KeyboardLayout)):
-        w.decorations = group_decor["decorations"]
+# for w in widget_box_1.widgets:
+#     if not isinstance(w, (widget.Spacer, widget.TextBox, widget.KeyboardLayout)):
+#         w.decorations = decor["decorations"]
+#     if isinstance(w, (widget.TextBox, widget.KeyboardLayout)):
+#         w.decorations = group_decor["decorations"]
 
-for w in widget_box_2.widgets:
-    if not isinstance(w, (widget.Spacer, widget.TextBox, widget.KeyboardLayout)):
-        w.decorations = decor["decorations"]
-    if isinstance(w, (widget.TextBox, widget.KeyboardLayout)):
-        w.decorations = group_decor["decorations"]
+# for w in widget_box_2.widgets:
+#     if not isinstance(w, (widget.Spacer, widget.TextBox, widget.KeyboardLayout)):
+#         w.decorations = decor["decorations"]
+#     if isinstance(w, (widget.TextBox, widget.KeyboardLayout)):
+#         w.decorations = group_decor["decorations"]
 
 first_stretch_spacer = stretch_spacer()
 second_stretch_spacer = stretch_spacer()
@@ -125,7 +126,11 @@ widgets_1 = [
     # small_spacer(),
     # music(),
     small_spacer(),
-    widget_box_1,
+    check_updates(),
+    small_spacer(),
+    data(),
+    # small_spacer(),
+    # widget_box_1,
     small_spacer(),
     group_box(),
     small_spacer(),
@@ -135,7 +140,14 @@ widgets_1 = [
     first_stretch_spacer,
     systray(),
     second_stretch_spacer,
-    widget_box_2,
+    # widget_box_2,
+    small_spacer(),
+    weather(),
+    small_spacer(),
+    cpu_temp(),
+    small_spacer(),
+    kbd_layout(),
+    kbd_layout_icon(),
     small_spacer(),
     github_notif(),
     small_spacer(),
@@ -165,14 +177,14 @@ for w in widgets_1:
     if not isinstance(w, (widget.Systray, widget.Spacer, Battery, widget.BatteryIcon)):
         w.decorations = decor["decorations"]
 
-    if isinstance(w, (Battery, widget.BatteryIcon)):
+    if isinstance(w, (Battery, widget.BatteryIcon, widget.TextBox, widget.KeyboardLayout)):
         w.decorations = group_decor["decorations"]
 
-widgets_2 = list()
-for w in widgets_1[:ss1_index] + widgets_1[ss2_index:]:
-    if not isinstance(w, widget.Systray):
-        widgets_2.append(w)
-
+widgets_2 = [
+    w
+    for w in widgets_1[:ss1_index] + widgets_1[ss2_index:]
+    if not isinstance(w, widget.Systray)
+]
 # side_widgets = []
 
 

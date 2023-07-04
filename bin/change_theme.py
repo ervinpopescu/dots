@@ -18,7 +18,6 @@ while True:
     if now > sunset or now < sunrise:
         if config["theme"] != themes["night"]:
             subprocess.call(f'qchanger.py -t {themes["night"]}'.split())
-    else:
-        if config["theme"] != themes["day"]:
-            subprocess.call(f'qchanger.py -t {themes["day"]}'.split())
+    elif config["theme"] != themes["day"]:
+        subprocess.call(f'qchanger.py -t {themes["day"]}'.split())
     sleep(60)

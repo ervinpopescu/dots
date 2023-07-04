@@ -22,7 +22,7 @@ for component in geocode_response["results"][0]["address_components"]:
         locality = component["long_name"]
     if "country" in component["types"]:
         country_code = component["short_name"]
-location = dict(location=locality + "," + country_code)
+location = dict(location=f"{locality},{country_code}")
 with open("/home/ervin/.local/share/location.json", "w") as f:
     json.dump(
         obj=location,

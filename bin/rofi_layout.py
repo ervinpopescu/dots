@@ -27,9 +27,7 @@ options = [None] * len(layouts)
 for icon in icons:
     for layout in layouts:
         if layout in icon:
-            options[layouts.index(layout)] = (
-                " " + layout + f"\x00icon\x1f{folder}" + icon
-            )
+            options[layouts.index(layout)] = f" {layout}" + f"\x00icon\x1f{folder}" + icon
 # print(options)
 r = Rofi(
     lines=len(layouts),

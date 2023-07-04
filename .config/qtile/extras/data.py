@@ -13,9 +13,7 @@ def get_uptime():
         hours = mod(seconds, 86400) // 3600
     if days == 0:
         return f"up {hours}h"
-    if hours == 24:
-        return f"up {days}d"
-    return f"up {days}d,{hours}h"
+    return f"up {days}d" if hours == 24 else f"up {days}d,{hours}h"
 
 
 class Data(widget.GenPollText):

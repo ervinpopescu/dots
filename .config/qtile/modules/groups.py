@@ -20,18 +20,15 @@ from modules.settings import (
 )
 
 qtile: Qtile
-groups = []
-
-for i in range(len(group_names)):
-    groups.append(
-        Group(
-            name=group_names[i],
-            layout=group_layouts[i],
-            label=group_labels[i],
-            layout_opts=None,
-        )
+groups = [
+    Group(
+        name=group_names[i],
+        layout=group_layouts[i],
+        label=group_labels[i],
+        layout_opts=None,
     )
-
+    for i in range(len(group_names))
+]
 screen_width = qtile.core.get_screen_info()[0][2]
 screen_height = qtile.core.get_screen_info()[0][3]
 scratchpad = ScratchPad(

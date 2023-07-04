@@ -60,7 +60,7 @@ def weather_popup(qtile):
 
 def music_layout():
     IMAGES_FOLDER = "/usr/lib/python3.10/site-packages/qtile_extras/resources/media-icons/"
-    DEFAULT_IMAGE = IMAGES_FOLDER + "default.png"
+    DEFAULT_IMAGE = f"{IMAGES_FOLDER}default.png"
 
     return PopupRelativeLayout(
         None,
@@ -125,7 +125,7 @@ def music_layout():
             ),
             PopupImage(
                 name="previous",
-                filename=IMAGES_FOLDER + "previous.svg",
+                filename=f"{IMAGES_FOLDER}previous.svg",
                 highlight=colors["bg1"],
                 mask=True,
                 pos_y=0.8,
@@ -135,7 +135,7 @@ def music_layout():
             ),
             PopupImage(
                 name="play_pause",
-                filename=IMAGES_FOLDER + "play_pause.svg",
+                filename=f"{IMAGES_FOLDER}play_pause.svg",
                 highlight=colors["bg1"],
                 mask=True,
                 pos_y=0.8,
@@ -145,7 +145,7 @@ def music_layout():
             ),
             PopupImage(
                 name="stop",
-                filename=IMAGES_FOLDER + "stop.svg",
+                filename=f"{IMAGES_FOLDER}stop.svg",
                 highlight=colors["bg1"],
                 mask=True,
                 pos_y=0.8,
@@ -155,7 +155,7 @@ def music_layout():
             ),
             PopupImage(
                 name="next",
-                filename=IMAGES_FOLDER + "next.svg",
+                filename=f"{IMAGES_FOLDER}next.svg",
                 highlight=colors["bg1"],
                 mask=True,
                 pos_y=0.8,

@@ -15,7 +15,7 @@ shows = Client(
     port=9092,
 )
 
-l = list(dict())
+l = list({})
 
 movies_session = movies.get_session()
 movies_torrents = movies.get_torrents()
@@ -38,11 +38,11 @@ for movie in movies_torrents:
         status = "up"
     l.append(
         {
-            "NAME": " " + movie.name[0:26] + " ",
+            "NAME": f" {movie.name[:26]} ",
             "STAT": status,
-            "PROG": " " + str(movie.progress) + " ",
-            "DOWN": " " + str(movie.rateDownload / 1e6) + " ",
-            "ETA": " " + eta + " ",
+            "PROG": f" {str(movie.progress)} ",
+            "DOWN": f" {str(movie.rateDownload / 1000000.0)} ",
+            "ETA": f" {eta} ",
         }
     )
 table = (
@@ -72,11 +72,11 @@ for show in shows_torrents:
         status = "up"
     l.append(
         {
-            "NAME": " " + show.name[0:26] + " ",
+            "NAME": f" {show.name[:26]} ",
             "STAT": status,
-            "PROG": " " + str(show.progress) + " ",
-            "DOWN": " " + str(show.rateDownload / 1e6) + " ",
-            "ETA": " " + eta + " ",
+            "PROG": f" {str(show.progress)} ",
+            "DOWN": f" {str(show.rateDownload / 1000000.0)} ",
+            "ETA": f" {eta} ",
         }
     )
 

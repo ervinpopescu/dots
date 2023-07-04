@@ -14,8 +14,10 @@ def github_notif():
             "Button1": lazy.spawn(
                 ["xdg-open", "https://github.com/notifications"],
             ),
-            "Button3": lazy.widget["githubnotifications"].eval("self.update()"),
+            "Button3": lazy.widget["githubnotifications"].eval(
+                "self.update()"
+            ),
         },
         padding=10,
-        token_file=qtile_path + "/github_token",
+        token_file=f"{qtile_path}/github_token",
     )

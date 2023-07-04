@@ -131,7 +131,7 @@ def set_rofi(theme):
             theme_line_index = i
 
     theme_line[1] = f'"{theme}"\n'
-    theme_line = " ".join(s for s in theme_line)
+    theme_line = " ".join(theme_line)
     settings[theme_line_index] = theme_line
 
     with open(settings_file, "w") as f:

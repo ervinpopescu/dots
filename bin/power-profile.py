@@ -102,8 +102,8 @@ class Indicator:
     def start_timer(self):
         GLib.timeout_add(5000, self.change_icon)
 
-    def quit(*args):
-        gtk.main_quit(*args)
+    def quit(self):
+        gtk.main_quit(*self)
 
 
 if __name__ == "__main__":

@@ -28,4 +28,4 @@ with open(os.path.join(qtile_path, "config.json")) as f:
     config = json.load(f)
     for key, val in config.items():
         if key != "theme":
-            exec(key + "=val")
+            exec(f"{key}=val")
