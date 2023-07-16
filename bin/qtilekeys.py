@@ -18,7 +18,7 @@ qtile_path = pathlib.Path(c.qtile_info()["config_path"]).parent.resolve()
 
 # with open(os.path.join(qtile_path, "keys.pickle"), "rb") as f:
 #     keys = pickle.load(f)
-with open(os.path.join(qtile_path, "keys.json"), "r") as f:
+with open(os.path.join(qtile_path, "json", "keys.json"), "r") as f:
     keys = jsonpickle.decode(f.read())
 
 

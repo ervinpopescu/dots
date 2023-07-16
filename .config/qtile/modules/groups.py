@@ -9,7 +9,7 @@ from libqtile.lazy import lazy
 
 from extras.mutablescratch import MutableScratch
 from modules.keys import keys
-from modules.path import qtile_path
+from modules.path import config_path
 from modules.settings import (
     bar_height,
     cmds,
@@ -98,7 +98,7 @@ keys.extend(
     ]
 )
 pickled_keys = jsonpickle.encode(keys)
-with open(os.path.join(qtile_path, "keys.json"), "w") as f:
+with open(os.path.join(config_path, "json", "keys.json"), "w") as f:
     f.write(pickled_keys)
 
 hook.subscribe.startup_complete(mutscr.qtile_startup)

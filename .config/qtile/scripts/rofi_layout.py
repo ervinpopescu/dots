@@ -1,24 +1,31 @@
 #!/bin/python
 
+import inspect
+import json
 import os
-import subprocess
+import pathlib
 
+import notify2
 from libqtile.command.client import InteractiveCommandClient
-
 from rofi import Rofi
 
+notify2.init("rofi_layout")
+
 c = InteractiveCommandClient()
-
-
-def dunstify(string):
-    subprocess.run(f"dunstify -a layout -u normal -r 323131 {string}".split())
-
+with open(
+    os.path.join(
+        (pathlib.Path(c.qtile_info()["config_path"]).parent), "json", "settings.json"
+    ),
+    "r",
+) as f:
+    group_layouts = json.load(f)["group_layouts"]
+print(group_layouts)
 
 groups = c.get_groups()
 keys = list(groups.keys())
 layouts: str = groups[keys[0]]["layouts"]
 
-folder = "/usr/lib/python3.10/site-packages/libqtile/resources/layout-icons/"
+folder = f"{pathlib.Path(inspect.getfile(InteractiveCommandClient)).parent.parent}/resources/layout-icons/"
 icons = os.listdir(folder)
 icons.sort()
 
@@ -27,8 +34,9 @@ options = [None] * len(layouts)
 for icon in icons:
     for layout in layouts:
         if layout in icon:
-            options[layouts.index(layout)] = f" {layout}" + f"\x00icon\x1f{folder}" + icon
-# print(options)
+            options[layouts.index(layout)] = (
+                f" {layout}" + f"\x00icon\x1f{folder}" + icon
+            )
 r = Rofi(
     lines=len(layouts),
     rofi_args=[
@@ -42,12 +50,11 @@ r = Rofi(
         "show-icons",
     ],
 )
-print(r.rofi_args)
 index, key = r.select(
     prompt="Select layout",
     options=options,
 )
 
 if key == 0:
-    # dunstify(layouts[index])
+    notify2.Notification(layouts[index]).show()
     c.group.setlayout(layouts[index])

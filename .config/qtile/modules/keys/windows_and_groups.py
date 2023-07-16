@@ -9,7 +9,7 @@ from modules.functions import (
     window_to_next_group,
     window_to_prev_group,
 )
-from modules.path import qtile_path
+from modules.path import config_path
 from modules.settings import cmds
 
 windows_and_groups_keys = [

@@ -1,3 +1,6 @@
+import pathlib
+
+from libqtile import qtile
 from libqtile.config import Key
 from libqtile.lazy import lazy
 
@@ -8,6 +11,7 @@ from modules.functions import (
     set_layout_current,
     toggle_gaps,
 )
+from modules.path import config_path
 from modules.settings import cmds
 
 qtile_keys = [
@@ -21,7 +25,7 @@ qtile_keys = [
         [cmds["mod"]],
         "r",
         lazy.reload_config(),
-        lazy.spawn("/home/ervin/.config/qtile-x11/scripts/set_spotify_size.py"),
+        lazy.spawn(f"{config_path}/scripts/set_spotify_size.py"),
         # lazy.hide_show_bar("bottom"),
         desc="Reload qtile config",
     ),
@@ -29,7 +33,7 @@ qtile_keys = [
         [cmds["mod"], "shift"],
         "r",
         lazy.restart(),
-        lazy.spawn("/home/ervin/.config/qtile-x11/scripts/set_spotify_size.py"),
+        lazy.spawn(f"{config_path}/scripts/set_spotify_size.py"),
         desc="Restart qtile",
     ),
     Key(

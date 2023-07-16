@@ -1,6 +1,7 @@
 acestream-launcher
 acpi_call-dkms
 activate-linux
+aicommits
 alacritty
 alhp-keyring
 alhp-mirrorlist
@@ -94,6 +95,7 @@ fbset
 fd
 fet.sh-git
 ffmpeg
+figlet
 file-roller
 firefox
 flameshot
@@ -140,7 +142,9 @@ help2man
 howdoi
 hsetroot
 htop
+hugo
 hwinfo
+i3-wm
 i3lock-color-git
 ibus
 ibus-daemon
@@ -297,6 +301,7 @@ python-dasbus
 python-dbus-next
 python-exifread
 python-ffmpeg-python
+python-flake8-black
 python-flufl-lock
 python-gitpython
 python-google-api-python-client
@@ -306,9 +311,12 @@ python-gspread
 python-h5py
 python-imageio
 python-isort
+python-jq
+python-json5
 python-jsonpickle
 python-libcst
 python-matplotlib
+python-notify2
 python-numba
 python-numpydoc
 python-opencv
@@ -330,14 +338,16 @@ python-pywayland
 python-pywlroots
 python-pyxdg
 python-requests
-python-rofi
+python-rofi-git
 python-scikit-learn
+python-simplejson
 python-sqlglot
 python-tensorflow-opt
 python-tensorflow-serving-api
 python-terminaltables
 python-thefuzz
 python-tox
+python-types-python-dateutil
 python-virtualenv
 python-watchdog
 python-xmljson

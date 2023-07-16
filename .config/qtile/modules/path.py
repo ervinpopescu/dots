@@ -7,6 +7,6 @@ qtile: Qtile
 
 qtile_info = qtile.qtile_info()
 if len(qtile_info) != 0:
-    qtile_path = str(pathlib.Path(qtile_info["config_path"]).parent.resolve())
+    config_path = str(pathlib.Path(qtile_info["config_path"]).parent.resolve())
 else:
-    qtile_path = str(pathlib.Path(__file__).parent.parent.resolve())
+    config_path = str(pathlib.Path(__file__).parent.parent.resolve())

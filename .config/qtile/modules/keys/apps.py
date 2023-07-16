@@ -3,7 +3,7 @@ import os
 from libqtile.config import Key
 from libqtile.lazy import lazy
 
-from modules.path import qtile_path
+from modules.path import config_path
 from modules.settings import cmds
 
 apps_keys = [
@@ -148,7 +148,7 @@ apps_keys = [
     Key(
         [cmds["mod"], "shift"],
         "t",
-        lazy.spawn(os.path.join(qtile_path, "scripts", "qchanger.py")),
+        lazy.spawn(os.path.join(config_path, "scripts", "qchanger.py")),
         desc="Change theme",
     ),
 ]

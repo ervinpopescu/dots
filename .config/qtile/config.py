@@ -12,7 +12,7 @@ from modules import (
     screens,
     widget_defaults,
 )
-from modules.path import qtile_path
+from modules.path import config_path
 
 assert floating_layout
 assert groups
@@ -24,7 +24,7 @@ assert screens
 assert widget_defaults
 assert extension_defaults
 
-with open(os.path.join(qtile_path, "config.json")) as f:
+with open(os.path.join(config_path, "json", "config.json")) as f:
     config = json.load(f)
     for key, val in config.items():
         if key != "theme":

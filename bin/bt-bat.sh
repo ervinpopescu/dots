@@ -10,6 +10,6 @@ do
   if [[ "$is_connected" != "no" ]]
   then
     battery="$(bluetoothctl info "${macs[$i]}" | grep Battery | sed 's/.*(\(.*\))/\1/')"
-    printf " |  %s%%\n" "$battery"
+    printf "%s" "$battery"
   fi
 done

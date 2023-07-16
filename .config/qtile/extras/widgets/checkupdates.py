@@ -8,10 +8,11 @@ from modules.settings import colors
 
 def chkup():
     try:
-        return str(len(subprocess.check_output("checkupdates").decode("utf-8").splitlines()))
+        num = len(subprocess.check_output("checkupdates").decode("utf-8").splitlines())
+        return str(num)
     except subprocess.CalledProcessError as e:
         if e.returncode == 0:
-            return num
+            return str(num)
         elif e.returncode == 2:
             return "0"
         else:

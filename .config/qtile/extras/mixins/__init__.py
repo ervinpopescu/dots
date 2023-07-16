@@ -59,10 +59,7 @@ class ThumbnailMixin(_BaseMixin):
             if isinstance(self.thumbnail_padding, int):
                 self._thumbnail_padding = [self.thumbnail_padding] * 2
 
-            elif (
-                not isinstance(self.thumbnail_padding, list)
-                or len(self.thumbnail_padding) < 2
-            ):
+            elif not isinstance(self.thumbnail_padding, list) or len(self.thumbnail_padding) < 2:
                 logger.warning("Invalid thumbnail padding. Defaulting to [4, 4]")
                 self._thumbnail_padding = [4, 4]
 

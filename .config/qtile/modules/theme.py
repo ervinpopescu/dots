@@ -1,13 +1,13 @@
 import json
 from os import path
 
-from modules.path import qtile_path
+from modules.path import config_path
 
 
 def load_theme():
     theme = "catppuccin"
 
-    config = path.join(qtile_path, "config.json")
+    config = path.join(config_path, "json", "config.json")
     if path.isfile(config):
         with open(config) as f:
             theme = json.load(f)["theme"]
@@ -15,9 +15,9 @@ def load_theme():
         with open(config, "w") as f:
             f.write(f'{{"theme": "{theme}"}}\n')
 
-    theme_file = path.join(qtile_path, "themes", f"{theme}.json")
+    theme_file = path.join(config_path, "themes", f"{theme}.json")
     if not path.isfile(theme_file):
-        raise Exception(f'"{theme_file}" does not exist')
+        raise FileNotFoundError(f'"{theme_file}" does not exist')
 
     with open(path.join(theme_file)) as f:
         return json.load(f)

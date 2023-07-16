@@ -5,6 +5,7 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 from logging import getLogger
 
 from custom_logging.logger import init_log
@@ -50,16 +51,20 @@ def main():
     args = parser.parse_args()
     logger.info(f"starting logging for {__file__}")
 
-    qtile_repo_path = os.path.join(
-        os.getenv("XDG_CACHE_HOME"), "yay", "qtile-git")
+    qtile_repo_path = os.path.join(os.getenv("XDG_CACHE_HOME"), "yay", "qtile-git")
     if os.path.exists(qtile_repo_path):
         logger.info("removing cached qtile repo")
-        shutil.rmtree(qtile_repo_path)
+        try:
+            shutil.rmtree(qtile_repo_path)
+        except PermissionError:
+            logger.error("couldn't remove folder")
+            ans = input("Would you like to try with root permissions? [Y/n]")
+            if ans in ["Y", "", "y"]:
+                subprocess.run(f"sudo rm -rf {qtile_repo_path}".split())
 
     aur_url = "https://aur.archlinux.org/qtile-git"
     if args.branch is not None:
-        logger.info("installing qtile `%s` - branch `%s`",
-                    args.maintainer, args.branch)
+        logger.info("installing qtile `%s` - branch `%s`", args.maintainer, args.branch)
         github_url = f"https://github.com/{args.maintainer}/qtile#branch={args.branch}"
     elif args.commit is not None:
         logger.info(

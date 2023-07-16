@@ -1,5 +1,5 @@
 import asyncio
-import json
+import contextlib
 import os
 import signal
 import subprocess
@@ -10,7 +10,7 @@ from libqtile.backend.base import Window
 from libqtile.core.manager import Qtile
 
 from modules.matches import d
-from modules.path import qtile_path
+from modules.path import config_path
 from modules.settings import bar_height, margin_size
 
 # from libqtile.lazy import lazy
@@ -24,19 +24,17 @@ def check_if_process_running(process_name):
     """
     # Iterate over the all the running process
     for proc in psutil.process_iter():
-        try:
+        with contextlib.suppress(psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
             # Check if process name contains the given name string.
             if process_name.lower() in proc.name().lower():
                 return True
-        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
-            pass
     return False
 
 
 @hook.subscribe.startup_once
 async def autostart():
     autostart = os.path.expanduser("~/bin/autostart.sh")
-    with open(os.path.join(qtile_path, "autostart.log"), "w") as autostart_log_file:
+    with open(os.path.join(config_path, "autostart.log"), "w") as autostart_log_file:
         subprocess.call(
             [autostart],
             stdout=autostart_log_file,
@@ -86,10 +84,16 @@ def resize_and_move_client(client):
         wm_class = client.window.get_wm_class()[0]
     except Exception:
         wm_class = None
+
     try:
         role = client.get_wm_role()
     except Exception:
         role = None
+
+    if role in ["devtools", "toolbox"]:
+        client.set_size_floating(w=1440, h=1400)
+        client.center()
+
     if wm_class == "gsimplecal":
         width = 482
         height = 408
@@ -97,28 +101,31 @@ def resize_and_move_client(client):
             x=2880 - width - margin_size - 5,
             y=bar_height + 2 * margin_size,
         )
+        client.center()
+
     if wm_class == "qtilekeys.py":
         client.set_size_floating(w=1384, h=1400)
         client.center()
-    if role in ["devtools", "toolbox"]:
-        client.set_size_floating(w=1440, h=1400)
-        client.center()
+
     if wm_class == "orar.py":
         client.set_size_floating(w=1302, h=1036)
         client.center()
+
     if wm_class == "nemo-terminal":
         client.set_size_floating(w=1440, h=1000)
+        client.center()
+
+    if wm_class == "blueman-manager":
+        client.toggle_floating()
         client.center()
 
 
 @hook.subscribe.client_killed
 def switch_group(client):
-    try:
+    with contextlib.suppress(AttributeError):
         num_windows_in_group = len(client.group.info()["windows"])
         if num_windows_in_group == 0:
             qtile.current_screen.toggle_group(qtile.current_screen.previous_group)
-    except AttributeError:
-        pass
 
 
 @hook.subscribe.shutdown
@@ -131,9 +138,7 @@ def kill_all_autostarted_programs():
     if check_if_process_running("plank"):
         for win in qtile.windows_map.values():
             if win.name == "plank":
-                os.kill(
-                    int(win.eval("self.window.get_net_wm_pid()")[1]), signal.SIGKILL
-                )
+                os.kill(int(win.eval("self.window.get_net_wm_pid()")[1]), signal.SIGKILL)
 
 
 # noswallow = ["min", "Navigator", "vlc", "qtilekeys.py", "Alacritty"]
