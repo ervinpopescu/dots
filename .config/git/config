@@ -1,7 +1,7 @@
 [user]
 email = ervin.popescu10@gmail.com
 name = ervinpopescu
-signingkey = /home/ervin/.ssh/id_ed25519.pub
+signingkey = ~/.ssh/id_ed25519.pub
 [format]
 pretty="%C(auto,yellow)%h%C(auto,magenta)% G? %C(auto,blue)%>(12,trunc)%ad %C(auto,green)%<(13,trunc)%aN %C(auto,reset)%s%C(auto,red)% gD% D"
 [init]
@@ -12,7 +12,7 @@ required = true
 clean = git-lfs clean -- %f
 smudge = git-lfs smudge -- %f
 [safe]
-directory = /home/ervin/.local/share/nvim/site/pack/packer/opt/which-key.nvim
+directory = ~/.local/share/nvim/site/pack/packer/opt/which-key.nvim
 [color]
 # Enable colors in color-supporting terminals
 ui = auto
@@ -36,4 +36,4 @@ cmd = codium --wait --diff $LOCAL $REMOTE
 [tag]
 	gpgsign = true
 [gpg "ssh"]
-	allowedSignersFile = /home/ervin/.config/git/allowed_signers
+	allowedSignersFile = ~/.config/git/allowed_signers
