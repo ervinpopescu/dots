@@ -1,39 +1,44 @@
+[alias]
+lp = "log --all --decorate --graph --date=relative --pretty=format:'%C(auto,yellow)%h%C(auto,magenta)% G? %C(auto,blue)%>(12,trunc)%ad %C(auto,green)%<(13,trunc)%aN %C(auto,reset)%s%C(auto,red)% gD% D'"
+
+[color]
+ui = auto
+
+[commit]
+gpgsign = true
+
+[diff]
+mnemonicprefix = true
+renames = true
+submodule = log
+tool = vscode
+wordregex = .
+
+[difftool "vscode"]
+cmd = code -r --wait --diff $LOCAL $REMOTE
+
+[filter "lfs"]
+clean = git-lfs clean -- %f
+process = git-lfs filter-process
+required = true
+smudge = git-lfs smudge -- %f
+
+[gpg]
+format = ssh
+
+[gpg "ssh"]
+allowedsignersfile = ~/.config/git/allowed_signers
+
+[init]
+defaultbranch = main
+
+[tag]
+gpgsign = true
+
 [user]
 email = ervin.popescu10@gmail.com
 name = ervinpopescu
 signingkey = ~/.ssh/id_ed25519.pub
-[format]
-pretty="%C(auto,yellow)%h%C(auto,magenta)% G? %C(auto,blue)%>(12,trunc)%ad %C(auto,green)%<(13,trunc)%aN %C(auto,reset)%s%C(auto,red)% gD% D"
-[init]
-defaultBranch = main
-[filter "lfs"]
-process = git-lfs filter-process
-required = true
-clean = git-lfs clean -- %f
-smudge = git-lfs smudge -- %f
-[safe]
-directory = ~/.local/share/nvim/site/pack/packer/opt/which-key.nvim
-[color]
-# Enable colors in color-supporting terminals
-ui = auto
-[diff]
-# Use better, descriptive initials (c, i, w) instead of a/b.
-mnemonicPrefix = true
-# Show renames/moves as such
-renames = true
-# When using --word-diff, assume --word-diff-regex=.
-wordRegex = .
-# Display submodule-related information (commit listings)
-submodule = log
-# Use VSCode as default diff tool when running `git diff-tool`
-tool = vscode
-[difftool "vscode"]
-cmd = codium --wait --diff $LOCAL $REMOTE
-[gpg]
-	format = ssh
-[commit]
-	gpgsign = true
-[tag]
-	gpgsign = true
-[gpg "ssh"]
-	allowedSignersFile = ~/.config/git/allowed_signers
+
+[core]
+editor = code -r --wait

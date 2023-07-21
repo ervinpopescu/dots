@@ -49,11 +49,11 @@ alias tty-clock="tty-clock -c -C 7 -f '%a, %d %b'"
 alias u='sudo pacman -Syu'
 alias v="vscodium"
 alias vim="nvim"
+alias qtile_to_json="python3 -c 'import sys, json, ast; print(json.dumps(ast.literal_eval(sys.stdin.read()), indent=2))'"
 alias wget='wget --hsts-file="$XDG_CACHE_HOME/wget-hsts"'
 alias xbindkeys='xbindkeys -f $XDG_CONFIG_HOME/xbindkeys/config'
 
 # git
-alias gl="git log --all --decorate --graph --date=relative"
 alias gp="git add .; git commit; git push"
 alias gsf='git fetch upstream; git checkout master; git merge upstream/master; git push -f'
 
