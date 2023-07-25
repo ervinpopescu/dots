@@ -1,4 +1,4 @@
-from extras import TaskList
+from extras.widgets import TaskList
 from modules.functions import no_text
 from modules.settings import bar_height, colors
 

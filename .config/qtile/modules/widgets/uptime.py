@@ -1,6 +1,6 @@
 from libqtile.lazy import lazy
 
-from extras import Uptime
+from extras.widgets import Uptime
 from modules.settings import cmds, text_font
 
 

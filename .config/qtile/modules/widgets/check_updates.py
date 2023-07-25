@@ -1,6 +1,6 @@
 from libqtile.lazy import lazy
 
-from extras import CheckUpdates
+from extras.widgets import CheckUpdates
 from modules.settings import cmds, icon_font
 
 

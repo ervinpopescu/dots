@@ -1,6 +1,6 @@
 from libqtile.lazy import lazy
 
-from extras import CPUTemp
+from extras.widgets import CPUTemp
 from modules.settings import cmds, text_font
 
 

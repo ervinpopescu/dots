@@ -1,23 +1,4 @@
-from extras.widgets import (
-    Battery,
-    CheckUpdates,
-    CPUTemp,
-    LaunchBar,
-    MouseOverClock,
-    TaskList,
-    Uptime,
-    Weather,
-    WidgetBox,
-)
+from .mutablescratch import MutableScratch
+from .floating_window_snapping import move_snap_window
 
-__all__ = [
-    "CPUTemp",
-    "MouseOverClock",
-    "Battery",
-    "CheckUpdates",
-    "Uptime",
-    "LaunchBar",
-    "TaskList",
-    "Weather",
-    "WidgetBox",
-]
+__all__ = ["MutableScratch", "move_snap_window"]

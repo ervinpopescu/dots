@@ -1,6 +1,6 @@
 from libqtile.lazy import lazy
 
-from extras import MouseOverClock
+from extras.widgets import MouseOverClock
 from modules.settings import colors, text_font
 
 mouse_over_clock = MouseOverClock(

@@ -1,6 +1,6 @@
 from libqtile.lazy import lazy
 
-from extras import Weather
+from extras.widgets import Weather
 from modules.popups import location, weather_popup
 from modules.settings import text_font
 
