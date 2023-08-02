@@ -1,4 +1,4 @@
-#!/bin/python
+#!/bin/python3
 
 import argparse
 import json
@@ -13,7 +13,7 @@ parser.add_argument("filename")
 args = parser.parse_args()
 
 with open(os.path.abspath(args.filename), "r") as read_file:
-    data = json.load(read_file)
+    data = json.loads(read_file.read())
 
 with open(os.path.abspath(args.filename), "w") as write_file:
-    json.dump(data, write_file, indent=2, sort_keys=True)
+    write_file.write(json.dumps(data, indent=2, sort_keys=True))
