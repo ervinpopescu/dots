@@ -1,5 +1,6 @@
 [alias]
-lp = "log --all --decorate --graph --date=relative --pretty=format:'%C(auto,yellow)%h%C(auto,magenta)% G? %C(auto,blue)%>(12,trunc)%ad %C(auto,green)%<(13,trunc)%aN %C(auto,reset)%s%C(auto,red)% gD% D'"
+lp = "log --decorate --graph --date=relative --pretty=format:'%C(auto,yellow)%h%C(auto,magenta)% G? %C(auto,blue)%>(12,trunc)%ad %C(auto,green)%<(13,trunc)%aN %C(auto,reset)%s%C(auto,red)% gD% D'"
+lpa = "log --all --decorate --graph --date=relative --pretty=format:'%C(auto,yellow)%h%C(auto,magenta)% G? %C(auto,blue)%>(12,trunc)%ad %C(auto,green)%<(13,trunc)%aN %C(auto,reset)%s%C(auto,red)% gD% D'"
 
 [color]
 ui = auto

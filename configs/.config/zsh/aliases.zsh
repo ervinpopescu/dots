@@ -77,9 +77,9 @@ alias cq="cd $HOME/.config/qtile"
 alias d="cd $HOME/www/src/mine/dots"
 
 # ls
-alias ls='exa --color=always --icons -aH'
+alias ls='exa --color=always --icons -H'
 alias ll="ls -ghl --accessed --modified"
-alias la="ls"
+alias la="ls -a"
 
 # checking for tty or not
 if [[ "$(tty | sed -e 's:/dev/::;s/[0-9]//')" == "tty" ]]; then
