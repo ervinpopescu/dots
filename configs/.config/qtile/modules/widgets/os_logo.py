@@ -1,10 +1,9 @@
 from libqtile.lazy import lazy
+from modules.settings import settings
 from qtile_extras import widget
 
-from modules.settings import settings
-
-arch_logo = widget.Image(
-    filename="/usr/share/pixmaps/archlinux-logo.svg",
+os_logo = widget.Image(
+    filename="/usr/share/pixmaps/debian-logo.png",
     margin=7,
     mouse_callbacks={"Button1": lazy.spawn(settings["cmds"]["menu"])},
 )

@@ -1,11 +1,11 @@
 from libqtile import bar
 from libqtile.config import Screen
 
-from modules.settings import bar_bg, bar_height, colors, margin_size  # launchbar_decor
+from modules.settings import settings, bar_bg
 from modules.widgets import widgets_1, widgets_2
 
-bh = bar_height
-ms = margin_size
+bh = settings["bar_height"]
+ms = settings["margin_size"]
 
 
 def statusbar(widgets, margin, size):

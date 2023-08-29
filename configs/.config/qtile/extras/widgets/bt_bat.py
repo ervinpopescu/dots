@@ -21,9 +21,13 @@ class BtBattery(widget.GenPollText):
         self.add_defaults(base.MarginMixin.defaults)
 
     def poll(self):
-        data = subprocess.check_output(
-            os.path.join(os.environ["HOME"], "bin", "bt-bat.sh")
-        ).decode("utf-8").strip("\n")
+        data = (
+            subprocess.check_output(
+                os.path.join(os.environ["HOME"], "bin", "bt-bat.sh")
+            )
+            .decode("utf-8")
+            .strip("\n")
+        )
         if data == "":
             return ""
         self.foreground = colors["lightgreen"] if int(data) > 10 else colors["red"]

@@ -1,15 +1,41 @@
 {
   "apps": [
-    ["nemo", "nemo", "nemo"],
-    ["Alacritty", "alacritty", "alacritty"],
-    ["vscodium", "vscodium", "vscodium"],
-    ["firefox", "firefox", "firefox"],
-    ["virtualbox", "virtualbox", "virtualbox"]
+    [
+      "nemo",
+      "nemo",
+      "nemo"
+    ],
+    [
+      "Alacritty",
+      "alacritty",
+      "alacritty"
+    ],
+    [
+      "vscodium",
+      "vscodium",
+      "vscodium"
+    ],
+    [
+      "firefox",
+      "firefox",
+      "firefox"
+    ],
+    [
+      "virtualbox",
+      "virtualbox",
+      "virtualbox"
+    ]
   ],
   "bar_height": 56,
   "cmds": {
     "alt": "mod1",
-    "emoji": ["rofi", "-modes", "emoji", "-show", "emoji"],
+    "emoji": [
+      "rofi",
+      "-modes",
+      "emoji",
+      "-show",
+      "emoji"
+    ],
     "htop": [
       "alacritty",
       "--class",
@@ -30,7 +56,13 @@
       "-show-icons"
     ],
     "mod": "mod4",
-    "nwgbar": ["nwgbar", "-b", "1d1d2d", "-o", "0.4"],
+    "nwgbar": [
+      "nwgbar",
+      "-b",
+      "1d1d2d",
+      "-o",
+      "0.4"
+    ],
     "terminal": "alacritty",
     "transmission": [
       "alacritty",
@@ -59,13 +91,22 @@
       "--noconfirm"
     ]
   },
+  "dropdown_opacity": 0.95,
   "extension_defaults": {
     "font": "Font Awesome 6 Free Solid",
     "fontsize": 30,
     "padding": 6
   },
-  "fontsize": 30,
-  "group_labels": ["", "", "", "", "", "", ""],
+  "font_size": 30,
+  "group_labels": [
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
   "group_layouts": [
     "monadwide",
     "max",

@@ -4,10 +4,9 @@ import os
 import sys
 from time import sleep
 
+from libqtile.command.client import InteractiveCommandClient
 from xdo import Xdo
 
-sys.path.insert(0, os.path.expanduser("~/.config/qtile-x11/"))
-from libqtile.command.client import InteractiveCommandClient
 from modules.settings import bar_height, margin_size
 
 c = InteractiveCommandClient()

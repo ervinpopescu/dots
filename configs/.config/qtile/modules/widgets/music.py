@@ -2,10 +2,10 @@ from libqtile.lazy import lazy
 from qtile_extras import widget
 
 from modules.popups import music_layout
-from modules.settings import bar_height, colors, margin_size, text_font
+from modules.settings import colors, settings
 
 music = widget.Mpris2(
-    font=text_font,
+    font=settings["text_font"],
     foreground=colors["darkblue"],
     format="{xesam:title} - {xesam:artist}",
     mouse_callbacks={
@@ -15,8 +15,8 @@ music = widget.Mpris2(
     popup_layout=music_layout(),
     popup_show_args={
         "relative_to": 1,
-        "x": margin_size,
-        "y": bar_height + 2 * margin_size,
+        "x": settings["margin_size"],
+        "y": settings["bar_height"] + 2 * settings["margin_size"],
         # "centered": True,
         "warp_pointer": True,
     },

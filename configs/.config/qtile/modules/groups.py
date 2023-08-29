@@ -10,24 +10,17 @@ from libqtile.lazy import lazy
 from extras.mutablescratch import MutableScratch
 from modules.keys import keys
 from modules.path import config_path
-from modules.settings import (
-    bar_height,
-    cmds,
-    group_labels,
-    group_layouts,
-    group_names,
-    margin_size,
-)
+from modules.settings import settings
 
 qtile: Qtile
 groups = [
     Group(
-        name=group_names[i],
-        layout=group_layouts[i],
-        label=group_labels[i],
+        name=settings["group_names"][i],
+        layout=settings["group_layouts"][i],
+        label=settings["group_labels"][i],
         layout_opts=None,
     )
-    for i in range(len(group_names))
+    for i in range(len(settings["group_names"]))
 ]
 screen_width = qtile.core.get_screen_info()[0][2]
 screen_height = qtile.core.get_screen_info()[0][3]
@@ -38,47 +31,50 @@ scratchpad = ScratchPad(
     dropdowns=[
         DropDown(
             "term",
-            cmds["terminal"] + " --class=AlacrittyScratchpad",
-            opacity=0.8,
-            width=1 - 2 * margin_size / screen_width - 0.05,
-            height=1 - 2 * margin_size / screen_height - 0.05,
-            x=margin_size / screen_width + 0.025,
-            y=margin_size / screen_height + 0.025,
+            settings["cmds"]["terminal"] + " --class=AlacrittyScratchpad",
+            opacity=settings["dropdown_opacity"],
+            width=1 - 2 * settings["margin_size"] / screen_width - 0.05,
+            height=1 - 2 * settings["margin_size"] / screen_height - 0.05,
+            x=settings["margin_size"] / screen_width + 0.025,
+            y=settings["margin_size"] / screen_height + 0.025,
+            on_focus_lost_hide=False,
         ),
         DropDown(
             "keys",
             "qtilekeys.py gtk",
-            opacity=0.8,
+            opacity=settings["dropdown_opacity"],
             width=1384 / screen_width,
             height=0.8,
             x=(1 - 1384 / screen_width) / 2,
             y=0.1,
+            on_focus_lost_hide=False,
         ),
         DropDown(
             "htop",
-            cmds["htop"],
-            opacity=0.8,
-            width=1 - 2 * margin_size / screen_width - 0.05,
-            height=1 - 2 * margin_size / screen_height - 0.05,
-            x=margin_size / screen_width + 0.025,
-            y=margin_size / screen_height + 0.025,
+            settings["cmds"]["htop"],
+            opacity=settings["dropdown_opacity"],
+            width=1 - 2 * settings["margin_size"] / screen_width - 0.05,
+            height=1 - 2 * settings["margin_size"] / screen_height - 0.05,
+            x=settings["margin_size"] / screen_width + 0.025,
+            y=settings["margin_size"] / screen_height + 0.025,
+            on_focus_lost_hide=False,
         ),
     ],
 )
 groups.append(scratchpad)
 
 keys_to_be_inserted = []
-for i, name in enumerate(group_names, 1):
+for i, name in enumerate(settings["group_names"], 1):
     keys_to_be_inserted.extend(
         [
             Key(
-                [cmds["mod"]],
+                [settings["cmds"]["mod"]],
                 str(i),
                 lazy.group[name].toscreen(toggle=True),
                 desc=f"Go to group {str(i)}",
             ),
             Key(
-                [cmds["mod"], "shift"],
+                [settings["cmds"]["mod"], "shift"],
                 str(i),
                 lazy.window.togroup(name),
                 desc=f"Move window to group {str(i)}",
@@ -92,7 +88,11 @@ mutscr = MutableScratch()
 groups.append(Group(""))
 keys.extend(
     [
-        EzKey("M-S-v", mutscr.add_current_window(), desc="Add current window to MutableScratch"),
+        EzKey(
+            "M-S-v",
+            mutscr.add_current_window(),
+            desc="Add current window to MutableScratch",
+        ),
         EzKey("M-<minus>", mutscr.toggle(), desc="Toggle MutableScratch"),
         EzKey("M-C-<minus>", mutscr.remove(), desc="Remove window from MutableScratch"),
     ]

@@ -10,7 +10,7 @@ from qtile_extras.popup.toolkit import (
 )
 
 from modules.functions import location
-from modules.settings import layout_defaults, margin_size, text_font
+from modules.settings import settings
 from modules.theme import colors
 
 
@@ -32,7 +32,7 @@ def weather_popup(qtile):
     wttr = "\n".join(wttr)
     controls = [
         PopupText(
-            font=text_font,
+            font=settings["text_font"],
             pos_x=10,
             pos_y=10,
             fontsize=25,
@@ -52,20 +52,22 @@ def weather_popup(qtile):
         initial_focus=None,
     )
     layout.show(
-        x=2880 - layout.width - margin_size,
-        y=qtile.current_screen.top.info()["size"] + margin_size,
+        x=2880 - layout.width - settings["margin_size"],
+        y=qtile.current_screen.top.info()["size"] + settings["margin_size"],
         warp_pointer=True,
     )
 
 
 def music_layout():
-    IMAGES_FOLDER = "/usr/lib/python3.10/site-packages/qtile_extras/resources/media-icons/"
+    IMAGES_FOLDER = (
+        "/usr/lib/python3.10/site-packages/qtile_extras/resources/media-icons/"
+    )
     DEFAULT_IMAGE = f"{IMAGES_FOLDER}default.png"
 
     return PopupRelativeLayout(
         None,
         border=colors["purple"],
-        border_width=layout_defaults["border_width"],
+        border_width=settings["layout_defaults"]["border_width"],
         background=colors["bg0"],
         width=1440,
         height=400,
@@ -73,7 +75,7 @@ def music_layout():
             PopupText(
                 "",
                 name="title",
-                font=text_font,
+                font=settings["text_font"],
                 fontsize=25,
                 pos_x=0.3,
                 pos_y=0.1,
@@ -85,7 +87,7 @@ def music_layout():
             PopupText(
                 "",
                 name="artist",
-                font=text_font,
+                font=settings["text_font"],
                 fontsize=25,
                 pos_x=0.3,
                 pos_y=0.24,
@@ -97,7 +99,7 @@ def music_layout():
             PopupText(
                 "",
                 name="album",
-                font=text_font,
+                font=settings["text_font"],
                 fontsize=25,
                 pos_x=0.3,
                 pos_y=0.38,

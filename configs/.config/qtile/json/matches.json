@@ -48,7 +48,7 @@
     "nitrogen",
     "pling-store",
     "Xfce4-power-manager-settings",
-    "pavucontrol",
+    // "pavucontrol",
     "lxappearance",
     "lightdm-settings",
     "qtile_yay_update"

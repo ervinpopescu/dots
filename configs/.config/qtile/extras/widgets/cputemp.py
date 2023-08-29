@@ -1,7 +1,7 @@
 from psutil import sensors_temperatures
 from qtile_extras import widget
 
-from modules.settings import colors, text_font
+from modules.settings import colors, settings
 
 
 def cpu_temp():
@@ -12,7 +12,7 @@ class CPUTemp(widget.GenPollText):
     defaults = [
         ("update_interval", 5, ""),
         ("padding", 10, ""),
-        ("font", text_font, ""),
+        ("font", settings["text_font"], ""),
         ("fontsize", 34, ""),
         ("foreground", colors["darkblue"], ""),
     ]

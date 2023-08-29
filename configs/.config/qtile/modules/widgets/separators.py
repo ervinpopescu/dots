@@ -1,8 +1,8 @@
 from qtile_extras import widget
 
-from modules.settings import colors, icon_font, margin_size
+from modules.settings import colors, settings
 
-ms = margin_size // 4
+ms = settings["margin_size"] // 4
 
 
 def small_spacer():
@@ -25,7 +25,7 @@ def pipe():
 def slash_left():
     return widget.TextBox(
         "/",
-        font=icon_font,
+        font=settings["icon_font"],
         fontsize=65,
         foreground=colors["purple"],
         padding=0,
@@ -35,7 +35,7 @@ def slash_left():
 def slash_right():
     return widget.TextBox(
         "\\",
-        font=icon_font,
+        font=settings["icon_font"],
         fontsize=65,
         foreground=colors["purple"],
         padding=0,

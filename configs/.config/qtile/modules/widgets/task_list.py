@@ -1,14 +1,14 @@
 from extras.widgets import TaskList
 from modules.functions import no_text
-from modules.settings import bar_height, colors
+from modules.settings import colors, settings
 
 task_list = TaskList(
     border=colors["fg1"],
     highlight_method="block",
-    icon_size=bar_height - 7,
+    icon_size=settings["bar_height"] - 7,
     margin_x=4,
     # margin_y=65,
-    margin_y=bar_height - 8,
+    margin_y=settings["bar_height"] - 8,
     padding_x=0,
     padding_y=-1,
     parse_text=no_text,

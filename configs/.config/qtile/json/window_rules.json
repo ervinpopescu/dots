@@ -1,0 +1,54 @@
+{
+    "blueman-manager": {
+        // "toggle_floating": true,
+        "center": true,
+        "h": 1000,
+        "set_size_floating": true,
+        "w": 1440
+    },
+    "devtools": {
+        "center": true,
+        "h": 1000,
+        "set_size_floating": true,
+        "w": 1440
+    },
+    "gsimplecal": {
+        "center": true,
+        "h": 408,
+        "set_position_floating": true,
+        "w": 482
+    },
+    "nemo-terminal": {
+        "center": true,
+        "h": 1000,
+        "set_size_floating": true,
+        "w": 1440
+    },
+    "normcap": {
+        "toggle_fullscreen": true
+    },
+    "orar.py": {
+        "center": true,
+        "h": 1036,
+        "set_size_floating": true,
+        "w": 1302
+    },
+    "pavucontrol": {
+        "center": true,
+        "h": 1000,
+        "set_size_floating": true,
+        "w": 1440
+    },
+    "qtilekeys.py": {
+        "center": true,
+        "h": 1400,
+        "set_size_floating": true,
+        "w": 1384
+    },
+    "toolbox": {
+        "center": true,
+        "h": 1000,
+        "set_size_floating": true,
+        "w": 1440
+    }
+}

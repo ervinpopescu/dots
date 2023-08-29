@@ -1,8 +1,8 @@
 from qtile_extras import widget
 
 from extras.widgets import WidgetBox
+from modules.decorations import decorations
 from modules.settings import colors
-from modules.widgets import decor, group_decor
 
 from .check_updates import check_updates
 from .cpu_temp import cpu_temp
@@ -12,7 +12,10 @@ from .separators import small_spacer
 from .uptime import uptime
 from .weather import weather
 
-widgetbox_1 = WidgetBox(
+decor = decorations["single_decor"]
+group_decor = decorations["group_single_decor"]
+
+widget_box_1 = WidgetBox(
     fontsize=40,
     foreground=colors["darkblue"],
     padding=10,
@@ -27,7 +30,7 @@ widgetbox_1 = WidgetBox(
     ],
 )
 
-widgetbox_2 = WidgetBox(
+widget_box_2 = WidgetBox(
     fontsize=40,
     close_button_location="right",
     foreground=colors["darkblue"],
@@ -47,13 +50,13 @@ widgetbox_2 = WidgetBox(
     ],
 )
 
-for w in widgetbox_1.widgets:
+for w in widget_box_1.widgets:
     if not isinstance(w, (widget.Spacer, widget.TextBox, widget.KeyboardLayout)):
         w.decorations = decor["decorations"]
     if isinstance(w, (widget.TextBox, widget.KeyboardLayout)):
         w.decorations = group_decor["decorations"]
 
-for w in widgetbox_2.widgets:
+for w in widget_box_2.widgets:
     if not isinstance(w, (widget.Spacer, widget.TextBox, widget.KeyboardLayout)):
         w.decorations = decor["decorations"]
     if isinstance(w, (widget.TextBox, widget.KeyboardLayout)):

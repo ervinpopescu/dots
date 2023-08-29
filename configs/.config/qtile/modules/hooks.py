@@ -3,7 +3,9 @@ import contextlib
 import os
 import signal
 import subprocess
+from time import sleep
 
+import json5
 import psutil
 from libqtile import hook, qtile
 from libqtile.backend.base import Window
@@ -11,11 +13,12 @@ from libqtile.core.manager import Qtile
 
 from modules.matches import d
 from modules.path import config_path
-from modules.settings import bar_height, margin_size
+from modules.settings import settings
 
-# from libqtile.lazy import lazy
-# from xcffib.xproto import StackMode
 qtile: Qtile
+
+with open(os.path.join(config_path, "json", "window_rules.json"), "r") as f:
+    rules: dict = json5.loads(f.read())
 
 
 def check_if_process_running(process_name):
@@ -24,7 +27,9 @@ def check_if_process_running(process_name):
     """
     # Iterate over the all the running process
     for proc in psutil.process_iter():
-        with contextlib.suppress(psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+        with contextlib.suppress(
+            psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess
+        ):
             # Check if process name contains the given name string.
             if process_name.lower() in proc.name().lower():
                 return True
@@ -47,15 +52,19 @@ async def autostart():
         stdout=subprocess.DEVNULL,
         stderr=subprocess.STDOUT,
     )
-
-
-@hook.subscribe.client_new
-@hook.subscribe.client_focus
-@hook.subscribe.client_managed
-def bring_plank_to_front(client: Window):
+    await asyncio.sleep(10)
     for window in qtile.windows_map.values():
         if window.name == "plank":
-            window.bring_to_front()
+            window.keep_above()
+
+
+# @hook.subscribe.client_new
+# @hook.subscribe.client_focus
+# @hook.subscribe.client_managed
+# def bring_plank_to_front(client: Window):
+#     for window in qtile.windows_map.values():
+#         if window.name == "plank":
+#             window.bring_to_front()
 
 
 # @hook.subscribe.client_new
@@ -79,45 +88,36 @@ def assign_app_to_group(client: Window):
 
 
 @hook.subscribe.client_new
-def resize_and_move_client(client):
+def resize_and_move_client(client: Window):
     try:
         wm_class = client.window.get_wm_class()[0]
     except Exception:
         wm_class = None
-
     try:
         role = client.get_wm_role()
     except Exception:
         role = None
 
-    if role in ["devtools", "toolbox"]:
-        client.set_size_floating(w=1440, h=1400)
-        client.center()
-
-    if wm_class == "gsimplecal":
-        width = 482
-        height = 408
-        client.set_position_floating(
-            x=2880 - width - margin_size - 5,
-            y=bar_height + 2 * margin_size,
-        )
-        client.center()
-
-    if wm_class == "qtilekeys.py":
-        client.set_size_floating(w=1384, h=1400)
-        client.center()
-
-    if wm_class == "orar.py":
-        client.set_size_floating(w=1302, h=1036)
-        client.center()
-
-    if wm_class == "nemo-terminal":
-        client.set_size_floating(w=1440, h=1000)
-        client.center()
-
-    if wm_class == "blueman-manager":
-        client.toggle_floating()
-        client.center()
+    for key, win in rules.items():
+        if key in [wm_class, role]:
+            if "set_position_floating" in win:
+                if key == "gsimplecal":
+                    client.set_position_floating(
+                        x=2880 - win["w"] - settings["margin_size"] - 5,
+                        y=settings["bar_height"] + 2 * settings["margin_size"],
+                    )
+                else:
+                    pass
+            if "toggle_floating" in win:
+                client.toggle_floating()
+            if "set_size_floating" in win:
+                if key == "blueman-manager":
+                    sleep(3)
+                client.set_size_floating(w=win["w"], h=win["h"])
+            if "center" in win:
+                client.center()
+            if "keep_above" in win:
+                client.keep_above()
 
 
 @hook.subscribe.client_killed
@@ -138,7 +138,9 @@ def kill_all_autostarted_programs():
     if check_if_process_running("plank"):
         for win in qtile.windows_map.values():
             if win.name == "plank":
-                os.kill(int(win.eval("self.window.get_net_wm_pid()")[1]), signal.SIGKILL)
+                os.kill(
+                    int(win.eval("self.window.get_net_wm_pid()")[1]), signal.SIGKILL
+                )
 
 
 # noswallow = ["min", "Navigator", "vlc", "qtilekeys.py", "Alacritty"]

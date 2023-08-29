@@ -1,15 +1,14 @@
 from libqtile.lazy import lazy
 
 from extras.widgets import CheckUpdates
-from modules.settings import cmds, icon_font
-
+from modules.settings import settings
 
 check_updates = CheckUpdates(
-    font=icon_font,
-    fontsize=30,
+    font=settings["icon_font"],
+    fontsize=settings["font_size"],
     fmt="{}",
     mouse_callbacks={
-        "Button1": lazy.spawn(cmds["update"]),
+        "Button1": lazy.spawn(settings["cmds"]["update"]),
         "Button3": lazy.widget["checkupdates"].force_update(),
     },
     padding=10,

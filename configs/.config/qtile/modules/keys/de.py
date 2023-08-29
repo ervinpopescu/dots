@@ -2,7 +2,7 @@ from libqtile.config import Key
 from libqtile.lazy import lazy
 
 from modules.functions import groupbox_disable_drag
-from modules.settings import cmds
+from modules.settings import settings
 
 de_keys = [
     Key(
@@ -78,19 +78,19 @@ de_keys = [
         desc="Brightness down by 10%",
     ),
     Key(
-        [cmds["mod"]],
+        [settings["cmds"]["mod"]],
         "space",
         lazy.widget["keyboardlayout"].next_keyboard(),
         desc="Cycle through available keyboard layouts",
     ),
     # Key(
-    #     [cmds["mod"]],
+    #     [settings["cmds"]["mod"]],
     #     "space",
     #     lazy.spawn(["ibus", "engine", "shin"]),
     #     desc="Activate shin",
     # ),
     Key(
-        [cmds["alt"]],
+        [settings["cmds"]["alt"]],
         "F5",
         groupbox_disable_drag(),
         desc="Disable GroupBox widget group drag",

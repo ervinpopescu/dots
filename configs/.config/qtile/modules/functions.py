@@ -3,10 +3,10 @@ import json
 from libqtile.bar import Bar
 from libqtile.lazy import lazy
 
-from modules.settings import group_layouts as def_group_layouts
-from modules.settings import margin_size
+from modules.settings import settings
 
-ms = margin_size
+ms = settings["margin_size"]
+def_group_layouts = settings["group_layouts"]
 
 
 @lazy.function

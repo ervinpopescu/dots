@@ -2,12 +2,11 @@ from libqtile.lazy import lazy
 
 from extras.widgets import Weather
 from modules.popups import location, weather_popup
-from modules.settings import text_font
-
+from modules.settings import settings
 
 weather = Weather(
-    font=text_font,
-    fontsize=34,
+    font=settings["text_font"],
+    fontsize=settings["font_size"],
     appkey="ce4579dd88a8d4877a8c23f2a10d61cc",
     format="{icon}{temp:.0f}°{units_temperature}",
     location=location(),

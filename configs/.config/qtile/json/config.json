@@ -1,8 +1,9 @@
 {
     "theme": "catppuccin",
     "auto_fullscreen": true,
-    "bring_front_click": true,
+    "bring_front_click": "floating_only",
     "cursor_warp": true,
+    "floats_kept_above": true,
     "focus_on_window_activation": "focus",
     "follow_mouse_focus": true,
     "reconfigure_screens": true,

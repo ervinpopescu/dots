@@ -1,12 +1,11 @@
 from libqtile.lazy import lazy
 
 from extras.widgets import Uptime
-from modules.settings import cmds, text_font
-
+from modules.settings import settings
 
 uptime = Uptime(
-    font=text_font,
-    fontsize=34,
+    font=settings["text_font"],
+    fontsize=settings["font_size"],
     mouse_callbacks={
         "Button1": lazy.group["scratchpad"].dropdown_toggle("htop"),
     },
