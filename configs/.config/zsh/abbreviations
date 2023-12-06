@@ -1,0 +1,7 @@
+abbr "gcl"="git clone"
+abbr "gd"="git diff"
+abbr "gl1"="git log -1"
+abbr "gst"="git status"
+abbr "i"="sudo apt install"
+abbr "u"="sudo apt update && sudo apt upgrade"
+abbr "SS"="sudo systemctl"

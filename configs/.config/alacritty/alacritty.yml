@@ -1,0 +1,122 @@
+colors:
+  bright:
+    black: '#45475A'
+    blue: '#89B4FA'
+    cyan: '#94E2D5'
+    green: '#A6E3A1'
+    magenta: '#F5C2E7'
+    red: '#F38BA8'
+    white: '#BAC2DE'
+    yellow: '#F9E2AF'
+  cursor:
+    cursor: '#F5E0DC'
+    text: '#1E1E2E'
+  dim:
+    black: '#45475A'
+    blue: '#89B4FA'
+    cyan: '#94E2D5'
+    green: '#A6E3A1'
+    magenta: '#F5C2E7'
+    red: '#F38BA8'
+    white: '#BAC2DE'
+    yellow: '#F9E2AF'
+  hints:
+    end:
+      background: '#A6ADC8'
+      foreground: '#1E1E2E'
+    start:
+      background: '#F9E2AF'
+      foreground: '#1E1E2E'
+  normal:
+    black: '#45475A'
+    blue: '#89B4FA'
+    cyan: '#94E2D5'
+    green: '#A6E3A1'
+    magenta: '#F5C2E7'
+    red: '#F38BA8'
+    white: '#BAC2DE'
+    yellow: '#F9E2AF'
+  primary:
+    background: '#1E1E2E'
+    bright_foreground: '#CDD6F4'
+    dim_foreground: '#CDD6F4'
+    foreground: '#CDD6F4'
+  search:
+    focused_match:
+      background: '#A6E3A1'
+      foreground: '#1E1E2E'
+    footer_bar:
+      background: '#A6ADC8'
+      foreground: '#1E1E2E'
+    matches:
+      background: '#A6ADC8'
+      foreground: '#1E1E2E'
+  selection:
+    background: '#F5E0DC'
+    text: '#1E1E2E'
+  vi_mode_cursor:
+    cursor: '#B4BEFE'
+    text: '#1E1E2E'
+cursor:
+  blinking: Never
+  style:
+    shape: Beam
+  thickness: 0.15
+  unfocused_hollow: false
+font:
+  bold:
+    family: CaskaydiaCove Nerd Font Mono
+    style: Bold
+  glyph_offset:
+    x: 0
+    y: 0
+  italic:
+    family: CaskaydiaCove Nerd Font Mono
+    style: Italic
+  ligatures: true
+  normal:
+    family: CaskaydiaCove Nerd Font Mono
+    style: Regular
+  offset:
+    x: 0
+    y: 0
+  size: 15
+key_bindings:
+- action: Paste
+  key: V
+  mods: Control|Shift
+- action: Copy
+  key: C
+  mods: Control|Shift
+- action: ResetFontSize
+  key: Key0
+  mods: Control
+- action: IncreaseFontSize
+  key: Equals
+  mods: Control
+- action: DecreaseFontSize
+  key: Minus
+  mods: Control
+- action: IncreaseFontSize
+  key: NumpadAdd
+  mods: None
+- action: DecreaseFontSize
+  key: NumpadSubtract
+  mods: None
+- action: SpawnNewInstance
+  key: N
+  mods: Control
+mouse:
+  hide_when_typing: true
+window:
+  decorations: None
+  dynamic_title: false
+  history: 10000
+  live_config_reload: true
+  opacity: 0.95
+  padding:
+    x: 10
+    y: 10
+  save_to_clipboard: true
+  semantic_escape_chars: ",\u2502`|:\"' ()[]{}<>"
+  startup_mode: Maximized
