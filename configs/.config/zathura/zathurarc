@@ -1,0 +1,23 @@
+set sandbox none
+set font "CodeNewRoman Nerd Font Mono Bold 22"
+set window-height 900
+set window-width 1440
+set statusbar-h-padding 0
+set guioptions none
+set statusbar-v-padding 0
+set page-padding 0
+set selection-clipboard clipboard
+set first-page-column 1:1
+map u scroll full-up
+map d scroll full-down
+map D toggle_page_mode
+map r reload
+map R rotate
+map K zoom in
+map J zoom out
+map i recolor
+map p print
+map g goto top
+map <C-i> recolor
+
+include catppuccin
