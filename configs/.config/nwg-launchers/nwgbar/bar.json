@@ -1,0 +1,31 @@
+[{
+        "name": "Lock screen",
+        "exec": "betterlockscreen -l dimblur",
+        "icon": "/home/ervin/.config/nwg-launchers/nwgbar/system-lock-screen.svg"
+    },
+    {
+        "name": "Sleep",
+        "exec": "systemctl -i suspend",
+        "icon": "/home/ervin/.config/nwg-launchers/nwgbar/system-suspend.svg"
+    },
+    {
+        "name": "Logout",
+        "exec": "loginctl terminate-session self",
+        "icon": "/home/ervin/.config/nwg-launchers/nwgbar/system-log-out.svg"
+    },
+    {
+        "name": "Reboot",
+        "exec": "systemctl -i reboot",
+        "icon": "/home/ervin/.config/nwg-launchers/nwgbar/system-reboot.svg"
+    },
+    {
+        "name": "Reboot to Windows",
+        "exec": "/home/ervin/bin/reboot-to-win.sh",
+        "icon": "/home/ervin/.config/nwg-launchers/nwgbar/microsoft.svg"
+    },
+    {
+        "name": "Shutdown",
+        "exec": "systemctl -i poweroff",
+        "icon": "/home/ervin/.config/nwg-launchers/nwgbar/system-shutdown.svg"
+    }
+]

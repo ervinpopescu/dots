@@ -1,0 +1,6 @@
+abbr "gcl"="git clone"
+abbr "gd"="git diff"
+abbr "gl1"="git log -1"
+abbr "gst"="git status"
+abbr "p"="sudo pacman"
+abbr "SS"="sudo systemctl"

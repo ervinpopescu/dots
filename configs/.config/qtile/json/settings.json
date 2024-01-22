@@ -1,0 +1,136 @@
+{
+  "apps": [
+    [
+      "nemo",
+      "nemo",
+      "nemo"
+    ],
+    [
+      "Alacritty",
+      "alacritty",
+      "alacritty"
+    ],
+    [
+      "vscodium",
+      "vscodium",
+      "vscodium"
+    ],
+    [
+      "firefox",
+      "firefox",
+      "firefox"
+    ],
+    [
+      "virtualbox",
+      "virtualbox",
+      "virtualbox"
+    ]
+  ],
+  "bar_height": 56,
+  "cmds": {
+    "alt": "mod1",
+    "emoji": [
+      "rofi",
+      "-modes",
+      "emoji",
+      "-show",
+      "emoji"
+    ],
+    "htop": [
+      "alacritty",
+      "--class",
+      "htop",
+      "-o",
+      "'font.size=10'",
+      "-e",
+      "htop"
+    ],
+    "menu": [
+      "rofi",
+      "-modes",
+      "drun",
+      "-show",
+      "drun",
+      "-terminal",
+      "alacritty",
+      "-show-icons"
+    ],
+    "mod": "mod4",
+    "nwgbar": [
+      "nwgbar",
+      "-b",
+      "1d1d2d",
+      "-o",
+      "0.4"
+    ],
+    "terminal": "alacritty",
+    "transmission": [
+      "alacritty",
+      "-o",
+      "font.size=10",
+      "--class",
+      "alacritty-transmission",
+      "-e",
+      "watch",
+      "-c",
+      "-n",
+      "1",
+      "-t",
+      "transmission.py"
+    ],
+    "update": [
+      "alacritty",
+      "-o",
+      "font.size=10",
+      "--class",
+      "qtile_yay_update",
+      "--hold",
+      "-e",
+      "yay",
+      "-Syyu",
+      "--noconfirm"
+    ]
+  },
+  "dropdown_opacity": 0.95,
+  "extension_defaults": {
+    "font": "Font Awesome 6 Free Solid",
+    "fontsize": 30,
+    "padding": 6
+  },
+  "font_size": 30,
+  "group_labels": [
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  "group_layouts": [
+    "monadwide",
+    "max",
+    "max",
+    "max",
+    "max",
+    "bsp",
+    "monadthreecol"
+  ],
+  "group_names": [
+    "coding",
+    "files",
+    "www",
+    "social",
+    "settings",
+    "etc",
+    "media"
+  ],
+  "icon_font": "Font Awesome 6 Free Solid",
+  "margin_size": 20,
+  "text_font": "CaskaydiaCove Nerd Font Mono Bold",
+  "widget_defaults": {
+    "font": "Font Awesome 6 Free Solid",
+    "fontsize": 30,
+    "padding": 6
+  }
+}

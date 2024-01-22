@@ -1,0 +1,43 @@
+import atexit
+import os
+import readline
+import time
+from libqtile.command.client import InteractiveCommandClient
+
+# enable syntax completion
+readline.parse_and_bind("tab: complete")
+
+# clear screen
+def clear():
+  os.system('clear')
+
+c = InteractiveCommandClient()
+
+if 'PYTHONHISTFILE' in os.environ:
+  history = os.path.expanduser(os.environ['PYTHONHISTFILE'])
+elif 'XDG_DATA_HOME' in os.environ:
+    history = os.path.join(os.path.expanduser(os.environ['XDG_DATA_HOME']),
+                           'python', 'python_history')
+else:
+    history = os.path.join(os.path.expanduser('~'),
+                           '.python_history')
+
+history = os.path.abspath(history)
+_dir, _ = os.path.split(history)
+os.makedirs(_dir, exist_ok=True)
+
+try:
+    readline.read_history_file(history)
+except OSError:
+    pass
+
+if readline.get_current_history_length() == 0:
+    readline.add_history(f'# History created at {time.asctime()}')
+
+def write_history():
+    try:
+        readline.write_history_file(history)
+    except OSError:
+        pass
+
+atexit.register(write_history)
