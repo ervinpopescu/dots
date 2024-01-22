@@ -1,0 +1,45 @@
+[alias]
+lp = "log --decorate --graph --date=relative --pretty=format:'%C(auto,yellow)%h%C(auto,magenta)% G? %C(auto,blue)%>(12,trunc)%ad %C(auto,green)%<(13,trunc)%aN %C(auto,reset)%s%C(auto,red)% gD% D'"
+lpa = "log --all --decorate --graph --date=relative --pretty=format:'%C(auto,yellow)%h%C(auto,magenta)% G? %C(auto,blue)%>(12,trunc)%ad %C(auto,green)%<(13,trunc)%aN %C(auto,reset)%s%C(auto,red)% gD% D'"
+
+[color]
+ui = auto
+
+[commit]
+gpgsign = true
+
+[diff]
+mnemonicprefix = true
+renames = true
+submodule = log
+tool = vscode
+wordregex = .
+
+[difftool "vscode"]
+cmd = code -r --wait --diff $LOCAL $REMOTE
+
+[filter "lfs"]
+clean = git-lfs clean -- %f
+process = git-lfs filter-process
+required = true
+smudge = git-lfs smudge -- %f
+
+[gpg]
+format = ssh
+
+[gpg "ssh"]
+allowedsignersfile = ~/.config/git/allowed_signers
+
+[init]
+defaultbranch = main
+
+[tag]
+gpgsign = true
+
+[user]
+email = ervin.popescu10@gmail.com
+name = ervinpopescu
+signingkey = ~/.ssh/id_ed25519.pub
+
+[core]
+editor = code -r --wait
