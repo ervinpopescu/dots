@@ -10,8 +10,9 @@ def mouse_over_clock():
         fontsize=settings["font_size"],
         foreground=colors["darkblue"],
         format="%H:%M",
-        long_format="%H:%M:%S",
-        # long_format="%H:%M:%S %d/%m/%y",
+        # long_format="%H:%M:%S",
+        long_format="%a %d/%m/%y %H:%M:%S",
         mouse_callbacks={"Button1": lazy.spawn("gsimplecal")},
         padding=10,
+        name="mouse_over_clock",
     )

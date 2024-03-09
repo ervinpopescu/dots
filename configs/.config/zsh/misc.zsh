@@ -15,7 +15,7 @@ setopt share_history         # share command history data
 alias history="history 0"
 
 # configure `time` format
-TIMEFMT=$'\nreal\t%E\nuser\t%U\nsys\t%S\ncpu\t%P'
+export TIMEFMT=$'\nreal\t%E\nuser\t%U\nsys\t%S\ncpu\t%P'
 
 export LESS_TERMCAP_mb=$'\E[1;31m'     # begin blink
 export LESS_TERMCAP_md=$'\E[1;36m'     # begin bold
@@ -32,3 +32,7 @@ function reset_broken_terminal () {
 }
 
 add-zsh-hook -Uz precmd reset_broken_terminal
+
+function get_github_token(){
+  keepassxc-cli show ~/.local/share/keepass/Passwords.kdbx "qtile github token" -sa password
+}
