@@ -8,7 +8,7 @@ dunst &
 # /usr/lib/kdeconnectd &
 
 ## wallpaper
-swaybg -i /home/ervin/Pictures/wallpapers/rand/valley.png &
+swaybg -i "$(xdg-user-dir PICTURES)"/wallpapers/rand/valley.png &
 
 ## various apps
 # /home/ervin/.config/conky/start_qtile.sh -n &
