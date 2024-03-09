@@ -1,9 +1,33 @@
 # functions
-calculator() { printf "%s\n" "$@" | bc -l; }
+calculator() {
+  printf "%s=" "$@"
+  printf "%s\n" "$@" | bc -l
+}
 
 mkcd() {
-    mkdir "$1"
-    cd "$1"
+  mkdir "$1"
+  cd "$1"
+}
+
+clear_terminal() {
+  clear
+  tmux list-sessions &>/dev/null
+  ret=$?
+  if [ $ret -eq 0 ]; then
+    tmux clearhist
+  fi
+}
+
+qtile_to_json() {
+  python3 -c \
+    '''
+import sys, json, ast
+evald = ast.literal_eval(sys.stdin.read())
+if not isinstance(evald, tuple):
+  print(json.dumps(evald, indent=2))
+else:
+  print(json.dumps(ast.literal_eval(evald[1]), indent=2))
+'''
 }
 
 alias sudo='sudo '
@@ -13,7 +37,7 @@ alias alttab='alttab -w 1 -d 2 -i 140x120 -s 2 -t 140x120 -bg "#1e1d2d" -fg "#d9
 alias birthday="birthday -f ~/.local/share/birthdays -W 7"
 alias calc="noglob calculator"
 alias cat="batcat -p"
-alias clear="clear; tmux server-info &>/dev/null; [ $? == 1 ] && tmux clearhist"
+alias clear="clear_terminal"
 alias copy="xclip -selection clipboard"
 alias cp="cp -v"
 alias df="df -h -x tmpfs -x devtmpfs -x squashfs"
@@ -37,11 +61,11 @@ alias neo-ru="neo-matrix --color=red --charset=cyrillic -m 'IN SOVIET RUSSIA, CO
 alias neo="neo-matrix -D"
 alias nf="neofetch"
 alias o="xdg-open"
+alias pacdiff="sudo DIFFPROG='env GDK_SCALE=2 meld' pacdiff"
 alias pacgraph='pacgraph -b "#1e1e2e" -l "#81a1c1" -t "#c9cbff" -d "#f38ba8" -n --disable-palette'
 alias parallel="parallel-moreutils"
 alias rm="rm -rf"
-alias soff="sudo suspend-off"
-alias son="sudo suspend-on"
+alias stg="sudo suspend-toggle"
 alias server-ssh="ssh -i ~/.ssh/id_rsa_hp -p 5922 ervin@ervinpopescu.ddns.net"
 alias services='server-ssh systemctl status calibre-server transmission@909{1,2} radarr sonarr jellyfin | grep "●\|○\|Active\|Status" | \cat'
 alias sway="sway --unsupported-gpu"
@@ -50,7 +74,6 @@ alias tty-clock="tty-clock -c -C 7 -f '%a, %d %b'"
 alias u='sudo pacman -Syu'
 alias v="vscodium"
 alias vim="nvim"
-alias qtile_to_json="python3 -c 'import sys, json, ast; print(json.dumps(ast.literal_eval(sys.stdin.read()), indent=2))'"
 alias wget='wget --hsts-file="$XDG_CACHE_HOME/wget-hsts"'
 alias xbindkeys='xbindkeys -f $XDG_CONFIG_HOME/xbindkeys/config'
 
@@ -70,11 +93,11 @@ alias bat-mode-rc="ideapad-perf -b rc"
 
 # bookmarks
 while IFS= read -r line; do
-    a="$(cut -d" " -f 1 <<< $line)"
-    b="$(cut -d" " -f 2 <<< $line)"
-    alias "$a"="$b"
-    export "$a"="$b"
-done < $ZDOTDIR/bookmarks
+  x="$(cut -d" " -f 1 <<<$line)"
+  y="$(cut -d" " -f 2 <<<$line)"
+  alias $x="$HOME/$y"
+  export $x="$HOME/$y"
+done <$ZDOTDIR/bookmarks
 
 # ls
 alias ls='exa --color=always --icons -H'
