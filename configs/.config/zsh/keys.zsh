@@ -21,7 +21,7 @@ bindkey '^[[H' beginning-of-line                  # home
 bindkey '^[[F' end-of-line                        # end
 bindkey '^[[Z' undo                               # shift + tab undo last action
 bindkey -s '^o' 'lfcd\n'                          # open lf in current directory
-bindkey -s '^L' 'clear;tmux clearhist\n'                         # clear terminal
+bindkey -s '^L' 'clear\n'                         # clear terminal
 
 cdUndoKey() {
     popd

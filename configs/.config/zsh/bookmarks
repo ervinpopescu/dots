@@ -1,7 +1,8 @@
-wsc $HOME/www/src/cloned
-wsm $HOME/www/src/mine
-wsmq $HOME/www/src/mine/qtile
-b $HOME/bin/
-c $HOME/.config
-cq $HOME/.config/qtile
-d $HOME/www/src/mine/dots
+sc src/cloned
+scg src/cloned/github
+sm src/mine
+smq src/mine/qtile
+b bin/
+c .config
+cq .config/qtile
+d src/mine/dots
