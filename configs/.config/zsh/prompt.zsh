@@ -1,6 +1,7 @@
 # shellcheck disable=all
 
 source /usr/share/zsh/plugins/git/git.zsh
+export ZSH_THEME_GIT_SHOW_UPSTREAM=1
 
 # set variable identifying the chroot you work in (used in the prompt below)
 if [ -z "${debian_chroot:-}" ] && [ -r /etc/debian_chroot ]; then
