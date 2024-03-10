@@ -1,8 +1,10 @@
 #!/bin/python
 
 import argparse
+import contextlib
 import os
 import subprocess
+import sys
 from time import sleep
 
 import psutil
@@ -20,23 +22,38 @@ def check_if_process_running(process_name):
     """
     # Iterate over the all the running process
     for proc in psutil.process_iter():
-        try:
+        with contextlib.suppress(
+            psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess
+        ):
             # Check if process name contains the given name string.
             if process_name.lower() in proc.name().lower():
                 return True
-        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
-            pass
     return False
 
 
-c = InteractiveCommandClient()
-parser = argparse.ArgumentParser(description="open Markdown preview in browser window")
-parser.add_argument("url", action="store", help="url to open in browser window")
-args = parser.parse_args()
-if check_if_process_running("qt_html.py"):
-    subprocess.run(["pkill", "-9", "qt_html.py"])
-browser = f"qt_html.py {args.url}"
-c.spawn(browser)
-c.group.setlayout("monadtall")
-sleep(1)
-c.group.focus_back()
+def main():
+    c = InteractiveCommandClient()
+    parser = argparse.ArgumentParser(description="open Markdown preview in qt window")
+    parser.add_argument(
+        "url",
+        default=None,
+        help="url to open in qt window",
+    )
+    parser.add_argument(
+        "-f",
+        "--file",
+        dest="file",
+        default=None,
+        help="file to open in qt window",
+    )
+    if check_if_process_running("qt_html.py"):
+        subprocess.run(["pkill", "-9", "qt_html.py"])
+    browser = f"qt_html.py {' '.join(sys.argv[1:])}"
+    c.spawn(browser)
+    c.group.setlayout("monadtall")
+    sleep(1)
+    c.group.focus_back()
+
+
+if __name__ == "__main__":
+    main()

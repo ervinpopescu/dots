@@ -1,0 +1,9 @@
+#!/bin/bash
+
+targets="sleep.target suspend.target hibernate.target hybrid-sleep.target"
+status="$(systemctl status $targets | grep Loaded | tr -d " " | awk -F':' '{print $2}' | sed 's/(.*//' | uniq)"
+if [[ "$status" == "loaded" ]]; then
+	systemctl mask $targets &>/dev/null && echo "Disabled suspend"
+elif [[ "$status" == "masked" ]]; then
+	systemctl unmask $targets &>/dev/null && echo "Enabled suspend"
+fi

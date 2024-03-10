@@ -1,0 +1,42 @@
+#!/bin/python
+
+import subprocess
+from rofi import Rofi
+import os
+import notify2
+
+notify2.init("rofi-wallpaper")
+
+directory = os.path.join(
+    subprocess.check_output("xdg-user-dir PICTURES".split()).decode().strip(),
+    "wallpapers",
+    "rand",
+)
+wallpapers = os.listdir(directory)
+wallpapers.sort()
+wallpapers = [x for x in wallpapers if not x.startswith(".git")]
+# wallpapers = random.choices(wallpapers, k=len(wallpapers))
+wallpapers_paths = [os.path.join(directory, i) for i in wallpapers]
+r = Rofi(
+    lines=len(wallpapers),
+    rofi_args=[
+        "-i",
+        "-config",
+        os.path.join(
+            os.path.expanduser("~"),
+            ".config",
+            "rofi",
+            "wallpapers.rasi",
+        ),
+        "show-icons",
+    ],
+)
+index, key = r.select(
+    prompt="Select wallpaper",
+    options=wallpapers,
+)
+
+if key == 0:
+    ret = subprocess.call(f"run_wall.sh {wallpapers_paths[index]} all".split())
+    if ret != 0:
+        notify2.Notification(f"failed to set {wallpapers[index]}").show()

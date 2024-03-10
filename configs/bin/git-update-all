@@ -1,0 +1,15 @@
+#!/bin/bash
+
+set -e
+current=$(git branch | grep '*' | awk '{print $2}')
+all_branches=($(git branch | sed 's/*//' | awk '{print $1}' | xargs))
+for b in ${all_branches[@]}; do
+	echo Checkin\' out branch $b...
+	git checkout $b
+	echo Fetchin\' branch $b...
+	git fetch
+	echo Pullin\' branch $b...
+	git pull
+	echo
+done
+git checkout $current
