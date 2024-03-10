@@ -1,8 +1,7 @@
 import os
 
-from xdg.IconTheme import getIconPath
-
 from qtile_extras import widget
+from xdg.IconTheme import getIconPath
 
 
 class LaunchBar(widget.LaunchBar):
@@ -29,9 +28,7 @@ class LaunchBar(widget.LaunchBar):
                 self.icons_files[name] = name if os.path.isfile(name) else None
             else:
                 # try to add the extension
-                self.icons_files[name] = (
-                    f"{name}.png" if os.path.isfile(f"{name}.png") else None
-                )
+                self.icons_files[name] = f"{name}.png" if os.path.isfile(f"{name}.png") else None
         else:
             self.icons_files[name] = getIconPath(name, theme=self.theme_path)
         # no search method found an icon, so default icon

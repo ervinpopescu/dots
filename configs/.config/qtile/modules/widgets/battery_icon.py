@@ -1,6 +1,5 @@
 from extras.widgets import BatteryIcon
-from modules.path import config_path
-from modules.settings import colors
+from modules.settings import colors, config_path
 
 
 def battery_icon():

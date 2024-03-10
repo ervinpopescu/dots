@@ -28,7 +28,9 @@
   ],
   "bar_height": 56,
   "cmds": {
-    "alt": "mod1",
+    "blueman": [
+      "blueman-manager"
+    ],
     "emoji": [
       "rofi",
       "-modes",
@@ -55,7 +57,6 @@
       "alacritty",
       "-show-icons"
     ],
-    "mod": "mod4",
     "nwgbar": [
       "nwgbar",
       "-b",
@@ -64,6 +65,7 @@
       "0.4"
     ],
     "terminal": "alacritty",
+    "dropdown_term": "alacritty --class=dropdown_term",
     "transmission": [
       "alacritty",
       "-o",
@@ -84,11 +86,13 @@
       "font.size=10",
       "--class",
       "qtile_yay_update",
-      "--hold",
       "-e",
       "yay",
       "-Syyu",
       "--noconfirm"
+    ],
+    "wallpaper": [
+      "rofi-wallpaper"
     ]
   },
   "dropdown_opacity": 0.95,
@@ -98,9 +102,12 @@
     "padding": 6
   },
   "font_size": 30,
+  "keymaps": {
+    "mod": "mod4",
+    "alt": "mod1"
+  },
   "group_labels": [
     "",
-    "",
     "",
     "",
     "",
@@ -112,13 +119,11 @@
     "max",
     "max",
     "max",
-    "max",
     "bsp",
     "monadthreecol"
   ],
   "group_names": [
     "coding",
-    "files",
     "www",
     "social",
     "settings",

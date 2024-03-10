@@ -1,8 +1,3 @@
-import os
-import subprocess
-
-import psutil
-
 from qtile_extras import widget
 
 
@@ -23,14 +18,6 @@ class MouseOverClock(widget.Clock):
     def mouse_enter(self, *args):
         self.format = self.long_format
         self.bar.draw()
-        # subprocess.Popen(["gsimplecal"])
 
     def mouse_leave(self, *args):
         self.format = self.short_format
-        # self.bar.draw()
-        # process_name = "gsimplecal"
-        # pid = None
-        # for proc in psutil.process_iter():
-        #     if process_name in proc.name():
-        #         pid = proc.pid
-        # os.kill(pid, 9)

@@ -6,34 +6,20 @@ import subprocess
 from time import sleep
 
 import json5
-import psutil
 from libqtile import hook, qtile
 from libqtile.backend.base import Window
 from libqtile.core.manager import Qtile
+from libqtile.log_utils import logger
+from libqtile.utils import send_notification
 
-from modules.matches import d
-from modules.path import config_path
-from modules.settings import settings
+from modules.functions import check_if_process_running
+from modules.matches import matches
+from modules.settings import config_path, settings
 
 qtile: Qtile
 
 with open(os.path.join(config_path, "json", "window_rules.json"), "r") as f:
     rules: dict = json5.loads(f.read())
-
-
-def check_if_process_running(process_name):
-    """
-    Check if there is any running process that contains the given name processName.
-    """
-    # Iterate over the all the running process
-    for proc in psutil.process_iter():
-        with contextlib.suppress(
-            psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess
-        ):
-            # Check if process name contains the given name string.
-            if process_name.lower() in proc.name().lower():
-                return True
-    return False
 
 
 @hook.subscribe.startup_once
@@ -58,85 +44,65 @@ async def autostart():
             window.keep_above()
 
 
-# @hook.subscribe.client_new
-# @hook.subscribe.client_focus
-# @hook.subscribe.client_managed
-# def bring_plank_to_front(client: Window):
-#     for window in qtile.windows_map.values():
-#         if window.name == "plank":
-#             window.bring_to_front()
+# @hook.subscribe.screen_change
+# def reload(event):
+#     qtile.reload_config()
 
-# @hook.subscribe.client_new
-# async def move_client(client):
-#     await asyncio.sleep(0.1)
-#     if client.window.get_wm_class()[0] == "spotify":
-# client.togroup("media", switch_group=True, toggle=False)
+
+@hook.subscribe.screens_reconfigured
+async def change_wallpaper():
+    with open(os.path.expanduser("~/.local/share/wallpaper/log")) as f:
+        path = f.readlines()[0].split(" ")[-1]
+    subprocess.call(f"run_wall.sh {path} all".split())
 
 
 @hook.subscribe.client_new
-def assign_app_to_group(client: Window):
-    try:
-        wm_class = client.window.get_wm_class()[0]
-    except Exception:
-        wm_class = None
-    for i in range(len(d)):
-        if wm_class in list(d.values())[i]:
-            group = list(d.keys())[i]
-            client.togroup(group, toggle=False)
-            client.group.toscreen(toggle=False)
-
-
-@hook.subscribe.client_new
+@hook.subscribe.client_managed
 def resize_and_move_client(client: Window):
-    try:
-        wm_class = client.window.get_wm_class()[0]
-    except Exception:
+    wm_class = client.window.get_wm_class()
+    if wm_class:
+        wm_class = wm_class[0]
+    else:
         wm_class = None
-    try:
-        role = client.get_wm_role()
-    except Exception:
+    role = client.get_wm_role()
+    if not role:
         role = None
+    name = client.name
+    if not name:
+        name = None
+
+    for group, wm_classes in matches.items():
+        if wm_class in wm_classes:
+            client.togroup(group)
+            client.group.toscreen(toggle=False)
+            return
 
     for key, win in rules.items():
-        if key in [wm_class, role]:
+        if key in [wm_class, role, name]:
             if "set_position_floating" in win and key == "gsimplecal":
                 client.set_position_floating(
-                    x=2880 - win["w"] - settings["margin_size"] - 5,
+                    x=qtile.core.get_screen_info()[0][2] - win["w"] - settings["margin_size"] - 5,
                     y=settings["bar_height"] + 2 * settings["margin_size"],
                 )
+                return
 
             if "set_size_floating" in win:
                 if key == "blueman-manager":
                     sleep(3)
                 client.set_size_floating(w=win["w"], h=win["h"])
+                return
 
             if "toggle_floating" in win:
                 client.toggle_floating()
+                return
 
             if "center" in win:
                 client.center()
+                return
 
             if "keep_above" in win:
                 client.keep_above()
-
-    if "Musializer" in [wm_class, role]:
-        # win = client.window
-        # desktop_atom = win.conn.atoms["_NET_WM_WINDOW_TYPE_DESKTOP"]
-        # win.set_property("_NET_WM_WINDOW_TYPE", [desktop_atom])
-        # state_atoms = [
-        #     win.conn.atoms[i]
-        #     for i in [
-        #         "_NET_WM_STATE_STICKY",
-        #         "_NET_WM_STATE_SKIP_TASKBAR",
-        #         "_NET_WM_STATE_SKIP_PAGER",
-        #         "_NET_WM_STATE_FULLSCREEN",
-        #     ]
-        # ]
-        # prev_state = set(win.get_property("_NET_WM_STATE", "ATOM", unpack=int))
-        # client.set_wm_state(prev_state, state_atoms)
-        client.toggle_fullscreen()
-        client.keep_below(enable=True)
-        client.change_layer()
+                return
 
 
 @hook.subscribe.client_killed
@@ -157,9 +123,7 @@ def kill_all_autostarted_programs():
     if check_if_process_running("plank"):
         for win in qtile.windows_map.values():
             if win.name == "plank":
-                os.kill(
-                    int(win.eval("self.window.get_net_wm_pid()")[1]), signal.SIGKILL
-                )
+                os.kill(int(win.eval("self.window.get_net_wm_pid()")[1]), signal.SIGKILL)
 
 
 # noswallow = ["min", "Navigator", "vlc", "qtilekeys.py", "Alacritty"]
@@ -189,19 +153,3 @@ def kill_all_autostarted_programs():
 # def unswallow(client):
 #     if hasattr(client, "parent"):
 #         client.parent.minimized = False
-
-# plank_instance = None
-
-# @hook.subscribe.client_managed
-# def register_and_bring_to_front_plank_instance(client):
-#     global plank_instance
-#     if client.name == "plank":
-#         plank_instance = client
-#     elif plank_instance is not None:
-#         plank_instance.client.configure(stackmode=StackMode.Above)
-
-# @hook.subscribe.client_killed
-# def unregister_plank_instance(client):
-#     global plank_instance
-#     if client.name == "plank":
-#         plank_instance = None
