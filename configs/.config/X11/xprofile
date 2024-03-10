@@ -1,6 +1,4 @@
 #!/bin/sh
 
-[ -f /home/ervin/.config/zsh/.zshenv ] && . /home/ervin/.config/zsh/.zshenv
-setsid -f alttab -w 1 -d 2 -i 140x120 -s 2 -t 140x120 -bg "#1e1d2d" -fg "#d9e0ee" -frame "#ddb6f2" -inact "#1e1d2d" -theme "hicolor"
-setsid -f firefox -width 1440 -height 900 -profile /home/ervin/.mozilla/firefox/gh1i5eys.books/
-setsid -f alacritty -o "window.dimensions.columns: 123" -o "window.dimensions.lines: 36" -o "window.position.x: 0" -o "window.position.y: 0"
+export XDG_SESSION_TYPE=x11
+export XDG_SESSION_DESKTOP=qtile
