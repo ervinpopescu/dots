@@ -1,5 +1,4 @@
 import os
-import sys
 
 import jsonpickle
 from libqtile import hook, qtile
@@ -9,8 +8,7 @@ from libqtile.lazy import lazy
 
 from extras.mutablescratch import MutableScratch
 from modules.keys import keys
-from modules.path import config_path
-from modules.settings import settings
+from modules.settings import config_path, settings
 
 qtile: Qtile
 groups = [
@@ -26,12 +24,11 @@ screen_width = qtile.core.get_screen_info()[0][2]
 screen_height = qtile.core.get_screen_info()[0][3]
 scratchpad = ScratchPad(
     name="scratchpad",
-    position=sys.maxsize,
     single=True,
     dropdowns=[
         DropDown(
             "term",
-            settings["cmds"]["terminal"] + " --class=AlacrittyScratchpad",
+            settings["cmds"]["dropdown_term"],
             opacity=settings["dropdown_opacity"],
             width=1 - 2 * settings["margin_size"] / screen_width - 0.05,
             height=1 - 2 * settings["margin_size"] / screen_height - 0.05,
@@ -59,6 +56,37 @@ scratchpad = ScratchPad(
             y=settings["margin_size"] / screen_height + 0.025,
             on_focus_lost_hide=False,
         ),
+        DropDown(
+            "blueman",
+            settings["cmds"]["blueman"],
+            opacity=settings["dropdown_opacity"],
+            width=1 / 2,
+            height=1 / 2,
+            x=1 / 4,
+            y=1 / 4,
+            on_focus_lost_hide=False,
+        ),
+        DropDown(
+            "pavucontrol",
+            "pavucontrol",
+            opacity=settings["dropdown_opacity"],
+            width=1 / 2,
+            height=1 / 2,
+            x=1 / 4,
+            y=1 / 4,
+            on_focus_lost_hide=False,
+        ),
+        DropDown(
+            "files",
+            "nemo",
+            # opacity=settings["dropdown_opacity"],
+            opacity=1,
+            width=4 / 5,
+            height=4 / 5,
+            x=1 / 10,
+            y=1 / 10,
+            on_focus_lost_hide=False,
+        ),
     ],
 )
 groups.append(scratchpad)
@@ -68,13 +96,13 @@ for i, name in enumerate(settings["group_names"], 1):
     keys_to_be_inserted.extend(
         [
             Key(
-                [settings["cmds"]["mod"]],
+                [settings["keymaps"]["mod"]],
                 str(i),
                 lazy.group[name].toscreen(toggle=True),
                 desc=f"Go to group {str(i)}",
             ),
             Key(
-                [settings["cmds"]["mod"], "shift"],
+                [settings["keymaps"]["mod"], "shift"],
                 str(i),
                 lazy.window.togroup(name),
                 desc=f"Move window to group {str(i)}",

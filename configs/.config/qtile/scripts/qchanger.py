@@ -1,5 +1,6 @@
 #!/bin/python
 import argparse
+import contextlib
 import json
 import os
 import pathlib
@@ -14,21 +15,6 @@ from rofi import Rofi
 c = InteractiveCommandClient()
 qtile_path = pathlib.Path(c.qtile_info()["config_path"]).parent.resolve()
 themes = ["catppuccin", "nord"]
-
-
-def check_if_process(process_name: str):
-    """
-    Check if there is any running process that contains the given name processName.
-    """
-    # Iterate over the all the running process
-    for proc in psutil.process_iter():
-        try:
-            # Check if process name contains the given name string.
-            if process_name.lower() in proc.name().lower():
-                return True
-        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
-            pass
-    return False
 
 
 def load_properties(filepath, sep="=", comment_char="#"):
@@ -58,7 +44,7 @@ def set_pycritty(theme):
 
 
 def set_qtile(theme):
-    config = os.path.join(qtile_path, "config.json")
+    config = os.path.join(qtile_path, "json", "config.json")
     with open(config, "r") as f:
         config_json = json.load(f)
         config_json["theme"] = theme
@@ -68,16 +54,14 @@ def set_qtile(theme):
 
 
 def set_firefox(theme):
-    firefox_theme_file = os.path.join(
-        qtile_path, "firefox_themes", "firefox_theme.json"
-    )
+    firefox_theme_file = os.path.join(qtile_path, "firefox_themes", "firefox_theme.json")
     theme_file = os.path.join(qtile_path, "firefox_themes", "themes", f"{theme}.json")
     shutil.copy(theme_file, firefox_theme_file)
 
 
 def set_vscode(theme):
     settings_file = os.path.join(
-        os.path.expanduser("~"), ".config", "VSCodium", "User", "settings.json"
+        os.path.expanduser("~"), ".config", "Code", "User", "settings.json"
     )
     with open(settings_file, "r") as f:
         settings = json.load(f)
@@ -102,7 +86,7 @@ def set_gtk(theme):
         case "nord":
             settings["Net/ThemeName"] = '"Nordic-darker"'
         case "catppuccin":
-            settings["Net/ThemeName"] = '"Catppuccin-Mocha-Standard-Teal-Dark"'
+            settings["Net/ThemeName"] = '"Catppuccin-Mocha-Standard-Blue-dark"'
 
     with open(settings_file, "w") as f:
         for key, value in settings.items():
@@ -116,13 +100,12 @@ def set_gtk(theme):
         "xsettingsd",
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
+        start_new_session=True,
     )
 
 
 def set_rofi(theme):
-    settings_file = os.path.join(
-        os.path.expanduser("~"), ".config", "rofi", "config.rasi"
-    )
+    settings_file = os.path.join(os.path.expanduser("~"), ".config", "rofi", "config.rasi")
     with open(settings_file, "r") as f:
         settings = f.readlines()
 
@@ -148,11 +131,28 @@ def set_neovim(theme):
         ".config",
         "nvim",
         "lua",
-        "user",
+        "plugins",
         "colorscheme.lua",
     )
     with open(colorscheme_file, "w") as f:
-        f.writelines([f'return "{theme}"'])
+        f.writelines(
+            [
+                'return { "LazyVim/LazyVim", opts = {',
+                f'\tcolorscheme = "{theme}"',
+                "} }",
+            ]
+        )
+
+
+def set_all(theme):
+    dunstify(theme)
+    set_pycritty(theme)
+    set_firefox(theme)
+    set_vscode(theme)
+    set_gtk(theme)
+    set_rofi(theme)
+    set_neovim(theme)
+    set_qtile(theme)
 
 
 def main():
@@ -164,32 +164,18 @@ def main():
         "-t",
         "--theme",
         choices=themes,
-        nargs=1,
+        dest="theme",
     )
     args = parser.parse_args()
     if args.theme is not None:
-        theme = args.theme[0]
-        dunstify(theme)
-        set_pycritty(theme)
-        set_firefox(theme)
-        set_vscode(theme)
-        set_gtk(theme)
-        set_qtile(theme)
-        set_rofi(theme)
-        set_neovim(theme)
+        theme = args.theme
+        set_all(theme)
     else:
         r = Rofi()
         index, key = r.select("Select theme", themes)
         theme = themes[index]
         if key == 0:
-            dunstify(theme)
-            set_pycritty(theme)
-            set_firefox(theme)
-            set_vscode(theme)
-            set_gtk(theme)
-            set_qtile(theme)
-            set_rofi(theme)
-            set_neovim(theme)
+            set_all(theme)
 
 
 if __name__ == "__main__":

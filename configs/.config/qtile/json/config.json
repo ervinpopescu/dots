@@ -1,12 +1,13 @@
 {
-    "theme": "catppuccin",
-    "auto_fullscreen": true,
-    "bring_front_click": "floating_only",
-    "cursor_warp": true,
-    "floats_kept_above": true,
-    "focus_on_window_activation": "focus",
-    "follow_mouse_focus": true,
-    "reconfigure_screens": true,
-    "wmname": "LG3D",
-    "auto_minimize": true
+  "theme": "catppuccin",
+  "auto_fullscreen": true,
+  "bring_front_click": "floating_only",
+  "cursor_warp": false,
+  "floats_kept_above": true,
+  "focus_on_window_activation": "smart",
+  "follow_mouse_focus": true,
+  "reconfigure_screens": true,
+  "wmname": "LG3D",
+  "auto_minimize": true,
+  "x11_fake_transparency": true
 }

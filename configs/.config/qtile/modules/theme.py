@@ -1,7 +1,7 @@
 import json
 from os import path
 
-from modules.path import config_path
+from modules.settings import config_path
 
 
 def load_theme():

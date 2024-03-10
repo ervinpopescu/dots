@@ -1,59 +1,53 @@
 {
-  "blueman-manager": {
+  "arandr": {
     "center": true,
-    "h": 1000,
     "set_size_floating": true,
-    "w": 1440
+    "w": 2160,
+    "h": 1000
   },
   "devtools": {
     "center": true,
-    "h": 1000,
     "set_size_floating": true,
-    "w": 1440
+    "w": 1440,
+    "h": 1000
   },
   "gsimplecal": {
     "center": true,
-    "h": 408,
     "set_position_floating": true,
-    "w": 482
+    "w": 482,
+    "h": 408
   },
   "nemo-terminal": {
     "center": true,
-    "h": 1000,
     "set_size_floating": true,
-    "w": 1440
+    "w": 1440,
+    "h": 1000
   },
   "normcap": {
     "toggle_fullscreen": true
   },
   "orar.py": {
     "center": true,
-    "h": 1036,
     "set_size_floating": true,
-    "w": 1302
-  },
-  "pavucontrol": {
-    "center": true,
-    "h": 1000,
-    "set_size_floating": true,
-    "w": 1440
-  },
-  "qtilekeys.py": {
-    "center": true,
-    "h": 1400,
-    "set_size_floating": true,
-    "w": 1384
+    "w": 1302,
+    "h": 1036
   },
   "toolbox": {
     "center": true,
-    "h": 1000,
     "set_size_floating": true,
-    "w": 1440
+    "w": 1440,
+    "h": 1000
   },
-  "arandr": {
+  "blueman-manager": {
     "center": true,
-    "h": 1000,
     "set_size_floating": true,
-    "w": 2160
+    "w": 1440,
+    "h": 1000
+  },
+  "Torrent Properties": {
+    "center": true,
+    "set_size_floating": true,
+    "w": 1440,
+    "h": 1000
   }
 }

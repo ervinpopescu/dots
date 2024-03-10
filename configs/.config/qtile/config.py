@@ -12,7 +12,7 @@ from modules import (
     screens,
     widget_defaults,
 )
-from modules.path import config_path
+from modules.settings import config_path
 
 assert floating_layout
 assert groups

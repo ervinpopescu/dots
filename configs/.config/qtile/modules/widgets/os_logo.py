@@ -1,7 +1,8 @@
-from libqtile.lazy import lazy
-from modules.settings import settings
-from qtile_extras import widget
 import distro
+from libqtile.lazy import lazy
+from qtile_extras import widget
+
+from modules.settings import settings
 
 if distro.id() == "debian":
     filename = "/usr/share/pixmaps/debian-logo.png"

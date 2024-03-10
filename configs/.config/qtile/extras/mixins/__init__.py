@@ -45,13 +45,9 @@ class ThumbnailMixin(_BaseMixin):
         self.img = img
 
         if (img.width / img.height) >= (self.width / self.height):
-            self.img.scale(
-                width_factor=(self.width / img.width), lock_aspect_ratio=True
-            )
+            self.img.scale(width_factor=(self.width / img.width), lock_aspect_ratio=True)
         else:
-            self.img.scale(
-                height_factor=(self.height / img.height), lock_aspect_ratio=True
-            )
+            self.img.scale(height_factor=(self.height / img.height), lock_aspect_ratio=True)
 
     def get_mouse_pos(self, x, y):
         box_start = self.margin_x
@@ -67,10 +63,7 @@ class ThumbnailMixin(_BaseMixin):
             if isinstance(self.thumbnail_padding, int):
                 self._thumbnail_padding = [self.thumbnail_padding] * 2
 
-            elif (
-                not isinstance(self.thumbnail_padding, list)
-                or len(self.thumbnail_padding) < 2
-            ):
+            elif not isinstance(self.thumbnail_padding, list) or len(self.thumbnail_padding) < 2:
                 logger.warning("Invalid thumbnail padding. Defaulting to [4, 4]")
                 self._thumbnail_padding = [4, 4]
 
