@@ -14,51 +14,36 @@ vim.api.nvim_create_autocmd("VimLeave", {
   command = "set guicursor=a:ver20",
   group = Idgroup,
 })
--- vim.api.nvim_create_autocmd("VimLeave", {
---   pattern = { "*" },
---   command = 'printf "e[6 q"',
---   group = Idgroup,
--- })
-vim.api.nvim_create_autocmd("VimLeave", {
-  pattern = { "*" },
-  command = "set guicursor=a:ver20",
-  group = Idgroup,
-})
-vim.api.nvim_create_autocmd("VimLeave", {
-  pattern = { "*" },
-  command = "set guicursor=a:ver20",
-  group = Idgroup,
-})
 vim.api.nvim_create_autocmd("VimLeave", {
   pattern = { "*.tex" },
   command = "!rm indent.log",
   group = Idgroup,
 })
-vim.api.nvim_create_autocmd("VimLeave", {
-  pattern = { "*.md" },
-  command = "!pkill qt_html.py",
-  group = Idgroup,
-})
-vim.api.nvim_create_autocmd("VimLeave", {
-  pattern = { "*.md" },
-  command = "!qtile cmd-obj -o group -f setlayout -a monadwide",
-  group = Idgroup,
-})
-vim.api.nvim_create_autocmd("VimEnter", {
-  pattern = { "*.md" },
-  command = "MarkdownPreviewToggle",
-  group = Idgroup,
-})
-vim.api.nvim_create_autocmd("VimLeave", {
-  pattern = { "*.md" },
-  command = "!clear",
-  group = Idgroup,
-})
--- vim.api.nvim_create_autocmd("BufEnter", {
---   pattern = "*",
---   command = "ColorizerAttachToBuffer",
+-- vim.api.nvim_create_autocmd("VimLeave", {
+--   pattern = { "*.md" },
+--   command = "!pkill qt_html.py",
 --   group = Idgroup,
 -- })
+-- vim.api.nvim_create_autocmd("VimLeave", {
+--   pattern = { "*.md" },
+--   command = "!qtile cmd-obj -o group -f setlayout -a monadwide",
+--   group = Idgroup,
+-- })
+-- vim.api.nvim_create_autocmd("VimEnter", {
+--   pattern = { "*.md" },
+--   command = "MarkdownPreviewToggle",
+--   group = Idgroup,
+-- })
+-- vim.api.nvim_create_autocmd("VimLeave", {
+--   pattern = { "*.md" },
+--   command = "!clear",
+--   group = Idgroup,
+-- })
+vim.api.nvim_create_autocmd("BufEnter", {
+  pattern = "*",
+  command = "ColorizerAttachToBuffer",
+  group = Idgroup,
+})
 vim.api.nvim_create_autocmd("BufEnter", {
   pattern = { "*" },
   -- command = "set wrap list listchars=space:· linebreak"
