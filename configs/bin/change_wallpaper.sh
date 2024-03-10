@@ -3,4 +3,4 @@
 pkill -KILL change_wallpaper
 pkill -KILL wallpaper
 pkill -KILL sleep
-/home/ervin/bin/wallpaper.sh "$1" &
+/home/ervin/bin/wallpaper.sh "$@" &

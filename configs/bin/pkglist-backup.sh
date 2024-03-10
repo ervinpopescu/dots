@@ -1,3 +1,3 @@
 #!/bin/sh
 
-yay -Qqe > "$1"/pkgs 
+yay -Qqe > ./configs/pkgs

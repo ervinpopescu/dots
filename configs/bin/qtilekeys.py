@@ -5,19 +5,18 @@ import os
 import pathlib
 import re
 
-import gi
+from textwrap import dedent
+from libqtile.command.client import InteractiveCommandClient
+from markdownTable import markdownTable
 import jsonpickle
+import gi
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
-from libqtile.command.client import InteractiveCommandClient
-from markdownTable import markdownTable
 
 c = InteractiveCommandClient()
 qtile_path = pathlib.Path(c.qtile_info()["config_path"]).parent.resolve()
 
-# with open(os.path.join(qtile_path, "keys.pickle"), "rb") as f:
-#     keys = pickle.load(f)
 with open(os.path.join(qtile_path, "json", "keys.json"), "r") as f:
     keys = jsonpickle.decode(f.read())
 
@@ -96,7 +95,7 @@ class CellRendererTextWindow(Gtk.Window):
 
 def keyslist():
     keyslist = []
-    arrow = "[red] => [/RED]"
+    arrow = " => "
 
     for key in keys:
         if hasattr(key, "submappings"):
@@ -107,6 +106,7 @@ def keyslist():
                     subkey.desc,
                 ]
                 for subkey in key.submappings
+                if subkey.key != "Escape"
             )
         else:
             keyslist.append([" + ".join(key.modifiers), key.key, key.desc])
@@ -169,17 +169,19 @@ def md(l: list):
 def main():
     k = keyslist()
     parser = argparse.ArgumentParser(
-        description="Open keybindings in GTK+ window/Generate keybindings markdown table"
+        description=dedent(
+            """Open keybindings in GTK+ window
+        || Generate keybindings markdown table"""
+        )
     )
     parser.add_argument("action", type=str, help="[gtk/md] action to be chosen")
     args = parser.parse_args()
     if args.action == "gtk":
         gtk(k)
     elif args.action == "md":
-        # exit(0)
         print(md(k))
     else:
-        parser.error("you need to provide an action")
+        parser.error("either gtk or md plz")
 
 
 if __name__ == "__main__":
