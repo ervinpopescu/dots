@@ -4,38 +4,32 @@ from qtile_extras import widget
 from modules.settings import colors, settings
 
 
-def small_spacer(ms):
-    return widget.Spacer(length=ms)
+def small_spacer(**config):
+    return widget.Spacer(**config)
 
 
 def stretch_spacer():
     return widget.Spacer()
 
 
-def pipe():
+def pipe(**config):
     return widget.Sep(
-        foreground=colors["purple"],
-        padding=5,
-        linewidth=2,
+        padding=10,
+        linewidth=5,
         size_percent=100,
+        **config,
     )
 
 
-def slash_left():
-    return widget.TextBox(
-        "/",
-        font=settings["icon_font"],
-        fontsize=65,
-        foreground=colors["purple"],
-        padding=0,
-    )
+def slash_left(**config):
+    return widget.TextBox("/", font=settings["icon_font"], fontsize=65, padding=5, **config)
 
 
-def slash_right():
+def slash_right(**config):
     return widget.TextBox(
         "\\",
         font=settings["icon_font"],
         fontsize=65,
-        foreground=colors["purple"],
-        padding=0,
+        padding=5,
+        **config,
     )

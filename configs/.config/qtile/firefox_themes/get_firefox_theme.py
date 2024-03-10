@@ -11,7 +11,7 @@ import sys
 import pyinotify
 
 # Change this to the absolute path to firefox theme
-FIREFOX_THEME_PATH = "/home/ervin/.config/qtile-x11/firefox_themes/firefox_theme.json"
+FIREFOX_THEME_PATH = "/home/ervin/.config/qtile/firefox_themes/firefox_theme.json"
 
 
 # Read a message from stdin and decode it.

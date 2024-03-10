@@ -1,8 +1,7 @@
 import os
 
-from xdg.IconTheme import getIconPath
-
 from qtile_extras import widget
+from xdg.IconTheme import getIconPath
 
 
 class LaunchBar(widget.LaunchBar):

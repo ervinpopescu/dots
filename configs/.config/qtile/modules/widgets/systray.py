@@ -4,7 +4,7 @@ from qtile_extras import widget
 
 def systray():
     return widget.Systray(
-        icon_size=40,
+        icon_size=32,
         padding=20,
-        # **decorations["single_decor"],
+        # **decorations["systray_decor"],
     )

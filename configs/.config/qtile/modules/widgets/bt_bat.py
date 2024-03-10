@@ -10,6 +10,8 @@ def bt_bat():
         font=settings["text_font"],
         fontsize=settings["font_size"] + 4,
         foreground=colors["fg2"],
-        mouse_callbacks={"Button1": lazy.spawn("blueman-manager")},
+        mouse_callbacks={
+            "Button1": lazy.group["scratchpad"].dropdown_toggle("blueman"),
+        },
         padding=5,
     )

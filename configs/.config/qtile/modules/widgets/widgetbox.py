@@ -23,9 +23,9 @@ widget_box_1 = WidgetBox(
     text_closed="",
     text_open="",
     widgets=[
-        small_spacer(ms),
+        small_spacer(length=ms),
         check_updates(),
-        small_spacer(ms),
+        small_spacer(length=ms),
         uptime(),
     ],
 )
@@ -39,13 +39,13 @@ widget_box_2 = WidgetBox(
     text_closed="",
     text_open="",
     widgets=[
-        small_spacer(ms),
+        small_spacer(length=ms),
         weather(),
         small_spacer(ms),
         small_spacer(ms),
         kbd_layout(),
         kbd_layout_icon(),
-        small_spacer(ms),
+        small_spacer(length=ms),
     ],
 )
 

@@ -39,7 +39,25 @@ layouts = [
 
 floating_layout = layout.Floating(
     float_rules=[
-        *layout.Floating.default_float_rules,
+        Match(wm_type="utility"),
+        Match(wm_type="notification"),
+        Match(wm_type="toolbar"),
+        Match(wm_type="splash"),
+        Match(wm_class="file_progress"),
+        Match(wm_class="confirm"),
+        # TODO: implement function that returns true for `dialog` and
+        #       false for wm_name="Torrent Properties" (from Transmission)
+        Match(
+            func=lambda window: window.get_wm_type() == "dialog"
+            and window.name != "Torrent Properties"
+        ),
+        Match(wm_class="download"),
+        Match(wm_class="error"),
+        Match(wm_class="notification"),
+        Match(wm_class="splash"),
+        Match(wm_class="toolbar"),
+        Match(func=lambda c: c.has_fixed_size()),
+        Match(func=lambda c: c.has_fixed_ratio()),
         Match(wm_class="flameshot"),
         Match(wm_class="confirmreset"),  # gitk
         Match(wm_class="makebranch"),  # gitk

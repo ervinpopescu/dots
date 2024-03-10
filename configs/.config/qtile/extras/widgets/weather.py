@@ -2,8 +2,9 @@ from libqtile.widget.open_weather import (
     OpenWeatherResponseError,
     _OpenWeatherResponseParser,
 )
-from modules.settings import colors
 from qtile_extras.widget import OpenWeather
+
+from modules.settings import colors
 
 
 class Weather(OpenWeather):
