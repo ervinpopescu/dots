@@ -22,9 +22,7 @@
     "Navigator",
     "chromium",
     "google-chrome-beta",
-    "qbittorrent",
-    "transmission-qt",
-    "transmission-gtk"
+    "qbittorrent"
   ],
   "2": [
     "ferdium",
