@@ -52,8 +52,11 @@ async def autostart():
 @hook.subscribe.screens_reconfigured
 async def change_wallpaper():
     with open(os.path.expanduser("~/.local/share/wallpaper/log")) as f:
-        path = f.readlines()[0].split(" ")[-1]
-    subprocess.call(f"run_wall.sh {path} all".split())
+        path = f.readlines()
+    if path is not None or path.len() != 0:
+        subprocess.call(f"run_wall.sh {path} all".split())
+    else:
+        subprocess.call("run_wall.sh rand all".split())
 
 
 @hook.subscribe.client_new
