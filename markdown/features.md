@@ -1,6 +1,6 @@
 ## Features
 
-1. apps [config](./.config)
+1. apps [config](/configs/.config)
     * ***global***
         * [catppuccin](https://github.com/catppuccin) colorscheme
     * ***alacritty*** (mostly default, fonts and cursor changed)
@@ -8,16 +8,14 @@
         * ~~*stolen*~~
         * \+ fortune cookie 
     * ***neovim***
-        * mostly default 
-        * added some LSP's, formatters and some autocommands
+        * mostly default [LazyVim](https://www.lazyvim.org)
         * added the following plugins:
-            * `catppuccin/nvim` (***obvious really***)
             * `Pocco81/auto-save.nvim`
             * `norcalli/nvim-colorizer.lua`
             * `ethanholz/nvim-lastplace`
             * `iamcco/markdown-preview.nvim`
-            * `cappyzawa/trim.nvim`
             * `prettier/vim-prettier`
+            * ***check [/configs/.config/nvim/lua/plugins/user.lua](/configs/.config/nvim/lua/plugins/user.lua)*** for more plugins
     * ***nwg-launchers***
         * nwgbar
             * used for powermenu
@@ -48,9 +46,6 @@
               * setopts that ***just make sense***
               * keybindings, completions, prompt
 
-2. [Font](/usr/share/fonts/Code%20New%20Roman%20Bold%20Nerd%20Font%20Complete%20Mono.otf)
 
-3. 57 scripts that each do one thing only
-(KISS UNIX philosophy): [bin](bin/)
-
-4. Package list backup: [pkgs](/pkgs)
+2. 57 scripts that each do one thing only
+(KISS UNIX philosophy): [bin](/configs/bin/)
