@@ -1,16 +1,18 @@
 alttab.background:	#1E1E2E
 alttab.bordercolor:	#1E1E2E
-alttab.borderwidth:	10
-alttab.desktops:	2
 alttab.foreground:	#D9E0EE
 alttab.framecolor:	#DDB6F2
-alttab.icon.geometry:	150x100
-alttab.icon.source:	1
 alttab.inactcolor:	#1E1E2E
-alttab.noskiptaskbar:	yes
+alttab.icon.source:	1
+alttab.icon.geometry: 250x200
+alttab.tile.geometry:	250x200
+alttab.framewidth: 12
+alttab.borderwidth:	10
+alttab.desktops:	2
 alttab.screens:	0
-alttab.tile.geometry:	150x100
 alttab.windowmanager:	1
+alttab.font: xft:CaskaydiaCove Nerd Font Mono Bold-30
+/*alttab.bottomline: 0*/
 *background:	#1E1E2E
 *color0:	#6E6C7E
 *color10:	#ABE9B3
