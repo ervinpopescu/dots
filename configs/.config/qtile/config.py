@@ -1,6 +1,5 @@
 import json
 import os
-
 from modules import (
     extension_defaults,
     floating_layout,
@@ -11,17 +10,10 @@ from modules import (
     screens,
     widget_defaults,
 )
+from modules.hooks import apps as apps_hooks
+from modules.hooks import layout as layout_hooks
+from modules.hooks import misc as misc_hooks
 from modules.settings import config_path
-import modules.hooks.apps as apps
-import modules.hooks.layout as layout
-import modules.hooks.misc as misc
-import modules.hooks.session as session
-
-assert apps
-assert layout
-assert misc
-assert session
-# import modules.hooks.swallow
 
 assert floating_layout
 assert groups
@@ -31,6 +23,10 @@ assert mouse
 assert screens
 assert widget_defaults
 assert extension_defaults
+
+assert apps_hooks
+assert layout_hooks
+assert misc_hooks
 
 with open(os.path.join(config_path, "json", "config.json")) as f:
     config = json.load(f)
