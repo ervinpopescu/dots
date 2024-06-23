@@ -86,7 +86,7 @@ def set_gtk(theme):
         case "nord":
             settings["Net/ThemeName"] = '"Nordic-darker"'
         case "catppuccin":
-            settings["Net/ThemeName"] = '"Catppuccin-Mocha-Standard-Blue-dark"'
+            settings["Net/ThemeName"] = '"catppuccin-mocha-mauve-standard+default-dark"'
 
     with open(settings_file, "w") as f:
         for key, value in settings.items():

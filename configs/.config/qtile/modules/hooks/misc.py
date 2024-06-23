@@ -1,0 +1,30 @@
+import contextlib
+import os
+import subprocess
+
+from libqtile import hook, qtile
+from libqtile.core.manager import Qtile
+
+qtile: Qtile
+
+# @hook.subscribe.screen_change
+# def reload(event):
+#     qtile.reload_config()
+
+
+@hook.subscribe.screens_reconfigured
+async def change_wallpaper():
+    with open(os.path.expanduser("~/.local/share/wallpaper/log")) as f:
+        path = f.readlines()
+    if path is not None or path.len() != 0:
+        subprocess.call(f"run_wall.sh {path} all".split())
+    else:
+        subprocess.call("run_wall.sh rand all".split())
+
+
+@hook.subscribe.client_killed
+def switch_group(client):
+    with contextlib.suppress(AttributeError):
+        num_windows_in_group = len(client.group.info()["windows"])
+        if num_windows_in_group == 0:
+            qtile.current_screen.toggle_group(qtile.current_screen.previous_group)

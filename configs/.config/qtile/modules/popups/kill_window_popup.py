@@ -98,7 +98,7 @@ layout = PopupRelativeLayout(
             h_align="center",
             v_align="middle",
             wrap=True,
-            name="question"
+            name="question",
         ),
         PopupText(
             font=settings["text_font"],

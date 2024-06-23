@@ -5,7 +5,6 @@ from modules import (
     extension_defaults,
     floating_layout,
     groups,
-    hooks,
     keys,
     layouts,
     mouse,
@@ -13,10 +12,19 @@ from modules import (
     widget_defaults,
 )
 from modules.settings import config_path
+import modules.hooks.apps as apps
+import modules.hooks.layout as layout
+import modules.hooks.misc as misc
+import modules.hooks.session as session
+
+assert apps
+assert layout
+assert misc
+assert session
+# import modules.hooks.swallow
 
 assert floating_layout
 assert groups
-assert hooks
 assert keys
 assert layouts
 assert mouse
