@@ -8,6 +8,5 @@
   "follow_mouse_focus": true,
   "reconfigure_screens": true,
   "wmname": "LG3D",
-  "auto_minimize": true,
-  "x11_fake_transparency": true
+  "auto_minimize": true
 }

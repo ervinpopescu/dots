@@ -20,6 +20,12 @@ apps_keys = [
             ),
             Key(
                 [],
+                "h",
+                lazy.group["scratchpad"].dropdown_toggle("htop"),
+                desc="Open htop",
+            ),
+            Key(
+                [],
                 "k",
                 lazy.group["scratchpad"].dropdown_toggle("keys"),
                 desc="Open keybindings window",
@@ -28,7 +34,7 @@ apps_keys = [
                 [],
                 "p",
                 lazy.group["scratchpad"].dropdown_toggle("pavucontrol"),
-                desc="Open PulseAudio Volume Control",
+                desc="Open `PulseAudio Volume Control`",
             ),
             Key([], "s", suspend_toggle(), desc="Toggle suspend"),
             Key(
@@ -49,21 +55,21 @@ apps_keys = [
     ),
     Key(
         [settings["keymaps"]["mod"]],
+        "Return",
+        lazy.spawn(settings["cmds"]["terminal"]),
+        desc=f"Open {settings['cmds']['terminal']}",
+    ),
+    Key(
+        [settings["keymaps"]["mod"]],
+        "slash",
+        lazy.spawn("rofi -modi ask-totoro:ask-totoro -show ask-totoro".split()),
+        desc="Wolfram Alpha API requester",
+    ),
+    Key(
+        [settings["keymaps"]["mod"]],
         "a",
         lazy.spawn(settings["cmds"]["menu"]),
         desc="Open rofi application menu",
-    ),
-    Key(
-        [settings["keymaps"]["mod"], "shift"],
-        "j",
-        lazy.spawn(settings["cmds"]["emoji"]),
-        desc="Open rofi emoji picker",
-    ),
-    Key(
-        [settings["keymaps"]["mod"], "shift"],
-        "w",
-        lazy.spawn(settings["cmds"]["wallpaper"]),
-        desc="Open rofi wallpaper picker",
     ),
     # Key(
     #     [settings["keymaps"]["mod"]],
@@ -71,6 +77,12 @@ apps_keys = [
     #     lazy.spawn("/home/ervin/bin/bookmarks.py"),
     #     desc="Open bookmarks",
     # ),
+    Key(
+        [settings["keymaps"]["mod"]],
+        "b",
+        lazy.spawn("boomer"),
+        desc="Open boomer - a zooming app",
+    ),
     Key(
         [settings["keymaps"]["mod"]],
         "c",
@@ -98,7 +110,7 @@ apps_keys = [
     # Key(
     #     [settings["keymaps"]["mod"]],
     #     "p",
-    #     lazy.spawn("nwggrid -b 1e1e2eef -f -n 32"),
+    #     lazy.spawn("nwggrid -b 0e1e2eef -f -n 32"),
     #     desc="Open nwggrid application menu",
     # ),
     Key(
@@ -125,40 +137,34 @@ apps_keys = [
         lazy.spawn("firefox"),
         desc="Open Firefox",
     ),
-    Key(
-        [settings["keymaps"]["mod"]],
-        "Return",
-        lazy.spawn(settings["cmds"]["terminal"]),
-        desc=f"Open {settings['cmds']['terminal']}",
-    ),
-    Key(
-        [settings["keymaps"]["mod"]],
-        "slash",
-        lazy.spawn("rofi -modi ask-totoro:ask-totoro -show ask-totoro".split()),
-        desc="Wolfram Alpha API requester",
-    ),
-    Key(
-        [settings["keymaps"]["mod"]],
-        "h",
-        lazy.group["scratchpad"].dropdown_toggle("htop"),
-        desc="Open htop",
-    ),
+    # Key(
+    #     [settings["keymaps"]["mod"], "shift"],
+    #     "i",
+    #     lazy.spawn("/home/ervin/bin/bookmarkthis.py"),
+    #     desc="Add bookmark",
+    # ),
     Key(
         [settings["keymaps"]["mod"], "shift"],
-        "i",
-        lazy.spawn("/home/ervin/bin/bookmarkthis.py"),
-        desc="Add bookmark",
-    ),
-    Key(
-        [settings["keymaps"]["alt"], "shift"],
-        "s",
-        lazy.spawn("flameshot gui"),
-        desc="Open flameshot",
+        "j",
+        lazy.spawn(settings["cmds"]["emoji"]),
+        desc="Open rofi emoji picker",
     ),
     Key(
         [settings["keymaps"]["mod"], "shift"],
         "t",
         lazy.spawn(os.path.join(config_path, "scripts", "qchanger.py")),
         desc="Change theme",
+    ),
+    Key(
+        [settings["keymaps"]["mod"], "shift"],
+        "w",
+        lazy.spawn(settings["cmds"]["wallpaper"]),
+        desc="Open rofi wallpaper picker",
+    ),
+    Key(
+        [settings["keymaps"]["alt"], "shift"],
+        "s",
+        lazy.spawn("flameshot gui"),
+        desc="Open flameshot",
     ),
 ]

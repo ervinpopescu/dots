@@ -19,9 +19,13 @@ from modules.widgets.powermenu import powermenu
 from modules.widgets.separators import pipe, small_spacer, stretch_spacer
 from modules.widgets.systray import systray
 from modules.widgets.task_list import task_list
-from modules.widgets.touchpad import touchpad
+
 from modules.widgets.wallpaper import wallpaper
-from modules.widgets.widgetbox import widget_box_1, widget_box_2
+
+from modules.widgets.widgetbox import widget_box
+
+# from modules.widgets.touchpad import touchpad
+# from modules.widgets.widgetbox import widget_box_1, widget_box_2
 
 # Constants
 MARGIN_SIZE = settings["margin_size"] // 2 - 2
@@ -31,15 +35,15 @@ GROUP_DECORATION = decorations["group_single_decor"]
 # Create a list of widgets for the first screen
 widgets_1: list[_Widget] = [
     os_logo(),
-    widget_box_1,
+    widget_box,
     group_box(),
     current_layout_icon(),
     task_list(),
     systray(),
-    widget_box_2,
+    chord(),
+    # widget_box_2,
     github_notif(),
     # touchpad(),
-    chord(),
     battery(),
     battery_icon(),
     bt_bat(),
@@ -94,7 +98,7 @@ while i < len(widgets_1):
         case "systray":
             widgets_1.insert(i, st_spacer)
             i += 2
-        case "second_widgetbox":
+        case "chord":
             widgets_1.insert(i, st_spacer)
             i += 2
         case "battery":
@@ -135,7 +139,7 @@ while i < len(widgets_2):
             widgets_2.insert(i, sm_spacer)
             i += 2
 
-# Insert Spacer widgets into widgets_2
+# Insert Spacer widgets into widgets_3
 i = 1
 while i < len(widgets_3):
     w = widgets_3[i]
