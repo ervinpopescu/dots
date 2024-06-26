@@ -22,7 +22,9 @@ class BtBattery(widget.GenPollText):
 
     def poll(self):
         data = (
-            subprocess.check_output(os.path.join(os.environ["HOME"], "bin", "bt-bat.sh"))
+            subprocess.check_output(
+                os.path.join(os.environ["HOME"], "bin", "bt-bat.sh")
+            )
             .decode("utf-8")
             .strip("\n")
         )

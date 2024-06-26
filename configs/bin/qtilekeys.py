@@ -134,7 +134,7 @@ def keyslist():
         "XF86AudioPlay": "",
         "XF86AudioPause": "",
         "XF86MonBrightnessUp": " +",
-        "XF86MonBrightnessDown": " -"
+        "XF86MonBrightnessDown": " -",
         # "Escape": "Esc",
     }
     for row_index, row in enumerate(keyslist):

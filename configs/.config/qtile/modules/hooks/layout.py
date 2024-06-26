@@ -14,6 +14,7 @@ qtile: Qtile
 with open(os.path.join(config_path, "json", "window_rules.json"), "r") as f:
     rules: dict = json5.loads(f.read())
 
+
 @hook.subscribe.client_new
 @hook.subscribe.client_managed
 def resize_and_move_client(client: Window):
@@ -39,7 +40,10 @@ def resize_and_move_client(client: Window):
         if key in [wm_class, role, name]:
             if "set_position_floating" in win and key == "gsimplecal":
                 client.set_position_floating(
-                    x=qtile.core.get_screen_info()[0][2] - win["w"] - settings["margin_size"] - 5,
+                    x=qtile.core.get_screen_info()[0][2]
+                    - win["w"]
+                    - settings["margin_size"]
+                    - 5,
                     y=settings["bar_height"] + 2 * settings["margin_size"],
                 )
                 return

@@ -19,9 +19,7 @@ from modules.widgets.powermenu import powermenu
 from modules.widgets.separators import pipe, small_spacer, stretch_spacer
 from modules.widgets.systray import systray
 from modules.widgets.task_list import task_list
-
 from modules.widgets.wallpaper import wallpaper
-
 from modules.widgets.widgetbox import widget_box
 
 # from modules.widgets.touchpad import touchpad
@@ -60,7 +58,8 @@ for w in widgets_1:
         w.decorations = SINGLE_DECORATION["decorations"]
 
     if isinstance(
-        w, (Battery, BtBattery, widget.BatteryIcon, widget.KeyboardLayout, widget.TextBox)
+        w,
+        (Battery, BtBattery, widget.BatteryIcon, widget.KeyboardLayout, widget.TextBox),
     ):
         w.decorations = GROUP_DECORATION["decorations"]
 
@@ -71,7 +70,14 @@ sm_spacer = small_spacer(length=MARGIN_SIZE)
 st_spacer = stretch_spacer()
 for w in widgets_1:
     if not isinstance(
-        w, (widget.Systray, WidgetBox, widget.GithubNotifications, widget.GroupBox, TaskList)
+        w,
+        (
+            widget.Systray,
+            WidgetBox,
+            widget.GithubNotifications,
+            widget.GroupBox,
+            TaskList,
+        ),
     ):
         widgets_2.append(w)
         widgets_3.append(w)
@@ -131,7 +137,9 @@ while i < len(widgets_2):
         case "battery_icon":
             i += 1
         case "bt_battery":
-            widgets_2.insert(i, next(item for item in widgets_1 if item.name == "battery_sep"))
+            widgets_2.insert(
+                i, next(item for item in widgets_1 if item.name == "battery_sep")
+            )
             i += 2
         case "powermenu":
             break
@@ -150,7 +158,9 @@ while i < len(widgets_3):
         case "battery_icon":
             i += 1
         case "bt_battery":
-            widgets_3.insert(i, next(item for item in widgets_1 if item.name == "battery_sep"))
+            widgets_3.insert(
+                i, next(item for item in widgets_1 if item.name == "battery_sep")
+            )
             i += 2
         case "powermenu":
             break

@@ -48,7 +48,12 @@ class TaskList(widget.TaskList):
             self.icon_size = self.bar.height - 2 * (self.borderwidth + self.margin_y)
 
         if self.fontsize is None:
-            calc = self.bar.height - self.margin_y * 2 - self.borderwidth * 2 - self.padding_y * 2
+            calc = (
+                self.bar.height
+                - self.margin_y * 2
+                - self.borderwidth * 2
+                - self.padding_y * 2
+            )
             self.fontsize = max(calc, 1)
         self.layout = self.drawer.textlayout(
             "", "ffffff", self.font, self.fontsize, self.fontshadow, wrap=False
