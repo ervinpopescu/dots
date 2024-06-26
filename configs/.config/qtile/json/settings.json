@@ -106,30 +106,40 @@
     "mod": "mod4",
     "alt": "mod1"
   },
-  "group_labels": [
-    "",
-    "",
-    "",
-    "",
-    "",
-    ""
-  ],
-  "group_layouts": [
-    "monadwide",
-    "max",
-    "max",
-    "max",
-    "bsp",
-    "monadthreecol"
-  ],
-  "group_names": [
-    "coding",
-    "www",
-    "social",
-    "settings",
-    "etc",
-    "media"
-  ],
+  "groups": {
+    "labels": [
+      "",
+      "",
+      "",
+      "",
+      "",
+      ""
+    ],
+    "layouts": [
+      "monadwide",
+      "max",
+      "max",
+      "max",
+      "bsp",
+      "monadthreecol"
+    ],
+    "names": [
+      "coding",
+      "www",
+      "social",
+      "settings",
+      "etc",
+      "media"
+    ],
+    "screen_affinities": [
+      2,
+      1,
+      0,
+      0,
+      1,
+      0
+    ]
+  },
   "icon_font": "Font Awesome 6 Free Solid",
   "margin_size": 20,
   "text_font": "CaskaydiaCove Nerd Font Mono Bold",

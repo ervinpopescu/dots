@@ -10,6 +10,7 @@ from modules.settings import config_path
 
 qtile: Qtile
 
+
 @hook.subscribe.startup_once
 def autostart():
     qtile.info()
@@ -30,6 +31,7 @@ def autostart():
         if window.name == "plank":
             window.keep_above()
 
+
 @hook.subscribe.shutdown
 def kill_all_autostarted_programs():
     with open("/tmp/autostart_pids", "r") as pids_file:
@@ -40,4 +42,6 @@ def kill_all_autostarted_programs():
     if check_if_process_running("plank"):
         for win in qtile.windows_map.values():
             if win.name == "plank":
-                os.kill(int(win.eval("self.window.get_net_wm_pid()")[1]), signal.SIGKILL)
+                os.kill(
+                    int(win.eval("self.window.get_net_wm_pid()")[1]), signal.SIGKILL
+                )

@@ -21,7 +21,9 @@ def pipe(**config):
 
 
 def slash_left(**config):
-    return widget.TextBox("/", font=settings["icon_font"], fontsize=65, padding=5, **config)
+    return widget.TextBox(
+        "/", font=settings["icon_font"], fontsize=65, padding=5, **config
+    )
 
 
 def slash_right(**config):

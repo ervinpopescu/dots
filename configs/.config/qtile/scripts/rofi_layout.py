@@ -13,10 +13,12 @@ notify2.init("rofi_layout")
 
 c = InteractiveCommandClient()
 with open(
-    os.path.join((pathlib.Path(c.qtile_info()["config_path"]).parent), "json", "settings.json"),
+    os.path.join(
+        (pathlib.Path(c.qtile_info()["config_path"]).parent), "json", "settings.json"
+    ),
     "r",
 ) as f:
-    group_layouts = json.load(f)["group_layouts"]
+    group_layouts = json.load(f)["groups"]["layouts"]
 print(group_layouts)
 
 groups = c.get_groups()
@@ -32,7 +34,9 @@ options = [None] * len(layouts)
 for icon in icons:
     for layout in layouts:
         if layout in icon:
-            options[layouts.index(layout)] = f" {layout}" + f"\x00icon\x1f{folder}" + icon
+            options[layouts.index(layout)] = (
+                f" {layout}" + f"\x00icon\x1f{folder}" + icon
+            )
 r = Rofi(
     lines=len(layouts),
     rofi_args=[

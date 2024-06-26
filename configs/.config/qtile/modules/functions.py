@@ -4,19 +4,19 @@ import subprocess
 
 import notify2
 import psutil
-from libqtile.bar import Bar
+
+# from libqtile.backend.base import Window
+# from libqtile.bar import Bar
 from libqtile.core.manager import Qtile
 from libqtile.layout.floating import Floating
 from libqtile.lazy import lazy
-from libqtile.backend.base import Window
 
 from modules.settings import settings
 
 # from libqtile.log_utils import logger
 
-
 ms = settings["margin_size"]
-def_group_layouts = settings["group_layouts"]
+def_group_layouts = settings["groups"]["layouts"]
 
 
 @lazy.function
@@ -97,7 +97,7 @@ def set_layout_current(qtile: Qtile):
 
 @lazy.function
 def toggle_gaps(qtile: Qtile):
-    bars = [x for x in qtile.current_screen.gaps if isinstance(x, Bar)]
+    # bars = [x for x in qtile.current_screen.gaps if isinstance(x, Bar)]
     groups = qtile.groups
     for group in groups:
         # logger.info("%s", group.layout.single_margin)
@@ -185,7 +185,9 @@ def check_if_process_running(process_name):
     """
     # Iterate over the all the running process
     for proc in psutil.process_iter():
-        with contextlib.suppress(psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+        with contextlib.suppress(
+            psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess
+        ):
             # Check if process name contains the given name string.
             if process_name.lower() in proc.name().lower():
                 return True

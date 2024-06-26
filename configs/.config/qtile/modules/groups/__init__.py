@@ -12,30 +12,51 @@ from modules.groups.scratchpad import scratchpad
 
 groups = [
     Group(
-        name=settings["group_names"][i],
-        layout=settings["group_layouts"][i],
-        label=settings["group_labels"][i],
+        name=settings["groups"]["names"][i],
+        layout=settings["groups"]["layouts"][i],
+        label=settings["groups"]["labels"][i],
+        screen_affinity=settings["groups"]["screen_affinities"][i],
         layout_opts=None,
     )
-    for i in range(len(settings["group_names"]))
+    for i in range(len(settings["groups"]["names"]))
 ]
 groups.append(scratchpad)
 
+
+def go_to_group(name: str):
+    def _inner(qtile):
+        if len(qtile.screens) == 1:
+            qtile.groups_map[name].toscreen()
+            return
+
+        if name in ["social", "settings", "media"]:
+            qtile.focus_screen(0)
+            qtile.groups_map[name].toscreen()
+        elif name in ["www", "etc"]:
+            qtile.focus_screen(1)
+            qtile.groups_map[name].toscreen()
+        elif name in ["coding"]:
+            qtile.focus_screen(2)
+            qtile.groups_map[name].toscreen()
+
+    return _inner
+
+
 keys_to_be_inserted = []
-for i, name in enumerate(settings["group_names"], 1):
+for i, name in enumerate(settings["groups"]["names"], 1):
     keys_to_be_inserted.extend(
         [
             Key(
                 [settings["keymaps"]["mod"]],
                 str(i),
-                lazy.group[name].toscreen(toggle=True),
-                desc=f"Go to group {str(i)}",
+                lazy.function(go_to_group(name)),
+                desc=f"Go to group `{name}`",
             ),
             Key(
                 [settings["keymaps"]["mod"], "shift"],
                 str(i),
                 lazy.window.togroup(name),
-                desc=f"Move window to group {str(i)}",
+                desc=f"Move window to group `{name}`",
             ),
         ]
     )
