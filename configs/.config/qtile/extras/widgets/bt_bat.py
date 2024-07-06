@@ -1,7 +1,6 @@
 import os
 import subprocess
 
-import pydbus
 from libqtile.widget import base
 from qtile_extras import widget
 
@@ -19,6 +18,7 @@ class BtBattery(widget.GenPollText):
         widget.GenPollText.__init__(self, **config)
         self.add_defaults(BtBattery.defaults)
         self.add_defaults(base.MarginMixin.defaults)
+        self.add_callbacks({"Button3": self.force_update})
 
     def poll(self):
         data = (

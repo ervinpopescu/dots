@@ -7,9 +7,11 @@ from libqtile.core.manager import Qtile
 
 qtile: Qtile
 
-# @hook.subscribe.screen_change
-# def reload(event):
-#     qtile.reload_config()
+
+@hook.subscribe.screen_change
+def screen_change(event):
+    qtile.reconfigure_screens()
+    qtile.reconfigure_screens()
 
 
 @hook.subscribe.screens_reconfigured
