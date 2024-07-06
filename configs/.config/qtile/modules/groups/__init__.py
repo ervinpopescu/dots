@@ -26,7 +26,7 @@ groups.append(scratchpad)
 def go_to_group(name: str):
     def _inner(qtile):
         if len(qtile.screens) == 1:
-            qtile.groups_map[name].toscreen()
+            qtile.groups_map[name].toscreen(toggle=True)
             return
 
         if name in ["social", "settings", "media"]:

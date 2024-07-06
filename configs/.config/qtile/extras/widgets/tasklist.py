@@ -24,7 +24,7 @@ class TaskList(widget.TaskList):
     def __init__(self, **config):
         widget.TaskList.__init__(self, **config)
         self.add_defaults(TaskList.defaults)
-        self.add_callbacks({"Button3": self.close_window})
+        self.add_callbacks({"Button2": self.close_window})
 
     #     # self.win = None
     #     # self.mouse_pos: tuple[int, int] = None
