@@ -56,6 +56,7 @@ qtile_keys = [
     Key(
         [settings["keymaps"]["mod"], "shift"],
         "x",
+        # lazy.widget["widgetbox"].toggle(),
         lazy.widget["first_widgetbox"].toggle(),
         lazy.widget["second_widgetbox"].toggle(),
         desc="Toggle WidgetBoxesk",

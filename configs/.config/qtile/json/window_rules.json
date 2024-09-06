@@ -46,5 +46,15 @@
   },
   "file_progress": {
     "keep_above": true
+  },
+  "feh_thumbnail": {
+    "set_size_floating": true,
+    "w": 400,
+    "h": 300,
+    "keep_above": true
+  },
+  "discord": {
+    "move": true,
+    "group": 2
   }
 }

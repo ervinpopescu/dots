@@ -1,11 +1,11 @@
 import subprocess
 
+from libqtile.log_utils import logger
 from libqtile.lazy import lazy
 from qtile_extras.popup.toolkit import PopupAbsoluteLayout, PopupText
 
 from modules.functions import location
 from modules.settings import settings
-
 
 @lazy.function
 def weather_popup(qtile):
@@ -45,8 +45,12 @@ def weather_popup(qtile):
         initial_focus=None,
     )
     widget_offset = qtile.widgets_map["weather"].info()["offset"]
-    # screen_width = qtile.core.get_screen_info()[0][2]
-    screen_height = qtile.core.get_screen_info()[0][3]
+    screen_info = qtile.core.get_screen_info()
+    # screen_width = min([screen_info[i].width for i in range(len(screen_info))])
+    screen_height = min([screen_info[i].height for i in range(len(screen_info))])
+    if not layout.configured:
+        layout._configure(qtile)
+    layout.popup.win.window.set_property("ROUNDED_CORNERS_EXCLUDE", 0, "CARDINAL", 32)
     layout.show(
         # x=2880 - layout.width - settings["margin_size"],
         x=widget_offset + settings["margin_size"],
