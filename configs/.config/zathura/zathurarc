@@ -1,0 +1,24 @@
+set database "sqlite"
+set first-page-column 1:1
+set font "CodeNewRoman Nerd Font Mono Bold 22"
+set guioptions none
+set page-padding 0
+set selection-clipboard clipboard
+set statusbar-h-padding 0
+set statusbar-v-padding 0
+set window-height 900
+set window-width 1440
+map u scroll full-up
+map d scroll full-down
+map D toggle_page_mode
+map r reload
+map R rotate
+map i recolor
+map p print
+map <C-i> recolor
+unmap Left
+unmap Right
+map Left navigate previous
+map Right navigate next
+
+include dark
