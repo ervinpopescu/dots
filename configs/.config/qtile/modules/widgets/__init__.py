@@ -20,10 +20,10 @@ from modules.widgets.separators import pipe, small_spacer, stretch_spacer
 from modules.widgets.systray import systray
 from modules.widgets.task_list import task_list
 from modules.widgets.wallpaper import wallpaper
-from modules.widgets.widgetbox import widget_box
+# from modules.widgets.widgetbox import widget_box
 
 # from modules.widgets.touchpad import touchpad
-# from modules.widgets.widgetbox import widget_box_1, widget_box_2
+from modules.widgets.widgetbox import widget_box_1, widget_box_2
 
 # Constants
 MARGIN_SIZE = settings["margin_size"] // 2 - 2
@@ -33,13 +33,13 @@ GROUP_DECORATION = decorations["group_single_decor"]
 # Create a list of widgets for the first screen
 widgets_1: list[_Widget] = [
     os_logo(),
-    widget_box,
+    widget_box_1,
     group_box(),
     current_layout_icon(),
     task_list(),
     systray(),
     chord(),
-    # widget_box_2,
+    widget_box_2,
     github_notif(),
     # touchpad(),
     battery(),

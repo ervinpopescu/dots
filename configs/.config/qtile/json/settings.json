@@ -83,19 +83,17 @@
     "update": [
       "alacritty",
       "-o",
-      "font.size=10",
+      "font.size=8",
       "--class",
       "qtile_yay_update",
       "-e",
-      "yay",
-      "-Syyu",
-      "--noconfirm"
+      "sh -c 'env CARGO_TARGET_DIR=./target yay -Syyu --noconfirm'"
     ],
     "wallpaper": [
       "rofi-wallpaper"
     ]
   },
-  "dropdown_opacity": 0.95,
+  "dropdown_opacity": 0.8,
   "extension_defaults": {
     "font": "Font Awesome 6 Free Solid",
     "fontsize": 30,

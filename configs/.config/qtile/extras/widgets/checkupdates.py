@@ -1,10 +1,8 @@
 import subprocess
-
-from libqtile.log_utils import logger
+import shutil
 from qtile_extras import widget
 
 from modules.settings import colors
-
 
 def chkup():
     try:
@@ -16,8 +14,8 @@ def chkup():
         elif e.returncode == 2:
             return "0"
         else:
-            return "Error"
-
+            shutil.rmtree("/tmp/checkup-db-1000")
+            return chkup()
 
 class CheckUpdates(widget.GenPollText):
     defaults = [

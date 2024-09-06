@@ -6,24 +6,6 @@ from modules.settings import settings
 
 de_keys = [
     Key(
-        [],
-        "XF86AudioMute",
-        lazy.spawn("/home/ervin/bin/mutevol.sh"),
-        desc="Mute audio",
-    ),
-    Key(
-        [],
-        "XF86AudioLowerVolume",
-        lazy.spawn("/home/ervin/bin/volctl.sh -5%"),
-        desc="Lower volume by 5%",
-    ),
-    Key(
-        [],
-        "XF86AudioRaiseVolume",
-        lazy.spawn("/home/ervin/bin/volctl.sh +5%"),
-        desc="Raise volume by 5%",
-    ),
-    Key(
         ["shift"],
         "XF86AudioLowerVolume",
         lazy.spawn("/home/ervin/bin/mediactl.sh previous"),

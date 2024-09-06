@@ -47,7 +47,13 @@ apps_keys = [
                 [],
                 "f",
                 lazy.group["scratchpad"].dropdown_toggle("files"),
-                desc="Open nemo dropdown",
+                desc="Open file manager dropdown",
+            ),
+            Key(
+                [],
+                "u",
+                lazy.group["scratchpad"].dropdown_toggle("update"),
+                desc="Open update dropdown",
             ),
         ],
         name="settings",
@@ -119,12 +125,12 @@ apps_keys = [
         lazy.group["scratchpad"].dropdown_toggle("term"),
         desc="Toggle terminal scratchpad",
     ),
-    Key(
-        [settings["keymaps"]["mod"]],
-        "u",
-        lazy.spawn(settings["cmds"]["update"]),
-        desc="Update system",
-    ),
+    # Key(
+    #     [settings["keymaps"]["mod"]],
+    #     "u",
+    #     lazy.spawn(settings["cmds"]["update"]),
+    #     desc="Update system",
+    # ),
     Key(
         [settings["keymaps"]["mod"]],
         "x",

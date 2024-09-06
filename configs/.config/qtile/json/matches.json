@@ -22,7 +22,8 @@
     "Navigator",
     "chromium",
     "google-chrome-beta",
-    "qbittorrent"
+    "qbittorrent",
+    "transmission-qt"
   ],
   "2": [
     "ferdium",
@@ -39,8 +40,7 @@
     "pling-store",
     "Xfce4-power-manager-settings",
     "lxappearance",
-    "lightdm-settings",
-    "qtile_yay_update"
+    "lightdm-settings"
   ],
   "4": [
     "virt-manager",
