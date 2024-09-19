@@ -1,0 +1,66 @@
+discover_other_daemon: 1GNOME_KEYRING_CONTROL=/run/user/1000/keyring
+WARNING: Setting origin is in the wrong section (urgency_low, should be global)
+WARNING: Setting offset is in the wrong section (urgency_low, should be global)
+QSocketNotifier: Can only be used with threads started with QThread
+I, [2024-09-19T12:12:06.131265 #740100]  INFO -- : reload config: /home/ervin/.config/fusuma/config.yml
+I, [2024-09-19T12:12:06.131310 #740100]  INFO -- : ---------------------------------------------
+I, [2024-09-19T12:12:06.131532 #740100]  INFO -- : Fusuma: 3.6.0
+I, [2024-09-19T12:12:06.132671 #740100]  INFO -- : libinput: 1.26.2
+I, [2024-09-19T12:12:06.132698 #740100]  INFO -- : ruby 3.2.5p208
+I, [2024-09-19T12:12:06.133774 #740100]  INFO -- : OS: Linux 6.11.0-arch1-1 #1 SMP PREEMPT_DYNAMIC Sun, 15 Sep 2024 18:38:36 +0000
+I, [2024-09-19T12:12:06.134801 #740100]  INFO -- : Distribution: ]P01E1E2E]P8585B70]P7BAC2DE]PFA6ADC8]P1F38BA8]P9F38BA8]P2A6E3A1]PAA6E3A1]P3F9E2AF]PBF9E2AF]P489B4FA]PC89B4FA]P5F5C2E7]PDF5C2E7]P694E2D5]PE94E2D5[H[2J
+Arch Linux \r @ \n \l
+
+Access to this system is for authorized persons only.
+Unauthorized use or access is regarded as a criminal act
+and is subject to civil and criminal prosecution.
+I, [2024-09-19T12:12:06.136764 #740100]  INFO -- : Desktop session: wayland
+I, [2024-09-19T12:12:06.136799 #740100]  INFO -- : ---------------------------------------------
+I, [2024-09-19T12:12:06.136810 #740100]  INFO -- : Enabled Plugins: 
+I, [2024-09-19T12:12:06.136855 #740100]  INFO -- :   Fusuma::Plugin::Buffers::GestureBuffer
+I, [2024-09-19T12:12:06.136865 #740100]  INFO -- :   Fusuma::Plugin::Buffers::TimerBuffer
+I, [2024-09-19T12:12:06.136872 #740100]  INFO -- :   Fusuma::Plugin::Detectors::HoldDetector
+I, [2024-09-19T12:12:06.136879 #740100]  INFO -- :   Fusuma::Plugin::Detectors::PinchDetector
+I, [2024-09-19T12:12:06.136885 #740100]  INFO -- :   Fusuma::Plugin::Detectors::RotateDetector
+I, [2024-09-19T12:12:06.136892 #740100]  INFO -- :   Fusuma::Plugin::Detectors::SwipeDetector
+I, [2024-09-19T12:12:06.136897 #740100]  INFO -- :   Fusuma::Plugin::Events::Records::ContextRecord
+I, [2024-09-19T12:12:06.136903 #740100]  INFO -- :   Fusuma::Plugin::Events::Records::GestureRecord
+I, [2024-09-19T12:12:06.136909 #740100]  INFO -- :   Fusuma::Plugin::Events::Records::IndexRecord
+I, [2024-09-19T12:12:06.136915 #740100]  INFO -- :   Fusuma::Plugin::Events::Records::TextRecord
+I, [2024-09-19T12:12:06.136922 #740100]  INFO -- :   Fusuma::Plugin::Executors::CommandExecutor
+I, [2024-09-19T12:12:06.136928 #740100]  INFO -- :   Fusuma::Plugin::Filters::LibinputDeviceFilter
+I, [2024-09-19T12:12:06.136935 #740100]  INFO -- :   Fusuma::Plugin::Inputs::LibinputCommandInput
+I, [2024-09-19T12:12:06.136940 #740100]  INFO -- :   Fusuma::Plugin::Inputs::TimerInput
+I, [2024-09-19T12:12:06.136945 #740100]  INFO -- :   Fusuma::Plugin::Parsers::LibinputGestureParser
+I, [2024-09-19T12:12:06.136953 #740100]  INFO -- : ---------------------------------------------
+No shitty files found :)
+applying profile 'one'
+applying profile output 'eDP-1' on connected head 'eDP-1'
+configuration for profile 'one' applied
+QObject::connect: No such signal QPlatformNativeInterface::systemTrayWindowChanged(QScreen*)
+
+(nm-applet:740106): Gtk-CRITICAL **: 12:12:32.210: gtk_widget_get_scale_factor: assertion 'GTK_IS_WIDGET (widget)' failed
+[ 09/19/2024 12:12:32.342 session_init FATAL ERROR ] Another composite manager is already running
+[ 09/19/2024 12:12:32.342 main FATAL ERROR ] Failed to create new session.
+
+(nm-applet:740106): Gtk-CRITICAL **: 12:12:39.330: gtk_widget_get_scale_factor: assertion 'GTK_IS_WIDGET (widget)' failed
+
+(nm-applet:740106): Gtk-CRITICAL **: 12:12:41.392: gtk_widget_get_scale_factor: assertion 'GTK_IS_WIDGET (widget)' failed
+
+(nm-applet:740106): Gtk-CRITICAL **: 12:12:59.401: gtk_widget_get_scale_factor: assertion 'GTK_IS_WIDGET (widget)' failed
+
+(nm-applet:740106): Gtk-CRITICAL **: 12:13:05.398: gtk_widget_get_scale_factor: assertion 'GTK_IS_WIDGET (widget)' failed
+I, [2024-09-19T12:18:00.273148 #740100]  INFO -- : {:command=>"ydotool key 125:1 103:1 103:0 125:0", :args=>{:move_x=>9.06, :move_y=>-25.78, :unaccelerated_x=>7.24, :unaccelerated_y=>-20.6, :zoom=>0.0, :rotate=>0.0}}
+I, [2024-09-19T12:18:00.873487 #740100]  INFO -- : {:command=>"ydotool key 125:1 103:1 103:0 125:0", :args=>{:move_x=>5.67, :move_y=>-15.78, :unaccelerated_x=>5.37, :unaccelerated_y=>-14.94, :zoom=>0.0, :rotate=>0.0}}
+I, [2024-09-19T12:18:19.171666 #740100]  INFO -- : {:command=>"ydotool key 125:1 103:1 103:0 125:0", :args=>{:move_x=>6.42, :move_y=>-15.42, :unaccelerated_x=>6.03, :unaccelerated_y=>-14.49, :zoom=>0.0, :rotate=>0.0}}
+I, [2024-09-19T12:18:20.385044 #740100]  INFO -- : {:command=>"ydotool key 125:1 106:1 106:0 125:0", :args=>{:move_x=>-2.19, :move_y=>0.11, :unaccelerated_x=>-2.19, :unaccelerated_y=>0.11, :zoom=>0.0, :rotate=>0.0}}
+I, [2024-09-19T12:18:28.175661 #740100]  INFO -- : {:command=>"ydotool key 125:1 103:1 103:0 125:0", :args=>{:move_x=>11.13, :move_y=>-26.03, :unaccelerated_x=>8.66, :unaccelerated_y=>-20.26, :zoom=>0.0, :rotate=>0.0}}
+I, [2024-09-19T12:18:28.972450 #740100]  INFO -- : {:command=>"ydotool key 125:1 103:1 103:0 125:0", :args=>{:move_x=>7.26, :move_y=>-15.48, :unaccelerated_x=>6.69, :unaccelerated_y=>-14.26, :zoom=>0.0, :rotate=>0.0}}
+I, [2024-09-19T12:18:29.285126 #740100]  INFO -- : {:command=>"ydotool key 125:1 105:1 105:0 125:0", :args=>{:move_x=>18.09, :move_y=>-0.68, :unaccelerated_x=>18.09, :unaccelerated_y=>-0.68, :zoom=>0.0, :rotate=>0.0}}
+I, [2024-09-19T12:18:48.732862 #740100]  INFO -- : {:command=>"ydotool key 125:1 106:1 106:0 125:0", :args=>{:move_x=>-21.85, :move_y=>-2.98, :unaccelerated_x=>-19.08, :unaccelerated_y=>-2.6, :zoom=>0.0, :rotate=>0.0}}
+I, [2024-09-19T12:19:26.512238 #740100]  INFO -- : {:command=>"ydotool key 125:1 105:1 105:0 125:0", :args=>{:move_x=>23.24, :move_y=>-2.39, :unaccelerated_x=>19.85, :unaccelerated_y=>-2.04, :zoom=>0.0, :rotate=>0.0}}
+I, [2024-09-19T12:19:27.262671 #740100]  INFO -- : {:command=>"ydotool key 125:1 106:1 106:0 125:0", :args=>{:move_x=>-18.76, :move_y=>1.7, :unaccelerated_x=>-18.75, :unaccelerated_y=>1.7, :zoom=>0.0, :rotate=>0.0}}
+I, [2024-09-19T12:19:27.658036 #740100]  INFO -- : {:command=>"ydotool key 125:1 105:1 105:0 125:0", :args=>{:move_x=>19.57, :move_y=>-6.35, :unaccelerated_x=>17.44, :unaccelerated_y=>-5.66, :zoom=>0.0, :rotate=>0.0}}
+I, [2024-09-19T12:19:28.540214 #740100]  INFO -- : {:command=>"ydotool key 125:1 106:1 106:0 125:0", :args=>{:move_x=>-21.1, :move_y=>-1.57, :unaccelerated_x=>-18.31, :unaccelerated_y=>-1.36, :zoom=>0.0, :rotate=>0.0}}
+I, [2024-09-19T12:19:40.496241 #740100]  INFO -- : {:command=>"ydotool key 125:1 105:1 105:0 125:0", :args=>{:move_x=>14.47, :move_y=>1.41, :unaccelerated_x=>13.93, :unaccelerated_y=>1.36, :zoom=>0.0, :rotate=>0.0}}
+I, [2024-09-19T12:19:41.327543 #740100]  INFO -- : {:command=>"ydotool key 125:1 105:1 105:0 125:0", :args=>{:move_x=>21.84, :move_y=>5.04, :unaccelerated_x=>18.64, :unaccelerated_y=>4.3, :zoom=>0.0, :rotate=>0.0}}
