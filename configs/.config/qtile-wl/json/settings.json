@@ -1,0 +1,150 @@
+{
+  "apps": [
+    [
+      "nemo",
+      "nemo",
+      "nemo"
+    ],
+    [
+      "Alacritty",
+      "alacritty",
+      "alacritty"
+    ],
+    [
+      "vscodium",
+      "vscodium",
+      "vscodium"
+    ],
+    [
+      "firefox",
+      "firefox",
+      "firefox"
+    ],
+    [
+      "virtualbox",
+      "virtualbox",
+      "virtualbox"
+    ]
+  ],
+  "bar_height": 28,
+  "cmds": {
+    "blueman": [
+      "blueman-manager"
+    ],
+    "emoji": [
+      "rofi",
+      "-modes",
+      "emoji",
+      "-show",
+      "emoji"
+    ],
+    "htop": [
+      "alacritty",
+      "--class",
+      "htop",
+      "-o",
+      "'font.size=10'",
+      "-e",
+      "htop"
+    ],
+    "menu": [
+      "rofi",
+      "-modes",
+      "drun",
+      "-show",
+      "drun",
+      "-terminal",
+      "alacritty",
+      "-show-icons"
+    ],
+    "nwgbar": [
+      "nwgbar",
+      "-b",
+      "1d1d2d",
+      "-o",
+      "0.4"
+    ],
+    "terminal": "alacritty",
+    "dropdown_term": "alacritty --class=dropdown_term",
+    "transmission": [
+      "alacritty",
+      "-o",
+      "font.size=10",
+      "--class",
+      "alacritty-transmission",
+      "-e",
+      "watch",
+      "-c",
+      "-n",
+      "1",
+      "-t",
+      "transmission.py"
+    ],
+    "update": [
+      "alacritty",
+      "-o",
+      "font.size=8",
+      "--class",
+      "qtile_yay_update",
+      "-e",
+      "sh -c 'env CARGO_TARGET_DIR=./target yay -Syyu --noconfirm'"
+    ],
+    "wallpaper": [
+      "rofi-wallpaper"
+    ]
+  },
+  "dropdown_opacity": 0.8,
+  "extension_defaults": {
+    "font": "Font Awesome 6 Free Solid",
+    "fontsize": 20,
+    "padding": 6
+  },
+  "font_size": 20,
+  "keymaps": {
+    "mod": "mod4",
+    "alt": "mod1"
+  },
+  "groups": {
+    "labels": [
+      "",
+      "",
+      "",
+      "",
+      "",
+      ""
+    ],
+    "layouts": [
+      "monadwide",
+      "max",
+      "max",
+      "max",
+      "bsp",
+      "monadthreecol"
+    ],
+    "names": [
+      "coding",
+      "www",
+      "social",
+      "settings",
+      "etc",
+      "media"
+    ],
+    "screen_affinities": [
+      2,
+      1,
+      0,
+      0,
+      1,
+      0
+    ]
+  },
+  "icon_font": "Font Awesome 6 Free Solid",
+  "icon_fontsize": 20,
+  "margin_size": 10,
+  "text_font": "CaskaydiaCove Nerd Font Mono Bold",
+  "widget_defaults": {
+    "font": "Font Awesome 6 Free Solid",
+    "fontsize": 20,
+    "padding": 6
+  }
+}
