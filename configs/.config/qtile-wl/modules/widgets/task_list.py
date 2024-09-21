@@ -15,8 +15,8 @@ margin_x = 5
 
 def task_list():
     return TaskList(
-        border=colors["darkblue"],
-        highlight_method="border",
+        border=colors["bg2"],
+        highlight_method="block",
         # rounded=False,
         # icon_only=True,
         # theme_mode="preferred",

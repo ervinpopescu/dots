@@ -5,6 +5,12 @@ from modules.settings import colors, settings
 
 
 def mouse_over_clock():
+    # return widget.Clock(
+    #     font=settings["text_font"],
+    #     fontsize=settings["font_size"],
+    #     foreground=colors["darkblue"],
+    #     format="%H:%M",
+    # )
     return MouseOverClock(
         font=settings["text_font"],
         fontsize=settings["font_size"],

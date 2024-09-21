@@ -18,4 +18,5 @@ def weather():
             "Button3": lazy.widget["weather"].force_update(),
         },
         padding=10,
+        update_interval=60,
     )

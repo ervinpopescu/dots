@@ -9,5 +9,5 @@ def battery_icon():
         scale=1.6,
         theme_path=f"{config_path}/battery-icons/",
         usemask=True,
-        update_interval=1,
+        update_interval=60,
     )

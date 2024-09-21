@@ -1,7 +1,7 @@
 from libqtile.widget.base import _Widget
 from qtile_extras import widget
 
-from extras.widgets import Battery, BtBattery, TaskList, WidgetBox
+from extras.widgets import Battery, BtBattery, WidgetBox
 from modules.decorations import decorations
 from modules.settings import colors, settings
 
@@ -19,27 +19,26 @@ from modules.widgets.powermenu import powermenu
 from modules.widgets.separators import pipe, small_spacer, stretch_spacer
 from modules.widgets.systray import systray
 from modules.widgets.task_list import task_list
-from modules.widgets.wallpaper import wallpaper
-from modules.widgets.widgetbox import widget_box
 
 # from modules.widgets.touchpad import touchpad
-# from modules.widgets.widgetbox import widget_box_1, widget_box_2
+from modules.widgets.wallpaper import wallpaper
+from modules.widgets.widgetbox import widget_box_1, widget_box_2
 
 # Constants
-MARGIN_SIZE = settings["margin_size"] // 2 - 2
+MARGIN_SIZE = settings["margin_size"] // 2
 SINGLE_DECORATION = decorations["single_decor"]  # type: ignore
 GROUP_DECORATION = decorations["group_single_decor"]  # type: ignore
 
 # Create a list of widgets for the first screen
 widgets_1: list[_Widget] = [
     os_logo(),
-    widget_box,
+    widget_box_1,
     group_box(),
     current_layout_icon(),
     task_list(),
     systray(),
     chord(),
-    # widget_box_2,
+    widget_box_2,
     github_notif(),
     # touchpad(),
     battery(),
@@ -140,7 +139,9 @@ while i < len(widgets_2):
         case "battery_icon":
             i += 1
         case "bt_battery":
-            widgets_2.insert(i, next(item for item in widgets_1 if item.name == "battery_sep"))
+            widgets_2.insert(
+                i, next(item for item in widgets_1 if item.name == "battery_sep")
+            )
             i += 2
         case "powermenu":
             break
@@ -159,7 +160,9 @@ while i < len(widgets_3):
         case "battery_icon":
             i += 1
         case "bt_battery":
-            widgets_3.insert(i, next(item for item in widgets_1 if item.name == "battery_sep"))
+            widgets_3.insert(
+                i, next(item for item in widgets_1 if item.name == "battery_sep")
+            )
             i += 2
         case "powermenu":
             break

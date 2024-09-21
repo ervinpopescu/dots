@@ -26,7 +26,7 @@
       "virtualbox"
     ]
   ],
-  "bar_height": 28,
+  "bar_height": 36,
   "cmds": {
     "blueman": [
       "blueman-manager"
