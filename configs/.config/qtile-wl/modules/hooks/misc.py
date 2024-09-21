@@ -18,9 +18,9 @@ async def change_wallpaper():
     with open(os.path.expanduser("~/.local/share/wallpaper/log")) as f:
         path = f.readlines()
     if path is not None or path.len() != 0:
-        subprocess.call(f"run_wall-wl.sh {path} all".split())
+        subprocess.call(f"run_wall_wl.sh {path} all".split())
     else:
-        subprocess.call("run_wall-wl.sh rand all".split())
+        subprocess.call("run_wall_wl.sh rand all".split())
 
 
 @hook.subscribe.client_killed

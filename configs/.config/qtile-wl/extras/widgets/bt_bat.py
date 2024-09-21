@@ -9,7 +9,7 @@ from modules.settings import colors
 
 class BtBattery(widget.GenPollText):
     defaults = [
-        ("update_interval", 1, "Update interval in seconds"),
+        ("update_interval", 60, "Update interval in seconds"),
         ("fontsize", 34, ""),
         ("foreground", colors["fg2"], ""),
     ]
@@ -22,7 +22,9 @@ class BtBattery(widget.GenPollText):
 
     def poll(self):
         data = (
-            subprocess.check_output(os.path.join(os.environ["HOME"], "bin", "bt-bat.sh"))
+            subprocess.check_output(
+                os.path.join(os.environ["HOME"], "bin", "bt-bat.sh")
+            )
             .decode("utf-8")
             .strip("\n")
         )

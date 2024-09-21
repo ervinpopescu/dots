@@ -1,7 +1,3 @@
-import os
-import subprocess
-
-import pydbus
 from libqtile.widget import base
 from psutil import sensors_battery
 from qtile_extras import widget

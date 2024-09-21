@@ -12,6 +12,7 @@ else:
 
 def os_logo():
     return widget.Image(
+        name="arch_logo",
         filename=filename,
         margin=7,
         mouse_callbacks={"Button1": lazy.spawn(settings["cmds"]["menu"])},

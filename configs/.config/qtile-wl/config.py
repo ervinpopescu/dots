@@ -75,5 +75,3 @@ wl_input_rules = {
         middle_emulation=True,
     ),
 }
-
-# xcursor theme (string or None) and size (integer) for Wayland backend

@@ -6,7 +6,7 @@ from modules.settings import colors
 
 class BatteryIcon(widget.BatteryIcon):
     defaults = (
-        ("update_interval", 1, "Update interval in seconds"),
+        ("update_interval", 60, "Update interval in seconds"),
         ("fontsize", 34, ""),
         ("foreground", colors["fg2"], ""),
     )

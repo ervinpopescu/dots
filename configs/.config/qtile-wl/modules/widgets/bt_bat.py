@@ -14,4 +14,5 @@ def bt_bat():
             "Button1": lazy.group["scratchpad"].dropdown_toggle("blueman"),
         },
         padding=5,
+        update_interval=60,
     )

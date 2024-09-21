@@ -1,7 +1,3 @@
-import os
-import subprocess
-
-import pydbus
 from libqtile.widget import base
 from psutil import sensors_battery
 from qtile_extras import widget
@@ -11,7 +7,7 @@ from modules.settings import colors
 
 class Battery(widget.GenPollText):
     defaults = [
-        ("update_interval", 1, "Update interval in seconds"),
+        ("update_interval", 60, "Update interval in seconds"),
         ("fontsize", 34, ""),
         ("foreground", colors["fg2"], ""),
     ]
