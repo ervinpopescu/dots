@@ -1,11 +1,19 @@
-from qtile_extras import widget
-
+from extras.widgets import Systray
 from modules.decorations import decorations
+from modules.settings import colors, settings
 
 
 def systray():
-    return widget.StatusNotifier(
-        icon_size=32,
-        padding=20,
+    return Systray(
+        highlight_colour=colors["bg1"],
+        icon_size=24,
+        icon_theme="Papirus-Dark",
+        menu_background=colors["bg0"],
+        menu_font=settings["text_font"],
+        menu_fontsize=15,
+        menu_icon_size=15,
+        menu_width=300,
+        opacity=0.95,
+        padding=10,
         **decorations["systray_decor"],  # type: ignore
     )

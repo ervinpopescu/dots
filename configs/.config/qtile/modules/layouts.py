@@ -36,6 +36,9 @@ layouts = [
         num_columns=2,
         **layout_defaults,
     ),
+    layout.TreeTab(
+        **layout_defaults,
+    ),
 ]
 
 floating_layout = layout.Floating(

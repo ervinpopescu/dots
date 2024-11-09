@@ -5,21 +5,23 @@ from .checkupdates import CheckUpdates
 from .cputemp import CPUTemp
 from .launchbar import LaunchBar
 from .mouseoverclock import MouseOverClock
+from .systray import Systray
 from .tasklist import TaskList
 from .uptime import Uptime
 from .weather import Weather
 from .widgetbox import WidgetBox
 
 __all__ = [
-    "CPUTemp",
-    "MouseOverClock",
-    "BtBattery",
-    "BatteryIcon",
     "Battery",
+    "BatteryIcon",
+    "BtBattery",
+    "CPUTemp",
     "CheckUpdates",
-    "Uptime",
     "LaunchBar",
+    "MouseOverClock",
+    "Systray",
     "TaskList",
+    "Uptime",
     "Weather",
     "WidgetBox",
 ]

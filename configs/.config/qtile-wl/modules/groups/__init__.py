@@ -6,21 +6,9 @@ from libqtile.config import EzKey, Group, Key
 from libqtile.lazy import lazy
 
 from extras.mutablescratch import MutableScratch
+from modules.groups.scratchpad import scratchpad
 from modules.keys import keys
 from modules.settings import config_path, settings
-from modules.groups.scratchpad import scratchpad
-
-groups = [
-    Group(
-        name=settings["groups"]["names"][i],
-        layout=settings["groups"]["layouts"][i],
-        label=settings["groups"]["labels"][i],
-        screen_affinity=settings["groups"]["screen_affinities"][i],
-        layout_opts=None,
-    )
-    for i in range(len(settings["groups"]["names"]))
-]
-groups.append(scratchpad)
 
 
 def go_to_group(name: str):
@@ -28,22 +16,26 @@ def go_to_group(name: str):
         if len(qtile.screens) == 1:
             qtile.groups_map[name].toscreen(toggle=True)
             return
-
-        if name in ["social", "settings", "media"]:
-            qtile.focus_screen(0)
-            qtile.groups_map[name].toscreen()
-        elif name in ["www", "etc"]:
-            qtile.focus_screen(1)
-            qtile.groups_map[name].toscreen()
-        elif name in ["coding"]:
-            qtile.focus_screen(2)
+        else:
+            screen = settings["groups"][name]["screen_affinity"]
+            qtile.focus_screen(screen)
             qtile.groups_map[name].toscreen()
 
     return _inner
 
 
+groups = []
 keys_to_be_inserted = []
-for i, name in enumerate(settings["groups"]["names"], 1):
+for i, name in enumerate(settings["groups"].keys(), 1):
+    groups.append(
+        Group(
+            name=name,
+            layout=settings["groups"][name]["layout"],
+            label=settings["groups"][name]["label"],
+            screen_affinity=settings["groups"][name]["screen_affinity"],
+            layout_opts=None,
+        )
+    )
     keys_to_be_inserted.extend(
         [
             Key(
@@ -61,6 +53,7 @@ for i, name in enumerate(settings["groups"]["names"], 1):
         ]
     )
 
+groups.append(scratchpad)
 keys[:0] = keys_to_be_inserted
 
 mutscr = MutableScratch()
@@ -73,12 +66,16 @@ keys.extend(
             desc="Add current window to MutableScratch",
         ),
         EzKey("M-<minus>", mutscr.toggle(), desc="Toggle MutableScratch"),
-        EzKey("M-C-<minus>", mutscr.remove(), desc="Remove window from MutableScratch"),
+        EzKey(
+            "M-C-<minus>",
+            mutscr.remove(),
+            desc="Remove window from MutableScratch",
+        ),
     ]
 )
 
 pickled_keys = jsonpickle.encode(keys)
 with open(os.path.join(config_path, "json", "keys.json"), "w") as f:
-    f.write(pickled_keys)
+    f.write(pickled_keys)  # type: ignore
 
 hook.subscribe.startup_complete(mutscr.qtile_startup)

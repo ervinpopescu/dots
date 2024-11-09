@@ -1,6 +1,3 @@
-import pathlib
-
-from libqtile import qtile
 from libqtile.config import Key
 from libqtile.lazy import lazy
 
