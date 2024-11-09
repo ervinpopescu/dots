@@ -67,7 +67,6 @@ widget_box_2 = WidgetBox(
     text_closed="",
     text_open="",
     widgets=[
-        small_spacer(length=ms),
         weather(),
         small_spacer(length=ms),
         cpu_temp(),

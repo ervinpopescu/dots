@@ -140,8 +140,8 @@ apps_keys = [
     Key(
         [settings["keymaps"]["mod"]],
         "z",
-        lazy.spawn("firefox"),
-        desc="Open Firefox",
+        lazy.spawn(settings["cmds"]["browser"]),
+        desc="Open browser",
     ),
     # Key(
     #     [settings["keymaps"]["mod"], "shift"],

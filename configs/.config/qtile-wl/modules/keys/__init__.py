@@ -2,6 +2,9 @@ from libqtile import qtile
 from libqtile.config import Key
 from libqtile.lazy import lazy
 
+from modules.hooks.alt_tab import cycle_windows
+
+# from libqtile.log_utils import logger
 from .apps import apps_keys
 from .de import de_keys
 from .layout_managing import layout_managing_keys
@@ -31,6 +34,14 @@ keys.extend(
         )
         for vt in range(1, 8)
     ]
+)
+keys.append(
+    Key(
+        ["mod1"],
+        "Tab",
+        lazy.function(cycle_windows),
+        desc="Cycle windows",
+    )
 )
 
 __all__ = ["keys"]

@@ -1,11 +1,19 @@
+import copy
+import pprint
+
+from libqtile import qtile
+from libqtile.log_utils import logger
+from libqtile.widget import SwayNC
 from libqtile.widget.base import _Widget
 from qtile_extras import widget
 
-from extras.widgets import Battery, BtBattery, WidgetBox
+from extras.widgets import Battery, BatteryIcon, BtBattery, WidgetBox
+from extras.widgets.mouseoverclock import MouseOverClock
 from modules.decorations import decorations
 from modules.settings import colors, settings
 
 # Local imports
+from modules.widgets import widgetbox
 from modules.widgets.battery import battery
 from modules.widgets.battery_icon import battery_icon
 from modules.widgets.bt_bat import bt_bat
@@ -16,7 +24,12 @@ from modules.widgets.group_box import group_box
 from modules.widgets.mouse_over_clock import mouse_over_clock
 from modules.widgets.os_logo import os_logo
 from modules.widgets.powermenu import powermenu
-from modules.widgets.separators import pipe, small_spacer, stretch_spacer
+from modules.widgets.separators import (
+    pipe,
+    small_spacer,
+    stretch_spacer,
+)
+from modules.widgets.sway_nc import sway_nc
 from modules.widgets.systray import systray
 from modules.widgets.task_list import task_list
 
@@ -36,14 +49,15 @@ widgets_1: list[_Widget] = [
     group_box(),
     current_layout_icon(),
     task_list(),
-    systray(),
     chord(),
+    systray(),
     widget_box_2,
     github_notif(),
     # touchpad(),
     battery(),
     battery_icon(),
     bt_bat(),
+    # sway_nc(),
     mouse_over_clock(),
     wallpaper(),
     powermenu(),
@@ -59,7 +73,7 @@ for w in widgets_1:
             widget.Spacer,
             widget.TaskList,
         ),
-    ):
+    ) or isinstance(w, SwayNC):
         w.decorations = SINGLE_DECORATION["decorations"]  # type: ignore
 
     if isinstance(
@@ -71,44 +85,162 @@ for w in widgets_1:
 # Duplicate widgets_1 into widgets_2 with specific conditions
 widgets_2 = []
 widgets_3 = []
-sm_spacer = small_spacer(length=MARGIN_SIZE)
-st_spacer = stretch_spacer()
-for w in widgets_1:
-    if not isinstance(
-        w,
-        (
-            WidgetBox,
-            widget.GithubNotifications,
-            widget.GroupBox,
-            widget.TaskList,
-        ),
-    ):
-        widgets_2.append(w)
-        widgets_3.append(w)
-    elif isinstance(w, widget.GroupBox):
-        gb = group_box()
-        gb.decorations = SINGLE_DECORATION["decorations"]
-        widgets_2.append(gb)
-        gb = group_box()
-        gb.decorations = SINGLE_DECORATION["decorations"]
-        widgets_3.append(gb)
-    elif isinstance(w, widget.TaskList):
-        tl = task_list()
-        widgets_2.append(tl)
-        tl = task_list()
-        widgets_3.append(tl)
+sm_spacer = small_spacer(name="sm_sp", length=MARGIN_SIZE)
+st_spacer = stretch_spacer(name="st_sp")
+
+
+def configure_widget(
+    widget,
+    fontsize_adjustment=None,
+    icon_size_adjustment=None,
+    margin_adjustment=None,
+    scale=None,
+    decorations=None,
+):
+    """Configures widget properties based on the parameters provided."""
+    if hasattr(widget, "fontsize") and fontsize_adjustment is not None:
+        if widget.fontsize is not None:
+            widget.fontsize += fontsize_adjustment
+    if hasattr(widget, "font_size") and fontsize_adjustment is not None:
+        if widget.font_size is not None:
+            widget.font_size += fontsize_adjustment
+    if hasattr(widget, "icon_size") and icon_size_adjustment is not None:
+        widget.icon_size += icon_size_adjustment
+    if hasattr(widget, "margin_y") and margin_adjustment is not None:
+        widget.margin_y += margin_adjustment
+    if scale is not None and hasattr(widget, "scale"):
+        widget.scale = scale
+    if decorations is not None:
+        widget.decorations = decorations
+    return widget
+
+
+def add_widget_to_list(
+    widget_cls,
+    widgets,
+    fontsize_adjustment=None,
+    icon_size_adjustment=None,
+    margin_adjustment=None,
+    scale=None,
+    decorations=None,
+):
+    """Creates and configures a widget and appends it to both widget lists."""
+    widget = widget_cls()
+    configure_widget(
+        widget,
+        fontsize_adjustment,
+        icon_size_adjustment,
+        margin_adjustment,
+        scale,
+        decorations,
+    )
+    widgets.append(widget)
+
+
+def create_widget_lists(adjust=True):
+    if adjust:
+        fontsize_adjustment = -5
+        icon_size_adjustment = -7
+    else:
+        fontsize_adjustment = 0
+        icon_size_adjustment = 0
+    for w in widgets_1:
+        match w:
+            case widget.GroupBox():
+                add_widget_to_list(
+                    group_box,
+                    widgets_2,
+                    fontsize_adjustment=fontsize_adjustment - 3,
+                    decorations=SINGLE_DECORATION["decorations"],
+                )
+                add_widget_to_list(
+                    group_box,
+                    widgets_3,
+                    fontsize_adjustment=fontsize_adjustment - 3,
+                    decorations=SINGLE_DECORATION["decorations"],
+                )
+            case widget.TaskList():
+                add_widget_to_list(
+                    task_list,
+                    widgets_2,
+                    fontsize_adjustment=fontsize_adjustment,
+                    margin_adjustment=-3,
+                )
+                add_widget_to_list(
+                    task_list,
+                    widgets_3,
+                    fontsize_adjustment=fontsize_adjustment,
+                    margin_adjustment=-3,
+                )
+            case widget.StatusNotifier():
+                add_widget_to_list(
+                    systray,
+                    widgets_2,
+                    icon_size_adjustment=icon_size_adjustment,
+                    decorations=SINGLE_DECORATION["decorations"],
+                )
+                add_widget_to_list(
+                    systray,
+                    widgets_3,
+                    icon_size_adjustment=icon_size_adjustment,
+                    decorations=SINGLE_DECORATION["decorations"],
+                )
+            case widget.WidgetBox():
+                continue
+            case widget.BatteryIcon():
+                add_widget_to_list(
+                    battery_icon,
+                    widgets_2,
+                    scale=0.8,
+                    decorations=GROUP_DECORATION["decorations"],
+                )
+                add_widget_to_list(
+                    battery_icon,
+                    widgets_3,
+                    scale=0.8,
+                    decorations=GROUP_DECORATION["decorations"],
+                )
+            case _:
+                # Copy and configure generic widgets
+                w2 = copy.copy(w)
+                w3 = copy.copy(w)
+
+                # Decorations based on widget type
+                if isinstance(w, (Battery, BtBattery, BatteryIcon)):
+                    decorations = GROUP_DECORATION["decorations"]
+                else:
+                    decorations = SINGLE_DECORATION["decorations"]
+
+                configure_widget(
+                    w2,
+                    fontsize_adjustment=fontsize_adjustment,
+                    decorations=decorations,
+                )
+                widgets_2.append(w2)
+                configure_widget(
+                    w3,
+                    fontsize_adjustment=fontsize_adjustment,
+                    decorations=decorations,
+                )
+                widgets_3.append(w3)
+
+
+create_widget_lists(adjust=True)
 
 # Insert Spacer widgets into widgets_1
 i = 1
 while i < len(widgets_1):
     w = widgets_1[i]
     match w.name:
-        case "systray":
-            widgets_1.insert(i, st_spacer)
-            i += 2
-        case "chord":
-            widgets_1.insert(i, st_spacer)
-            i += 2
+        # case "tasklist":
+        #     widgets_1.insert(i, st_spacer)
+        #     i += 2
+        # case "statusnotifier":
+        #     widgets_1.insert(i, st_spacer)
+        #     i += 2
+        # case "chord":
+        #     widgets_1.insert(i, sm_spacer)
+        #     i += 2
         case "battery":
             widgets_1.insert(i, sm_spacer)
             i += 2
@@ -133,14 +265,17 @@ i = 1
 while i < len(widgets_2):
     w = widgets_2[i]
     match w.name:
-        case "battery":
-            widgets_2.insert(i, st_spacer)
-            i += 2
+        # case "battery":
+        #     widgets_2.insert(i, st_spacer)
+        #     i += 2
         case "battery_icon":
             i += 1
         case "bt_battery":
             widgets_2.insert(
-                i, next(item for item in widgets_1 if item.name == "battery_sep")
+                i,
+                copy.deepcopy(
+                    next(item for item in widgets_1 if item.name == "battery_sep")
+                ),
             )
             i += 2
         case "powermenu":
@@ -149,26 +284,5 @@ while i < len(widgets_2):
             widgets_2.insert(i, sm_spacer)
             i += 2
 
-# Insert Spacer widgets into widgets_3
-i = 1
-while i < len(widgets_3):
-    w = widgets_3[i]
-    match w.name:
-        case "battery":
-            widgets_3.insert(i, st_spacer)
-            i += 2
-        case "battery_icon":
-            i += 1
-        case "bt_battery":
-            widgets_3.insert(
-                i, next(item for item in widgets_1 if item.name == "battery_sep")
-            )
-            i += 2
-        case "powermenu":
-            break
-        case _:
-            widgets_3.insert(i, sm_spacer)
-            i += 2
-
 # Define public exports
-__all__ = ["widgets_1", "widgets_2", "widgets_3"]
+__all__ = ["widgets_1", "widgets_2"]

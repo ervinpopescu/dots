@@ -1,42 +1,11 @@
 {
-  "apps": [
-    [
-      "nemo",
-      "nemo",
-      "nemo"
-    ],
-    [
-      "Alacritty",
-      "alacritty",
-      "alacritty"
-    ],
-    [
-      "vscodium",
-      "vscodium",
-      "vscodium"
-    ],
-    [
-      "firefox",
-      "firefox",
-      "firefox"
-    ],
-    [
-      "virtualbox",
-      "virtualbox",
-      "virtualbox"
-    ]
-  ],
   "bar_height": 36,
   "cmds": {
     "blueman": [
       "blueman-manager"
     ],
     "emoji": [
-      "rofi",
-      "-modes",
-      "emoji",
-      "-show",
-      "emoji"
+      "rofi -modes emoji -show emoji"
     ],
     "htop": [
       "alacritty",
@@ -83,7 +52,7 @@
     "update": [
       "alacritty",
       "-o",
-      "font.size=8",
+      "font.size=13",
       "--class",
       "qtile_yay_update",
       "-e",
@@ -91,9 +60,10 @@
     ],
     "wallpaper": [
       "rofi-wallpaper"
-    ]
+    ],
+    "browser": "firefox-developer-edition"
   },
-  "dropdown_opacity": 0.8,
+  "dropdown_opacity": 0.95,
   "extension_defaults": {
     "font": "Font Awesome 6 Free Solid",
     "fontsize": 20,
@@ -105,38 +75,36 @@
     "alt": "mod1"
   },
   "groups": {
-    "labels": [
-      "",
-      "",
-      "",
-      "",
-      "",
-      ""
-    ],
-    "layouts": [
-      "monadwide",
-      "max",
-      "max",
-      "max",
-      "bsp",
-      "monadthreecol"
-    ],
-    "names": [
-      "coding",
-      "www",
-      "social",
-      "settings",
-      "etc",
-      "media"
-    ],
-    "screen_affinities": [
-      2,
-      1,
-      0,
-      0,
-      1,
-      0
-    ]
+    "coding": {
+      "label": "",
+      "layout": "max",
+      "screen_affinity": 0
+    },
+    "www": {
+      "label": "",
+      "layout": "max",
+      "screen_affinity": 1
+    },
+    "social": {
+      "label": "",
+      "layout": "max",
+      "screen_affinity": 1
+    },
+    "settings": {
+      "label": "",
+      "layout": "max",
+      "screen_affinity": 2
+    },
+    "etc": {
+      "label": "",
+      "layout": "max",
+      "screen_affinity": 2
+    },
+    "media": {
+      "label": "",
+      "layout": "max",
+      "screen_affinity": 2
+    }
   },
   "icon_font": "Font Awesome 6 Free Solid",
   "icon_fontsize": 20,

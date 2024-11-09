@@ -1,3 +1,4 @@
+from libqtile.command.base import expose_command
 from qtile_extras import widget
 
 
@@ -21,3 +22,11 @@ class MouseOverClock(widget.Clock):
 
     def mouse_leave(self, *args):
         self.format = self.short_format
+        self.bar.draw()
+
+    @expose_command()
+    def toggle_format(self):
+        if self.format == self.long_format:
+            self.format = self.short_format
+        if self.format == self.short_format:
+            self.format = self.long_format

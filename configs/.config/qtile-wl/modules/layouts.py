@@ -5,7 +5,11 @@ from modules.settings import layout_defaults
 
 layouts = [
     layout.Bsp(**layout_defaults),  # type: ignore
-    layout.Max(margin=layout_defaults["margin"]),  # type: ignore
+    layout.Max(  # type: ignore
+        border_focus=layout_defaults["border_normal"],
+        margin=layout_defaults["margin"],
+        border_width=layout_defaults["border_width"],
+    ),
     layout.Zoomy(  # type: ignore
         margin=layout_defaults["margin"],
         columnwidth=500,
@@ -27,6 +31,8 @@ layouts = [
         max_ratio=0.95,
         min_ratio=0.01,
         margin=layout_defaults["margin"],
+        border_focus=layout_defaults["border_focus"],
+        border_normal=layout_defaults["border_normal"],
     ),
     layout.Spiral(  # type: ignore
         new_client_position="bottom",
@@ -60,13 +66,15 @@ floating_layout = layout.Floating(  # type: ignore
         Match(wm_class="confirmreset"),  # gitk
         Match(wm_class="makebranch"),  # gitk
         Match(wm_class="maketag"),  # gitk
-        Match(wm_class="lightdm-settings"),
         Match(wm_class="ssh-askpass"),  # ssh-askpass
         Match(title="branchdialog"),  # gitk
         Match(title="pinentry"),  # GPG key password entry
         Match(wm_class="Pavucontrol"),
         Match(wm_class="matplotlib"),
+        Match(wm_class="lightdm-settings"),
+        # Match(wm_class="nm-tray"),
     ],
+    no_reposition_rules=[],
     border_width=layout_defaults["border_width"],
     border_focus=layout_defaults["border_focus"],
     border_normal=layout_defaults["border_normal"],

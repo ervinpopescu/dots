@@ -12,5 +12,5 @@ def battery():
         foreground=colors["fg2"],
         mouse_callbacks={"Button1": lazy.group["scratchpad"].dropdown_toggle("htop")},
         padding=5,
-        update_interval=60,
+        update_interval=5,
     )

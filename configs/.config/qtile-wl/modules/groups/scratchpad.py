@@ -8,6 +8,20 @@ qtile: Qtile
 screen_info = qtile.core.get_screen_info()
 screen_width = min([screen_info[i].width for i in range(len(screen_info))])
 screen_height = min([screen_info[i].height for i in range(len(screen_info))])
+
+
+def add_dpi_env_to_command(command: str):
+    return " ".join(
+        [
+            "env",
+            "QT_AUTO_SCREEN_SCALE_FACTOR=0",
+            "QT_ENABLE_HIGHDPI_SCALING=0",
+            "PLASMA_USE_QT_SCALING=1",
+            command,
+        ]
+    )
+
+
 scratchpad = ScratchPad(
     name="scratchpad",
     single=True,
@@ -24,7 +38,7 @@ scratchpad = ScratchPad(
         ),
         DropDown(
             "keys",
-            "qtilekeys.py gtk",
+            add_dpi_env_to_command("qtilekeys.py gtk"),
             opacity=settings["dropdown_opacity"],
             width=1384 / screen_width,
             height=0.8,
@@ -44,7 +58,9 @@ scratchpad = ScratchPad(
         ),
         DropDown(
             "blueman",
-            settings["cmds"]["blueman"],
+            add_dpi_env_to_command(
+                " ".join(settings["cmds"]["blueman"]),
+            ),
             opacity=settings["dropdown_opacity"],
             width=1 / 2,
             height=1 / 2,
@@ -54,7 +70,7 @@ scratchpad = ScratchPad(
         ),
         DropDown(
             "pavucontrol",
-            "pavucontrol",
+            add_dpi_env_to_command("pavucontrol"),
             opacity=settings["dropdown_opacity"],
             width=1 / 2,
             height=1 / 2,
@@ -64,7 +80,7 @@ scratchpad = ScratchPad(
         ),
         DropDown(
             "files",
-            "thunar",
+            add_dpi_env_to_command("nemo"),
             opacity=settings["dropdown_opacity"],
             width=4 / 5,
             height=4 / 5,
