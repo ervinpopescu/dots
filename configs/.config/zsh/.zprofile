@@ -1,3 +1,12 @@
-if [ -z "${DISPLAY}" ] && [ "${XDG_VTNR}" -eq 1 ]; then
+if [ -z "$WAYLAND_DISPLAY" ] && [ "${XDG_VTNR}" -eq 1 ]; then
+  exec start-cosmic &
+  disown
+fi
+
+if [ -z "${DISPLAY}" ] && [ "${XDG_VTNR}" -eq 2 ]; then
   exec startx
+fi
+
+if [ -z "$WAYLAND_DISPLAY" ] && [ "$XDG_VTNR" -eq 3 ]; then
+  exec qtile start -b wayland -c ~/.config/qtile-wl/config.py
 fi

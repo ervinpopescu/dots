@@ -1,4 +1,5 @@
 # export XCURSOR_PATH=/usr/share/icons:${XDG_DATA_HOME}/icons
+export ANDROID_USER_HOME="$XDG_DATA_HOME"/android
 export CARGO_HOME="$XDG_DATA_HOME"/cargo
 export DVDCSS_CACHE="$XDG_DATA_HOME"/dvdcss
 export GDBHISTFILE="$XDG_DATA_HOME"/gdb/history
@@ -10,18 +11,27 @@ export KERAS_HOME="${XDG_DATA_HOME}/keras"
 export MATLAB_LOG_DIR="$XDG_CACHE_HOME/matlab"
 export MYCLI_HISTFILE="$XDG_DATA_HOME"/mycli_history
 export MYSQL_HISTFILE="$XDG_DATA_HOME"/mysql_history
+export NODE_REPL_HISTORY="$XDG_DATA_HOME"/node_repl_history
 export NPM_CONFIG_USERCONFIG=$XDG_CONFIG_HOME/npm/npmrc
 export NVM_DIR="$XDG_DATA_HOME"/nvm
 export OCTAVE_HISTFILE="$XDG_CACHE_HOME"/octave-hsts
 export OCTAVE_SITE_INITFILE="$XDG_CONFIG_HOME"/octave/octaverc
+export PARALLEL_HOME="$XDG_CONFIG_HOME"/parallel
 export PYTHONSTARTUP="$XDG_CONFIG_HOME"/pythonrc
+export PYTHON_HISTORY="$XDG_CACHE_HOME"/python_history
+export QT_QPA_PLATFORM=wayland
+export QT_STYLE_OVERRIDE=kvantum
 export RUSTUP_HOME="$XDG_DATA_HOME"/rustup
+export SDL_VIDEODRIVER=wayland
 export SOLARGRAPH_CACHE="$XDG_CACHE_HOME"/solargraph
 export WGETRC="$XDG_CONFIG_HOME"/wgetrc
 export WINEPREFIX="$XDG_DATA_HOME"/wine
+export XDG_CURRENT_DESKTOP=sway
+export XDG_SESSION_DESKTOP=sway
 export XINITRC="$XDG_CONFIG_HOME"/X11/xinitrc
+export ZSHZ_DATA="$XDG_DATA_HOME/z"
+export _JAVA_AWT_WM_NONREPARENTING=1
 export _JAVA_OPTIONS=-Djava.util.prefs.userRoot="$XDG_CONFIG_HOME"/java
-export _Z_DATA="$XDG_DATA_HOME/z"
 
 # disable fucking DRI2
 export LIBGL_DRI2_DISABLE=1
@@ -39,3 +49,7 @@ export BROWSER='firefox'
 export OPENSUBTITLES_API_KEY="ANqedh96HuRAYfx5up0nJwI6lg4HhjvE"
 export TF_CPP_MIN_LOG_LEVEL=2
 export TSTRUCT_TOKEN="tstruct_eyJ2ZXJzaW9uIjoxLCJkYXRhIjp7InVzZXJJRCI6MTQ0NDIxMTU1NywidXNlckVtYWlsIjoiZXJ2aW4ucG9wZXNjdTEwQGdtYWlsLmNvbSIsInRlYW1JRCI6OTg3NTM1ODgwLCJ0ZWFtTmFtZSI6ImVydmluLnBvcGVzY3UxMEBnbWFpbC5jb20ncyB0ZWFtIiwicmVuZXdhbERhdGUiOiIyMDIyLTEyLTA3VDAxOjMzOjMwLjIxNDIyMDUwMVoiLCJjcmVhdGVkQXQiOiIyMDIyLTExLTMwVDAxOjMzOjMwLjIxNDIyMzA5N1oifSwic2lnbmF0dXJlIjoiNEg1cEdxZEF1b3lYMVpUQm82eCtlMVZ0QlpqUm81S0pnZCswVU9vdHVxNmptZUNrdmJPRDk4alB6NlVoVW05TkRFOUx5V25oMlNZMnRsdXhCVnhJQWc9PSJ9"
+export DIFFPROG="nvim -d"
+if [ "$XDG_SESSION_TYPE" = "wayland" ]; then
+  export MOZ_ENABLE_WAYLAND=1
+fi

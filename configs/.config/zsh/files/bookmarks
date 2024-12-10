@@ -1,0 +1,11 @@
+b bin/
+c .config
+cq .config/qtile
+cqw .config/qtile-wl
+sc src/cloned
+scg src/cloned/github
+scgm src/cloned/github/misc
+scr src/cloned/repos
+sm src/mine
+smd src/mine/dots
+smq src/mine/qtile
