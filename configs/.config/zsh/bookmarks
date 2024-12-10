@@ -1,8 +1,0 @@
-sc src/cloned
-scg src/cloned/github
-sm src/mine
-smq src/mine/qtile
-b bin/
-c .config
-cq .config/qtile
-d src/mine/dots

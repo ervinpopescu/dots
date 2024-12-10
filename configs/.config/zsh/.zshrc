@@ -1,24 +1,19 @@
-# ~/.zshrc file for zsh interactive shells.
-# see /usr/share/doc/zsh/examples/zshrc for examples
-# shellcheck disable=all
-
-#modules
-source "$ZDOTDIR"/keys.zsh
-source "$ZDOTDIR"/opts.zsh
-source "$ZDOTDIR"/completions.zsh
-source "$ZDOTDIR"/prompt.zsh
-source "$ZDOTDIR"/command_not_found_handler.zsh
-source "$ZDOTDIR"/misc.zsh
+# source /usr/share/zsh/plugins/zsh-defer/zsh-defer.plugin.zsh
+# plugins
+source /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.plugin.zsh
+source /usr/share/zsh/plugins/zsh-z/zsh-z.plugin.zsh
 source /usr/share/nvm/init-nvm.sh
 
-#plugins
-source /usr/share/zsh/plugins/zsh-you-should-use/you-should-use.plugin.zsh
-source /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.plugin.zsh
-source /usr/share/z/z.sh
-# source /usr/share/zsh/plugins/zsh-notify/notify.plugin.zsh
-# zstyle ':notify:*' error-icon "https://media3.giphy.com/media/10ECejNtM1GyRy/200_s.gif"
-# zstyle ':notify:*' error-title "wow such #fail"
-# zstyle ':notify:*' success-icon "https://s-media-cache-ak0.pinimg.com/564x/b5/5a/18/b55a1805f5650495a74202279036ecd2.jpg"
-# zstyle ':notify:*' success-title "very #success. wow"
+# modules
+source "$ZDOTDIR/rc/keys.zsh"
+source "$ZDOTDIR/rc/opts.zsh"
+source "$ZDOTDIR/rc/completions.zsh"
+source "$ZDOTDIR/rc/prompt.zsh"
+source "$ZDOTDIR/rc/command_not_found_handler.zsh"
+source "$ZDOTDIR/rc/misc.zsh"
+source "$ZDOTDIR/rc/hooks.zsh"
+
+# zsh-abbr is special, needs to be at the end
 ABBR_TMPDIR=/tmp/zsh-abbr-user/
+ABBR_USER_ABBREVIATIONS_FILE="$ZDOTDIR"/files/abbreviations
 source /usr/share/zsh/plugins/zsh-abbr/zsh-abbr.zsh
