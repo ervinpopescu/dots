@@ -134,8 +134,17 @@
       "center": true,
       "set_size_floating": true,
       "keep_above": true,
-      "w": 200,
+      "w": 400,
       "h": 1000
+    }
+  },
+  {
+    "wm_class": null,
+    "name": "nwgbar",
+    "rules": {
+      "center": true,
+      "keep_above": true,
+      "toggle_fullscreen": true
     }
   }
 ]

@@ -4,10 +4,9 @@
   "bring_front_click": "floating_only",
   "cursor_warp": true,
   "floats_kept_above": true,
-  "follow_mouse_focus": true,
+  "follow_mouse_focus": "click_or_drag_only",
   "theme": "catppuccin",
   "wmname": "LG3D",
   "wl_xcursor_theme": "Bibata-Modern-Ice",
-  "wl_xcursor_size": 30,
-  "reconfigure_screens": true
+  "wl_xcursor_size": 30
 }

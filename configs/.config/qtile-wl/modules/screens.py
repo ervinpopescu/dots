@@ -1,5 +1,8 @@
-from libqtile import bar
+import json
+
+from libqtile import bar, hook, qtile
 from libqtile.config import Screen
+from libqtile.log_utils import logger
 
 from modules.settings import bar_bg, settings
 from modules.widgets import *  # noqa: F403
@@ -16,6 +19,24 @@ def statusbar(widgets, margin, size):
         background=bar_bg,
     )
 
+
+# @hook.subscribe.screens_reconfigured
+# def modify_screens():
+#     if len(qtile.get_screens()) == 3:
+#         # find screen with bar, probably left most one which coincidentally is
+#         # rotated
+#         screens = qtile.screens
+#         bars = [scr.bottom for scr in screens]
+#         logger.info(bars)
+#         screen_with_bar = [scr for scr in screens if scr.bottom is not None][0]
+#
+#         # laptop screen should be the primary
+#         laptop_screen = screens[2]
+#         logger.info("laptop screen: %s", laptop_screen)
+#         laptop_screen.bottom = screen_with_bar.bottom
+#         logger.info("laptop screen bottom: %s", laptop_screen.bottom)
+#         screen_with_bar.bottom = None
+#         laptop_screen.bottom.draw()
 
 screens = [
     # Screen(
@@ -35,7 +56,7 @@ screens = [
     # ),
     # Screen(
     #     bottom=statusbar(
-    #         widgets=widgets_2,  # noqa: F405
+    #         widgets=widgets_3,  # noqa: F405
     #         size=bh * 2 // 3,
     #         margin=[
     #             0,

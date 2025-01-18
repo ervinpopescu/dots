@@ -28,7 +28,7 @@ assert floating_layout
 assert keys
 assert mouse
 assert groups
-assert screens
+# assert screens
 
 with open(os.path.join(config_path, "json", "config.json")) as f:
     config = json.load(f)

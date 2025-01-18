@@ -1,34 +1,66 @@
 import os
 import subprocess
+from types import NoneType
 
+# from libqtile.command.base import expose_command
 from libqtile.widget import base
 from qtile_extras import widget
 
-from modules.settings import colors
+from modules.settings import colors, settings
 
 
 class BtBattery(widget.GenPollText):
     defaults = [
         ("update_interval", 60, "Update interval in seconds"),
-        ("fontsize", 34, ""),
+        ("fontsize", 20, ""),
         ("foreground", colors["fg2"], ""),
     ]
 
     def __init__(self, **config):
-        widget.GenPollText.__init__(self, **config)
+        base.ThreadPoolText.__init__(self, **config)
         self.add_defaults(BtBattery.defaults)
-        self.add_defaults(base.MarginMixin.defaults)
         self.add_callbacks({"Button3": self.force_update})
 
-    def poll(self):
+    def poll(self):  # type: ignore
         data = (
             subprocess.check_output(
-                os.path.join(os.environ["HOME"], "bin", "bt-bat.sh")
+                # os.path.join(os.environ["HOME"], "bin", "bt-bat.sh"),
+                os.path.join(os.environ["HOME"], "bin", "bt-bat.py"),
+                timeout=10,
             )
-            .decode("utf-8")
-            .strip("\n")
+            .decode()
+            .strip()
         )
         if data == "":
+            self.foreground = colors["fg0"]
             return ""
-        self.foreground = colors["lightgreen"] if int(data) > 10 else colors["red"]
-        return f" {data}%"
+        left: int | NoneType = None
+        right: int | NoneType = None
+        case: int | NoneType = None
+        try:
+            data = int(data)
+            self.fontsize = settings["font_size"] + 4
+            if data > 10:
+                self.foreground = colors["lightgreen"]
+            else:
+                self.foreground = colors["red"]
+        except ValueError:
+            data_list = data.split(",")  # type: ignore
+            left = int(data_list[0].replace("L:", ""))
+            right = int(data_list[1].replace("R:", ""))
+            case = int(data_list[2].replace("C:", ""))
+            if left > 10 and right > 10 and case > 30:  # type: ignore
+                self.foreground = colors["lightgreen"]
+            elif left != -1 and right != -1:
+                self.foreground = colors["red"]
+            if case == -1:
+                self.foreground = colors["lightgreen"]
+                data = data.replace(",C:-1", "")  # type: ignore
+            # else:
+            #     return ""
+        return f" {data}"
+
+    # TODO: IMPLEMENT async_force_update
+    # @expose_command()
+    def async_force_update(self):
+        self.poll()
