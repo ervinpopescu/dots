@@ -8,11 +8,11 @@ def bt_bat():
     return BtBattery(
         name="bt_battery",
         font=settings["text_font"],
-        fontsize=settings["font_size"] + 4,
+        fontsize=settings["font_size"],
         foreground=colors["fg2"],
         mouse_callbacks={
             "Button1": lazy.group["scratchpad"].dropdown_toggle("blueman"),
         },
-        padding=5,
-        update_interval=60,
+        padding=2,
+        update_interval=30,
     )

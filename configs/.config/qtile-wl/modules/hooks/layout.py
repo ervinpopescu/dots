@@ -4,6 +4,7 @@ import os
 import json5
 from libqtile import hook, qtile
 from libqtile.backend.base import Window  # type: ignore
+from libqtile.backend.wayland.layer import LayerStatic
 from libqtile.core.manager import Qtile
 from libqtile.log_utils import logger
 
@@ -31,6 +32,8 @@ def window_rules(client: Window):
             indent=2,
         ),
     )
+    if isinstance(client, LayerStatic):
+        return
 
     wm_class = client.get_wm_class()
     if wm_class:

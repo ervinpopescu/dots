@@ -10,6 +10,7 @@ from libqtile.bar import Bar
 from libqtile.core.manager import Qtile
 from libqtile.layout.floating import Floating
 from libqtile.lazy import lazy
+from libqtile.log_utils import logger
 
 from modules.settings import settings
 
@@ -36,7 +37,16 @@ def window_to_next_group(qtile: Qtile):
 
 @lazy.function
 def switch_win_in_group(qtile: Qtile):
-    qtile.current_group.focus_back()
+    focus_history = [
+        win for win in qtile.current_group.focus_history if win.name != "qalttab"
+    ]
+    logger.info(focus_history)
+    try:
+        win = focus_history[-2]
+    except IndexError:
+        pass
+    else:
+        qtile.current_group.focus(win)
 
 
 @lazy.function

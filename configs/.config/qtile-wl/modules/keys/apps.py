@@ -61,6 +61,12 @@ apps_keys = [
     ),
     Key(
         [settings["keymaps"]["mod"]],
+        "l",
+        lazy.spawn(settings["cmds"]["lock"]),
+        desc="Open session locker",
+    ),
+    Key(
+        [settings["keymaps"]["mod"]],
         "Return",
         lazy.spawn(settings["cmds"]["terminal"]),
         desc=f"Open {settings['cmds']['terminal']}",
@@ -86,7 +92,7 @@ apps_keys = [
     Key(
         [settings["keymaps"]["mod"]],
         "b",
-        lazy.spawn("boomer"),
+        lazy.spawn("woomer"),
         desc="Open boomer - a zooming app",
     ),
     Key(

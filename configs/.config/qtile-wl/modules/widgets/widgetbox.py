@@ -15,6 +15,8 @@ from .weather import weather
 ms = settings["margin_size"] // 2
 decor = decorations["single_decor"]  # type: ignore
 group_decor = decorations["group_single_decor"]  # type: ignore
+sm_spacer = small_spacer(length=ms)
+
 # widget_box = WidgetBox(
 #     name="first_widgetbox",
 #     fontsize=40,
@@ -51,9 +53,9 @@ widget_box_1 = WidgetBox(
     text_closed="",
     text_open="",
     widgets=[
-        small_spacer(length=ms),
+        sm_spacer,
         check_updates(),
-        small_spacer(length=ms),
+        sm_spacer,
         uptime(),
     ],
 )
@@ -68,12 +70,12 @@ widget_box_2 = WidgetBox(
     text_open="",
     widgets=[
         weather(),
-        small_spacer(length=ms),
+        sm_spacer,
         cpu_temp(),
-        small_spacer(length=ms),
+        sm_spacer,
         kbd_layout(),
         kbd_layout_icon(),
-        small_spacer(length=ms),
+        sm_spacer,
     ],
 )
 

@@ -8,6 +8,10 @@ from modules.functions import (
     set_layout_current,
     toggle_gaps,
 )
+from modules.hooks.alt_tab import (
+    save_focus_history,
+    # load_focus_history,
+)
 from modules.settings import config_path, settings
 
 qtile_keys = [
@@ -20,8 +24,10 @@ qtile_keys = [
     Key(
         [settings["keymaps"]["mod"]],
         "r",
+        lazy.function(save_focus_history),
         lazy.reload_config(),
         lazy.spawn(f"{config_path}/scripts/set_spotify_size.py"),
+        # lazy.function(load_focus_history),
         # lazy.hide_show_bar("bottom"),
         desc="Reload qtile config",
     ),
@@ -37,12 +43,6 @@ qtile_keys = [
         "q",
         lazy.shutdown(),
         desc="Shutdown qtile",
-    ),
-    Key(
-        [settings["keymaps"]["mod"]],
-        "l",
-        lazy.spawn("betterlockscreen -l dimblur --span"),
-        desc="Lock screen",
     ),
     Key(
         [settings["keymaps"]["mod"], "shift"],

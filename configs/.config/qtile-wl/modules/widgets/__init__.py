@@ -1,19 +1,25 @@
 import copy
-import pprint
 
-from libqtile import qtile
-from libqtile.log_utils import logger
+# import pprint
+# from libqtile import qtile
+# from libqtile.log_utils import logger
 from libqtile.widget import SwayNC
 from libqtile.widget.base import _Widget
 from qtile_extras import widget
 
-from extras.widgets import Battery, BatteryIcon, BtBattery, WidgetBox
-from extras.widgets.mouseoverclock import MouseOverClock
+from extras.widgets import (
+    Battery,
+    BatteryIcon,
+    BtBattery,
+    # WidgetBox,
+)
+
+# from extras.widgets.mouseoverclock import MouseOverClock
 from modules.decorations import decorations
 from modules.settings import colors, settings
 
 # Local imports
-from modules.widgets import widgetbox
+# from modules.widgets import widgetbox
 from modules.widgets.battery import battery
 from modules.widgets.battery_icon import battery_icon
 from modules.widgets.bt_bat import bt_bat
@@ -29,7 +35,8 @@ from modules.widgets.separators import (
     small_spacer,
     stretch_spacer,
 )
-from modules.widgets.sway_nc import sway_nc
+
+# from modules.widgets.sway_nc import sway_nc
 from modules.widgets.systray import systray
 from modules.widgets.task_list import task_list
 
@@ -56,7 +63,7 @@ widgets_1: list[_Widget] = [
     # touchpad(),
     battery(),
     battery_icon(),
-    bt_bat(),
+    # bt_bat(),
     # sway_nc(),
     mouse_over_clock(),
     wallpaper(),
@@ -70,6 +77,7 @@ for w in widgets_1:
         (
             Battery,
             widget.BatteryIcon,
+            BtBattery,
             widget.Spacer,
             widget.TaskList,
         ),
@@ -284,5 +292,28 @@ while i < len(widgets_2):
             widgets_2.insert(i, sm_spacer)
             i += 2
 
+# Insert Spacer widgets into widgets_3
+i = 1
+while i < len(widgets_3):
+    w = widgets_3[i]
+    match w.name:
+        # case "battery":
+        #     widgets_3.insert(i, st_spacer)
+        #     i += 2
+        case "battery_icon":
+            i += 1
+        case "bt_battery":
+            widgets_3.insert(
+                i,
+                copy.deepcopy(
+                    next(item for item in widgets_1 if item.name == "battery_sep")
+                ),
+            )
+            i += 2
+        case "powermenu":
+            break
+        case _:
+            widgets_3.insert(i, sm_spacer)
+            i += 2
 # Define public exports
-__all__ = ["widgets_1", "widgets_2"]
+__all__ = ["widgets_1", "widgets_2", "widgets_3"]

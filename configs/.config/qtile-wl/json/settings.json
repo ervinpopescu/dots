@@ -61,7 +61,10 @@
     "wallpaper": [
       "rofi-wallpaper"
     ],
-    "browser": "firefox-developer-edition"
+    "browser": "firefox-developer-edition",
+    "lock": [
+      "swaylock"
+    ]
   },
   "dropdown_opacity": 0.95,
   "extension_defaults": {
