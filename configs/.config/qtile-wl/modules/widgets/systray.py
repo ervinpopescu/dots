@@ -12,7 +12,7 @@ def systray():
         menu_font=settings["text_font"],
         menu_fontsize=15,
         menu_icon_size=15,
-        menu_width=300,
+        menu_width=500,
         opacity=0.95,
         padding=10,
         **decorations["systray_decor"],  # type: ignore

@@ -3,7 +3,7 @@ import os
 import pathlib
 from os import path
 
-import notify2
+# import notify2
 from libqtile import qtile
 from libqtile.core.manager import Qtile
 
@@ -27,7 +27,7 @@ def load_theme():
         return json.load(f)
 
 
-notify2.init("qtile config")
+# notify2.init("qtile config")
 qtile: Qtile
 qtile_info = qtile.qtile_info()
 if len(qtile_info) != 0:

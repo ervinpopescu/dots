@@ -57,6 +57,7 @@ de_keys = [
         [],
         "XF86AudioPlay",
         lazy.spawn("/home/ervin/bin/mediactl.sh play"),
+        lazy.spawn("/home/ervin/bin/mediactl.sh play-pause"),  # Airpods...
         desc="Play/pause media",
     ),
     Key(
