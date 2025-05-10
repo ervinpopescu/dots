@@ -25,4 +25,4 @@ export LESS_TERMCAP_se=$'\E[0m'     # reset reverse video
 export LESS_TERMCAP_us=$'\E[1;32m'  # begin underline
 export LESS_TERMCAP_ue=$'\E[0m'     # reset underline
 
-[[ "$(tmux display-message -p '#S')" == "archnet" ]] && ssh ervin@archnet
+[[ "$(tmux display-message -p '#S')" == "archnet" ]] && ssh ervin@archen.home.ro -p 8922

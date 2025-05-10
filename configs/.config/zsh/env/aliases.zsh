@@ -17,7 +17,7 @@ alias feh="feh -d --edit --scale-down --auto-zoom -e yudit/23 -M yudit/23"
 alias fgrep='fgrep --color=auto'
 alias ff='freshfetch; printf "\n\n\n\n\n\n\n\n\\n\n\n\n\n\n\n\n\n\n"'
 alias gdb="gdb -q"
-alias grep='grep --color=auto'
+alias grep='rg --color=auto'
 alias ip='ip --color=auto'
 alias jess="jq -C | less -r"
 alias less='less -f -r'

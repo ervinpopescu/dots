@@ -3,9 +3,9 @@ if [ -z "$WAYLAND_DISPLAY" ] && [ "${XDG_VTNR}" -eq 1 ]; then
   disown
 fi
 
-if [ -z "${DISPLAY}" ] && [ "${XDG_VTNR}" -eq 2 ]; then
-  exec startx
-fi
+# if [ -z "${DISPLAY}" ] && [ "${XDG_VTNR}" -eq 2 ]; then
+#   exec startx
+# fi
 
 if [ -z "$WAYLAND_DISPLAY" ] && [ "$XDG_VTNR" -eq 3 ]; then
   exec qtile start -b wayland -c ~/.config/qtile-wl/config.py
