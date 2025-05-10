@@ -1,0 +1,128 @@
+unbind-key C-b
+set-option -g prefix C-Space
+
+# set-option -a terminal-overrides ",alacritty:RGB"
+set-option -as terminal-features ",alacritty*:RGB"
+set-option -g default-shell /bin/zsh
+set-option -g history-limit 50000
+set-option -g mouse on
+set-option -g set-titles on
+set-option -g set-titles-string "#S | #W"
+set-option default-terminal "tmux-256color"
+
+# Start windows and panes at 1, not 0
+set-option -g base-index 1
+set-option -g pane-base-index 1
+set-window-option -g pane-base-index 1
+set-option -g renumber-windows on
+
+bind-key r source-file ~/.config/tmux/tmux.conf
+
+# Vim style pane selection
+bind-key h select-pane -L
+bind-key j select-pane -D
+bind-key k select-pane -U
+bind-key l select-pane -R
+
+# Use Alt-arrow keys without prefix key to switch panes
+bind-key -n M-Left select-pane -L
+bind-key -n M-Right select-pane -R
+bind-key -n M-Up select-pane -U
+bind-key -n M-Down select-pane -D
+
+# Shift arrow to switch windows
+bind-key -n S-Left  previous-window
+bind-key -n S-Right next-window
+
+# Shift Alt vim keys to switch windows
+bind-key -n M-H previous-window
+bind-key -n M-L next-window
+
+# # set-option vi-mode
+# set-window-option -g mode-keys vi
+# # keybindings
+# bind-key -T copy-mode-vi v send-keys -X begin-selection
+# bind-key -T copy-mode-vi C-v send-keys -X rectangle-toggle
+# bind-key -T copy-mode-vi y send-keys -X copy-selection-and-cancel
+
+# bind-key '-' split-window -v -c "#{pane_current_path}"
+# bind-key '|' split-window -h -c "#{pane_current_path}"
+
+bind-key -n C-k clearhist
+
+bind-key c new-window -c "#{pane_current_path}"
+bind-key '"' split-window -c "#{pane_current_path}"
+bind-key % split-window -h -c "#{pane_current_path}"
+
+bind-key s choose-tree -s -O name -Z
+bind-key -n C-Tab last-window
+
+############ PLUGINS CONFIG ############
+
+set-option -g @plugin 'tmux-plugins/tpm'
+
+#### THEMING ####
+
+set-option -g @plugin 'catppuccin/tmux'
+set-option -g @plugin 'tmux-plugins/tmux-battery'
+set-option -g @plugin 'tmux-plugins/tmux-cpu'
+
+set-option -g @catppuccin_flavour 'mocha'
+
+set-option -g @catppuccin_window_left_separator " "
+set-option -g @catppuccin_window_right_separator ""
+set-option -g @catppuccin_window_left_separator_inverse "yes"
+set-option -g @catppuccin_window_right_separator_inverse "no"
+set-option -g @catppuccin_window_connect_separator "yes"
+set-option -g @catppuccin_window_middle_separator " | "
+set-option -g @catppuccin_window_number_position "left"
+set-option -g @catppuccin_window_default_fill "all"
+set-option -g @catppuccin_window_current_fill "all"
+set-option -g @catppuccin_window_default_text "#W "
+set-option -g @catppuccin_window_current_text "#W "
+
+set-option -g @catppuccin_status_left_separator  ""
+set-option -g @catppuccin_status_left_separator_inverse "no"
+set-option -g @catppuccin_status_right_separator ""
+set-option -g @catppuccin_status_right_separator_inverse "yes"
+set-option -g @catppuccin_status_connect_separator "no"
+set-option -g @catppuccin_status_fill "all"
+set-option -g @catppuccin_status_modules_left ""
+set-option -g @catppuccin_status_modules_right "application session battery date_time"
+
+set-option -g @catppuccin_application_text "#{pane_current_command}"
+set-option -g @catppuccin_date_time_text "%Y-%m-%d %H:%M"
+
+#### SMART WINDOW NAMES ####
+
+set-option -g @plugin 'ofirgall/tmux-window-name'
+set-option -g @tmux_window_dir_programs "['nvim', 'vim', 'vi', 'git']"
+set-option -g @tmux_window_name_max_name_len "40"
+set-option -g @tmux_window_name_use_tilde "True"
+set-option -g @tmux_window_name_substitute_sets "[('.+ipython([32])', 'ipython\g<1>'), ('^(/usr)?/bin/(.+)', '\g<2>'), ('(bash) (.+)/(.+[ $])(.+)', '\g<3>\g<4>'), ('/home/ervin/.config', 'c')]"
+
+#### RESTORE SESSION ####
+
+set-option -g @plugin 'tmux-plugins/tmux-resurrect'
+set-option -g @plugin 'tmux-plugins/tmux-continuum'
+set-option -g @continuum-restore 'on'
+
+#### CONFIG AUTO-RELOAD ####
+
+set-option -g @plugin 'b0o/tmux-autoreload'
+
+#### SENSIBLE SETTINGS ####
+
+set-option -g @plugin 'tmux-plugins/tmux-sensible'
+
+#### FZF ####
+
+set-option -g @plugin 'sainnhe/tmux-fzf'
+
+#####################################################
+
+set-option -g @plugin 'tmux-plugins/tmux-open'
+
+#####################################################
+
+run '~/.config/tmux/plugins/tpm/tpm'
