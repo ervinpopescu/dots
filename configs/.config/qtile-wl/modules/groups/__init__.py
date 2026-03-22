@@ -52,8 +52,8 @@ for i, name in enumerate(settings["groups"].keys(), 1):
             ),
         ]
     )
-
 groups.append(scratchpad)
+
 keys[:0] = keys_to_be_inserted
 
 mutscr = MutableScratch()

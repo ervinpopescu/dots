@@ -1,5 +1,6 @@
-import subprocess
 import shutil
+import subprocess
+
 from qtile_extras import widget
 
 from modules.settings import colors
@@ -34,4 +35,5 @@ class CheckUpdates(widget.GenPollText):
     def poll(self):
         data = chkup()
         self.foreground = colors["lightgreen"] if data == "0" else colors["red"]
+        # self._configure(self.bar.qtile, self.bar)
         return data

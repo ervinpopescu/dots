@@ -1,5 +1,14 @@
 {
   "0": [
+    "brave-browser",
+    "firefox",
+    "firefox-developer-edition",
+    "chromium",
+    "google-chrome-beta",
+    "qbittorrent",
+    "transmission-qt"
+  ],
+  "1": [
     "Alacritty",
     "atom",
     "brackets",
@@ -16,15 +25,6 @@
     "terminator",
     "vscodium",
     "matplotlib"
-  ],
-  "1": [
-    "brave-browser",
-    "firefox",
-    "firefox-developer-edition",
-    "chromium",
-    "google-chrome-beta",
-    "qbittorrent",
-    "transmission-qt"
   ],
   "2": [
     "ferdium",

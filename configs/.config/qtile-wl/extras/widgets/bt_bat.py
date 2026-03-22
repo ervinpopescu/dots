@@ -58,6 +58,9 @@ class BtBattery(widget.GenPollText):
                 data = data.replace(",C:-1", "")  # type: ignore
             # else:
             #     return ""
+
+        # self._configure(self.bar.qtile, self.bar)
+
         return f" {data}"
 
     # TODO: IMPLEMENT async_force_update

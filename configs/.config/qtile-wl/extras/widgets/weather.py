@@ -34,4 +34,5 @@ class Weather(OpenWeather):
             self.foreground = colors["yellow"]
         else:
             self.foreground = colors["lightblue"]
+        self.draw()
         return self.format.format(**data)

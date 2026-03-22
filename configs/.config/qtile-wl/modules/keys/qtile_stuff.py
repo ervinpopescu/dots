@@ -8,11 +8,8 @@ from modules.functions import (
     set_layout_current,
     toggle_gaps,
 )
-from modules.hooks.alt_tab import (
-    save_focus_history,
-    # load_focus_history,
-)
 from modules.settings import config_path, settings
+from modules.widget_names import WIDGETBOX_1, WIDGETBOX_2
 
 qtile_keys = [
     Key(
@@ -24,11 +21,8 @@ qtile_keys = [
     Key(
         [settings["keymaps"]["mod"]],
         "r",
-        lazy.function(save_focus_history),
         lazy.reload_config(),
         lazy.spawn(f"{config_path}/scripts/set_spotify_size.py"),
-        # lazy.function(load_focus_history),
-        # lazy.hide_show_bar("bottom"),
         desc="Reload qtile config",
     ),
     Key(
@@ -54,8 +48,8 @@ qtile_keys = [
         [settings["keymaps"]["mod"], "shift"],
         "x",
         # lazy.widget["widgetbox"].toggle(),
-        lazy.widget["first_widgetbox"].toggle(),
-        lazy.widget["second_widgetbox"].toggle(),
+        lazy.widget[WIDGETBOX_1].toggle(),
+        lazy.widget[WIDGETBOX_2].toggle(),
         desc="Toggle WidgetBoxesk",
     ),
     Key(

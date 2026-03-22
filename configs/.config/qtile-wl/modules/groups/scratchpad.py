@@ -5,9 +5,22 @@ from libqtile.core.manager import Qtile
 from modules.settings import settings
 
 qtile: Qtile
-screen_info = qtile.core.get_screen_info()
-screen_width = min([screen_info[i].width for i in range(len(screen_info))])
-screen_height = min([screen_info[i].height for i in range(len(screen_info))])
+
+
+def fullscreen_dropdown_geometry():
+    try:
+        screen_info = qtile.core.get_output_info()
+        w = min(screen_info[i].rect.width for i in range(len(screen_info)))
+        h = min(screen_info[i].rect.height for i in range(len(screen_info)))
+    except AttributeError:
+        w, h = 1920, 1080
+    ms = settings["margin_size"]
+    return dict(
+        width=1 - 2 * ms / w - 0.05,
+        height=1 - 2 * ms / h - 0.05,
+        x=ms / w + 0.025,
+        y=ms / h + 0.025,
+    )
 
 
 def add_dpi_env_to_command(command: str):
@@ -30,30 +43,24 @@ scratchpad = ScratchPad(
             "term",
             settings["cmds"]["dropdown_term"],
             opacity=settings["dropdown_opacity"],
-            width=1 - 2 * settings["margin_size"] / screen_width - 0.05,
-            height=1 - 2 * settings["margin_size"] / screen_height - 0.05,
-            x=settings["margin_size"] / screen_width + 0.025,
-            y=settings["margin_size"] / screen_height + 0.025,
+            **fullscreen_dropdown_geometry(),
             on_focus_lost_hide=False,
         ),
         DropDown(
             "keys",
             add_dpi_env_to_command("qtilekeys.py gtk"),
             opacity=settings["dropdown_opacity"],
-            width=1384 / screen_width,
-            height=0.8,
-            x=(1 - 1384 / screen_width) / 2,
-            y=0.1,
+            width=1 / 2,
+            height=1 / 2,
+            x=1 / 4,
+            y=1 / 4,
             on_focus_lost_hide=False,
         ),
         DropDown(
             "htop",
             settings["cmds"]["htop"],
             opacity=settings["dropdown_opacity"],
-            width=1 - 2 * settings["margin_size"] / screen_width - 0.05,
-            height=1 - 2 * settings["margin_size"] / screen_height - 0.05,
-            x=settings["margin_size"] / screen_width + 0.025,
-            y=settings["margin_size"] / screen_height + 0.025,
+            **fullscreen_dropdown_geometry(),
             on_focus_lost_hide=False,
         ),
         DropDown(
@@ -90,12 +97,19 @@ scratchpad = ScratchPad(
         ),
         DropDown(
             "update",
-            " ".join(settings["cmds"]["update"]),
+            settings["cmds"]["update"],
             opacity=settings["dropdown_opacity"],
-            width=1 - 2 * settings["margin_size"] / screen_width - 0.05,
-            height=1 - 2 * settings["margin_size"] / screen_height - 0.05,
-            x=settings["margin_size"] / screen_width + 0.025,
-            y=settings["margin_size"] / screen_height + 0.025,
+            **fullscreen_dropdown_geometry(),
+            on_focus_lost_hide=False,
+        ),
+        DropDown(
+            "spotify",
+            "spotify",
+            opacity=settings["dropdown_opacity"],
+            width=1 / 2,
+            height=1 / 2,
+            x=1 / 4,
+            y=1 / 4,
             on_focus_lost_hide=False,
         ),
     ],

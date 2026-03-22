@@ -13,7 +13,6 @@ layouts = [
     layout.Zoomy(  # type: ignore
         margin=layout_defaults["margin"],
         columnwidth=500,
-        property_small="1.0",
     ),
     layout.MonadWide(  # type: ignore
         max_ratio=0.95,
@@ -62,6 +61,7 @@ floating_layout = layout.Floating(  # type: ignore
         Match(wm_class="toolbar"),
         Match(func=lambda c: c.has_fixed_size()),
         Match(func=lambda c: c.has_fixed_ratio()),
+        Match(func=lambda c: bool(c.is_transient_for())),
         Match(wm_class="flameshot"),
         Match(wm_class="confirmreset"),  # gitk
         Match(wm_class="makebranch"),  # gitk
@@ -72,9 +72,18 @@ floating_layout = layout.Floating(  # type: ignore
         Match(wm_class="Pavucontrol"),
         Match(wm_class="matplotlib"),
         Match(wm_class="lightdm-settings"),
+        Match(wm_class="me.kavishdevar.librepods"),
         # Match(wm_class="nm-tray"),
+        # Match(
+        #     func=lambda c: c.name.startswith("Figure") and c.wm_class == "MATLABWindow"
+        # ),
     ],
-    no_reposition_rules=[],
+    no_reposition_rules=[
+        # Match(wm_class="me.kavishdevar.librepods"),
+        # Match(
+        #     func=lambda c: c.name.startswith("Figure") and c.wm_class == "MATLABWindow"
+        # ),
+    ],
     border_width=layout_defaults["border_width"],
     border_focus=layout_defaults["border_focus"],
     border_normal=layout_defaults["border_normal"],

@@ -15,7 +15,7 @@ layouts_keys = [
     Key(
         [settings["keymaps"]["mod"], "control"],
         "Left",
-        lazy.layout.shrink().when(layout=["monadwide", "monadtall" or "monadthreecol"]),
+        lazy.layout.shrink().when(layout=["monadwide", "monadtall", "monadthreecol"]),
         lazy.layout.grow_left().when(layout=["bsp", "columns"]),
         lazy.layout.decrease_ratio().when(layout="spiral"),
         desc="Shrink (monad*) || Grow left (bsp&col) || Decrease ratio (spiral)",

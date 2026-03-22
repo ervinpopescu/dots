@@ -17,33 +17,6 @@ decor = decorations["single_decor"]  # type: ignore
 group_decor = decorations["group_single_decor"]  # type: ignore
 sm_spacer = small_spacer(length=ms)
 
-# widget_box = WidgetBox(
-#     name="first_widgetbox",
-#     fontsize=40,
-#     foreground=colors["darkblue"],
-#     padding=10,
-#     # start_opened=True,
-#     text_closed="",
-#     text_open="",
-#     widgets=[
-#         small_spacer(length=ms),
-#         weather(),
-#         small_spacer(length=ms),
-#         cpu_temp(),
-#         small_spacer(length=ms),
-#         kbd_layout(),
-#         kbd_layout_icon(),
-#         small_spacer(length=ms),
-#         uptime(),
-#     ],
-# )
-#
-# for w in widget_box.widgets:
-#     if not isinstance(w, (widget.Spacer, widget.TextBox, widget.KeyboardLayout)):
-#         w.decorations = decor["decorations"]
-#     if isinstance(w, (widget.TextBox, widget.KeyboardLayout)):
-#         w.decorations = group_decor["decorations"]
-
 widget_box_1 = WidgetBox(
     name="first_widgetbox",
     fontsize=25,

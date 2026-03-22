@@ -55,8 +55,14 @@ apps_keys = [
                 lazy.group["scratchpad"].dropdown_toggle("update"),
                 desc="Open update dropdown",
             ),
+            Key(
+                [],
+                "m",
+                lazy.group["scratchpad"].dropdown_toggle("spotify"),
+                desc="Open spotify dropdown",
+            ),
         ],
-        name="settings",
+        name="scratchpads",
         mode=False,
     ),
     Key(
@@ -83,12 +89,6 @@ apps_keys = [
         lazy.spawn(settings["cmds"]["menu"]),
         desc="Open rofi application menu",
     ),
-    # Key(
-    #     [settings["keymaps"]["mod"]],
-    #     "b",
-    #     lazy.spawn("/home/ervin/bin/bookmarks.py"),
-    #     desc="Open bookmarks",
-    # ),
     Key(
         [settings["keymaps"]["mod"]],
         "b",
@@ -98,7 +98,7 @@ apps_keys = [
     Key(
         [settings["keymaps"]["mod"]],
         "c",
-        lazy.spawn("/home/ervin/.config/conky/start_qtile.sh -n"),
+        lazy.spawn(os.path.expanduser("~/.config/conky/start_qtile.sh -n")),
         desc="Open conky",
     ),
     Key(
@@ -110,7 +110,7 @@ apps_keys = [
     Key(
         [settings["keymaps"]["mod"]],
         "m",
-        lazy.spawn("/home/ervin/bin/start-spotify.py"),
+        lazy.spawn(os.path.expanduser("~/bin/start-spotify.py")),
         desc="Start Spotify (and/or GLava)",
     ),
     Key(
@@ -119,24 +119,12 @@ apps_keys = [
         lazy.spawn("alacritty -e zsh -c lf"),
         desc="Open TUI file manager (lf)",
     ),
-    # Key(
-    #     [settings["keymaps"]["mod"]],
-    #     "p",
-    #     lazy.spawn("nwggrid -b 0e1e2eef -f -n 32"),
-    #     desc="Open nwggrid application menu",
-    # ),
     Key(
         [settings["keymaps"]["mod"]],
         "t",
         lazy.group["scratchpad"].dropdown_toggle("term"),
         desc="Toggle terminal scratchpad",
     ),
-    # Key(
-    #     [settings["keymaps"]["mod"]],
-    #     "u",
-    #     lazy.spawn(settings["cmds"]["update"]),
-    #     desc="Update system",
-    # ),
     Key(
         [settings["keymaps"]["mod"]],
         "x",
@@ -149,12 +137,6 @@ apps_keys = [
         lazy.spawn(settings["cmds"]["browser"]),
         desc="Open browser",
     ),
-    # Key(
-    #     [settings["keymaps"]["mod"], "shift"],
-    #     "i",
-    #     lazy.spawn("/home/ervin/bin/bookmarkthis.py"),
-    #     desc="Add bookmark",
-    # ),
     Key(
         [settings["keymaps"]["mod"], "shift"],
         "j",

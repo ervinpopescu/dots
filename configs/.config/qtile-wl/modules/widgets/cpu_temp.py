@@ -11,5 +11,5 @@ def cpu_temp():
         fmt="🌡️{}",
         mouse_callbacks={"Button1": lazy.group["scratchpad"].dropdown_toggle("htop")},
         padding=10,
-        update_interval=60,
+        update_interval=5,
     )

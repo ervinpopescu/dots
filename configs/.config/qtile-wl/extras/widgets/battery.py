@@ -7,7 +7,7 @@ from modules.settings import colors
 
 class Battery(widget.GenPollText):
     defaults = [
-        ("update_interval", 60, "Update interval in seconds"),
+        ("update_interval", 5, "Update interval in seconds"),
         ("fontsize", 34, ""),
         ("foreground", colors["fg2"], ""),
     ]
@@ -25,4 +25,5 @@ class Battery(widget.GenPollText):
             return "You need a poll function"
         data = self.func()
         self.foreground = colors["lightgreen"] if data > 10 else colors["red"]
+        # self._configure(self.bar.qtile, self.bar)
         return f"{data}%"

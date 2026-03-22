@@ -15,15 +15,15 @@ windows_and_groups_keys = [
     Key(
         [settings["keymaps"]["mod"]],
         "Up",
-        # lazy.group.next_window(),
-        switch_win_in_group(),
+        lazy.group.next_window(),
+        # switch_win_in_group(),
         desc="Next window in group",
     ),
     Key(
         [settings["keymaps"]["mod"]],
         "Down",
-        # lazy.group.prev_window(),
-        switch_win_in_group(),
+        lazy.group.prev_window(),
+        # switch_win_in_group(),
         desc="Previous window in group",
     ),
     Key(

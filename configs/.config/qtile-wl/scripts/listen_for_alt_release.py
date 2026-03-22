@@ -28,7 +28,12 @@ def listen_for_alt_release():
                     break
                 decoded_line = line.decode("utf-8").strip()
 
-                if "KEY_LEFTALT" in decoded_line and "released" in decoded_line:
+                if (
+                    any(
+                        word in decoded_line for word in ["KEY_LEFTALT", "KEY_RIGHTALT"]
+                    )
+                    and "released" in decoded_line
+                ):
                     notify_qtile()
     except KeyboardInterrupt:
         process.terminate()

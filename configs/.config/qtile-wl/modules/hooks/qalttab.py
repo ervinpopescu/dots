@@ -1,10 +1,10 @@
-import asyncio
+# import asyncio
 import json
 import os
 
 from libqtile import hook, qtile
 from libqtile.backend.base.window import Window
-from libqtile.backend.wayland.layer import LayerStatic
+
 from libqtile.ipc import Client
 from libqtile.log_utils import logger
 from libqtile.utils import create_task, get_cache_dir
@@ -21,32 +21,6 @@ reloaded = False
 CACHE_DIR = get_cache_dir()
 SOCKET_PATH = os.path.join(CACHE_DIR, "qalttab.wayland-0")
 SAVED_HISTORY_PATH = os.path.join(config_path, "json", "focus_history.json")
-
-# @hook.subscribe.user("ask_for_focus_history")  # type: ignore
-# def ask_for_focus_history():
-#     if os.path.exists(SOCKET_PATH):
-#         client = Client(socket_path=SOCKET_PATH, is_json=True)
-#         create_task(
-#             client.async_send(
-#                 {
-#                     "message_type": "client_focus",
-#                     "windows": [
-#                         {
-#                             "class": win.get_wm_class()[0]  # type: ignore
-#                             if win.get_wm_class() is not None
-#                             else "not set",
-#                             "id": str(win.wid),
-#                             "name": win.name,
-#                             "group_name": win.group.name,  # type: ignore
-#                             "group_label": win.group.label,  # type: ignore
-#                         }
-#                         for win in focus_history
-#                     ],
-#                 }
-#             )
-#         ).add_done_callback(check_response)
-#     return
-
 
 def save_focus_history(qtile):
     global message
@@ -108,15 +82,14 @@ def record_focus(window):
     logger.debug(focus_index)
     logger.debug(last_focused_index)
 
-    if not isinstance(window, LayerStatic):
-        if (
-            window.group
-            and window.group.name not in excluded_focus_history
-            and window.name not in excluded_focus_history
-        ):
-            if window in focus_history:
-                focus_history.remove(window)
-            focus_history.insert(0, window)
+    if (
+        window.group
+        and window.group.name not in excluded_focus_history
+        and not any(ex in window.name for ex in excluded_focus_history)
+    ):
+        if window in focus_history:
+            focus_history.remove(window)
+        focus_history.insert(0, window)
 
     if not reloaded:
         message = {
@@ -136,7 +109,7 @@ def record_focus(window):
         }
 
         # write focus_history to qalttab socket
-        if os.path.exists(SOCKET_PATH) and window.name not in excluded_focus_history:
+        if os.path.exists(SOCKET_PATH) and not any(ex in window.name for ex in excluded_focus_history):
             client = Client(socket_path=SOCKET_PATH, is_json=True)
             create_task(
                 client.async_send(message),
@@ -194,7 +167,7 @@ def cycle_windows(qtile):
         focus_index = (focus_index + 1) % len(focus_history)
         next_window = focus_history[focus_index]
 
-    qtile.current_screen.set_group(next_window.group)
+    # qtile.current_screen.set_group(next_window.group)
     next_window.group.focus(next_window, warp=False)  # type: ignore
     next_window.bring_to_front()  # To get a scratchpad possibly hidden behind a newly maximized window.
 
@@ -217,7 +190,7 @@ def cycle_windows(qtile):
 
         if (
             os.path.exists(SOCKET_PATH)
-            and next_window.name not in excluded_focus_history
+            and not any(ex in next_window.name for ex in excluded_focus_history)
         ):
             client = Client(socket_path=SOCKET_PATH, is_json=True)
             create_task(
@@ -234,7 +207,7 @@ def cycle_windows(qtile):
 
         if qalttab_win:
             logger.debug(qalttab_win)
-            qalttab_win.togroup(next_window.group.name)  # type: ignore
+            # qalttab_win.togroup(next_window.group.name)  # type: ignore
             qalttab_win.group.focus(qalttab_win, warp=True)  # type: ignore
             qalttab_win.bring_to_front()
 
@@ -263,7 +236,7 @@ def remove_from_focus_history(group, window):
     logger.debug(last_focused_index)
 
     if (
-        window.name not in excluded_focus_history
+        not any(ex in window.name for ex in excluded_focus_history)
         and window.group.name not in excluded_focus_history
     ):
         focus_history.remove(window)
@@ -289,18 +262,18 @@ def remove_from_history(window):
         if window.floating:
             return  # Easiest workaround to handle internal pop-ups conflicts.
 
-    if isinstance(window, LayerStatic):
+    if False:
         return
 
     if len(focus_history) >= 2:
         focus_index = 1
         next_window = focus_history[focus_index]
-        qtile.current_screen.set_group(next_window.group)
+        # qtile.current_screen.set_group(next_window.group)
         next_window.group.focus(next_window, warp=False)  # type: ignore
     elif focus_history:
         focus_index = 0
         next_window = focus_history[focus_index]
-        qtile.current_screen.set_group(next_window.group)
+        # qtile.current_screen.set_group(next_window.group)
         next_window.group.focus(next_window, warp=False)  # type: ignore
     else:
         focus_index = -1

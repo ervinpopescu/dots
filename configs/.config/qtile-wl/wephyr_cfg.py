@@ -1,6 +1,8 @@
+import os
+
 from libqtile import hook, qtile
 from libqtile.bar import Bar
-from libqtile.config import Key, Screen
+from libqtile.config import IdleTimer, Key, Screen
 from libqtile.lazy import lazy
 from qtile_extras import widget
 
@@ -13,8 +15,8 @@ def autostart():
 class Systray(widget.StatusNotifier):
     def __init__(self, **config) -> None:
         super().__init__(**config)
-        self.add_callbacks({"Button1": self.show_menu}, force=True)
-        self.add_callbacks({"Button2": self.show_menu}, force=True)
+        self.add_callbacks({"Button1": self.show_menu})
+        self.add_callbacks({"Button2": self.show_menu})
 
 
 screens = [
@@ -63,3 +65,8 @@ keys.extend(
         for vt in range(1, 8)
     ]
 )
+
+idle_timers = [
+    # IdleTimer(15, lazy.spawn("dpms-off")),
+    # IdleTimer(30, lazy.spawn("systemctl suspend")),
+]

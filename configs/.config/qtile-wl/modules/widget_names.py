@@ -1,0 +1,6 @@
+WEATHER = "weather"
+WIDGETBOX_1 = "first_widgetbox"
+WIDGETBOX_2 = "second_widgetbox"
+BATTERY_SEP = "battery_sep"
+GROUPBOX = "groupbox"
+KEYBOARD_LAYOUT = "keyboardlayout"

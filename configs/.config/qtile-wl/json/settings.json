@@ -19,7 +19,7 @@
     "menu": [
       "rofi",
       "-modes",
-      "drun",
+      "drun,run",
       "-show",
       "drun",
       "-terminal",
@@ -55,8 +55,9 @@
       "font.size=13",
       "--class",
       "qtile_yay_update",
+      "--hold",
       "-e",
-      "sh -c 'env CARGO_TARGET_DIR=./target yay -Syyu --noconfirm'"
+      "sh -x -c \"sudo pacman -Sy && sudo powerpill -Su --noconfirm && env CARGO_TARGET_DIR=./target yay -Su --noconfirm --overwrite '*'\""
     ],
     "wallpaper": [
       "rofi-wallpaper"
@@ -67,44 +68,39 @@
     ]
   },
   "dropdown_opacity": 0.95,
-  "extension_defaults": {
-    "font": "Font Awesome 6 Free Solid",
-    "fontsize": 20,
-    "padding": 6
-  },
   "font_size": 20,
   "keymaps": {
     "mod": "mod4",
     "alt": "mod1"
   },
   "groups": {
-    "coding": {
-      "label": "",
-      "layout": "max",
-      "screen_affinity": 0
-    },
     "www": {
       "label": "",
       "layout": "max",
-      "screen_affinity": 1
+      "screen_affinity": 2
     },
-    "social": {
-      "label": "",
+    "coding": {
+      "label": "",
       "layout": "max",
       "screen_affinity": 1
+    },
+    "media": {
+      "label": "",
+      "layout": "max",
+      "screen_affinity": 0
     },
     "settings": {
       "label": "",
       "layout": "max",
-      "screen_affinity": 2
+      "screen_affinity": 0
     },
     "etc": {
       "label": "",
       "layout": "max",
       "screen_affinity": 2
     },
-    "media": {
-      "label": "",
+    "social": {
+      "label": "",
       "layout": "max",
       "screen_affinity": 2
     }
@@ -113,6 +109,8 @@
   "icon_fontsize": 20,
   "margin_size": 10,
   "text_font": "CaskaydiaCove Nerd Font Mono Bold",
+  "theme": "catppuccin",
+  "openweather_api_key": "REDACTED_OPENWEATHER_KEY",
   "widget_defaults": {
     "font": "Font Awesome 6 Free Solid",
     "fontsize": 20,

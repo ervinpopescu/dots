@@ -1,3 +1,4 @@
+import os
 import subprocess
 
 from libqtile.lazy import lazy
@@ -5,15 +6,17 @@ from qtile_extras.popup.toolkit import PopupAbsoluteLayout, PopupText
 
 from modules.functions import location
 from modules.settings import settings
+from modules.widget_names import WEATHER
 
 
 @lazy.function
 def weather_popup(qtile):
+    loc = location()
     wttr = (
         subprocess.check_output(
             [
-                "/home/ervin/bin/wttr.sh",
-                location(),
+                os.path.expanduser("~/bin/wttr.sh"),
+                loc,
                 "?M?T?0",
             ]
         )
@@ -22,7 +25,9 @@ def weather_popup(qtile):
     )
     wttr.pop(0)
     wttr.pop(0)
-    wttr = "\n".join(wttr)
+    # wttr.insert(0, f"{loc}\n")
+    wttr = "\n  ".join(wttr)
+    wttr += f"\n\n         {loc}        \n"
     controls = [
         PopupText(
             font=settings["text_font"],
@@ -41,10 +46,10 @@ def weather_popup(qtile):
         height=300,
         controls=controls,
         opacity=0.96,
-        background=qtile.widgets_map["weather"].foreground,
+        background=qtile.widgets_map[WEATHER].foreground,
         initial_focus=None,
     )
-    widget_offset = qtile.widgets_map["weather"].info()["offset"]
+    widget_offset = qtile.widgets_map[WEATHER].info()["offset"]
     screen_info = qtile.core.get_screen_info()
     # screen_width = min([screen_info[i].width for i in range(len(screen_info))])
     screen_height = min([screen_info[i].height for i in range(len(screen_info))])

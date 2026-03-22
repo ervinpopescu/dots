@@ -16,11 +16,6 @@ qtile: Qtile
 @hook.subscribe.startup_once
 def autostart():
     create_task(run_autostart()).add_done_callback(autostart_done)  # type: ignore
-    # subprocess.call(
-    #     [os.path.expanduser("~/bin/birthday-notification.sh")],
-    #     stdout=subprocess.DEVNULL,
-    #     stderr=subprocess.STDOUT,
-    # )
 
 
 async def run_autostart():
@@ -29,7 +24,6 @@ async def run_autostart():
         proc = await asyncio.create_subprocess_exec(
             autostart,
             stdout=autostart_log_file,
-            # stdout=subprocess.DEVNULL,
             stderr=subprocess.STDOUT,
         )
         return_code = await proc.wait()
@@ -44,6 +38,6 @@ def autostart_done(return_code):
 def kill_all_autostarted_programs():
     with open("/tmp/autostart-wl_pids", "r") as pids_file:
         pids = pids_file.readlines()
-        if not pids:
+        if pids:
             for pid in pids:
                 os.kill(int(pid), signal.SIGKILL)

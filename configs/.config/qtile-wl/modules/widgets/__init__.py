@@ -1,8 +1,5 @@
 import copy
 
-# import pprint
-# from libqtile import qtile
-# from libqtile.log_utils import logger
 from libqtile.widget import SwayNC
 from libqtile.widget.base import _Widget
 from qtile_extras import widget
@@ -11,38 +8,25 @@ from extras.widgets import (
     Battery,
     BatteryIcon,
     BtBattery,
-    # WidgetBox,
 )
 
-# from extras.widgets.mouseoverclock import MouseOverClock
 from modules.decorations import decorations
 from modules.settings import colors, settings
-
-# Local imports
-# from modules.widgets import widgetbox
-from modules.widgets.battery import battery
-from modules.widgets.battery_icon import battery_icon
-from modules.widgets.bt_bat import bt_bat
-from modules.widgets.chord import chord
-from modules.widgets.current_layout_icon import current_layout_icon
-from modules.widgets.github_notif import github_notif
-from modules.widgets.group_box import group_box
-from modules.widgets.mouse_over_clock import mouse_over_clock
-from modules.widgets.os_logo import os_logo
-from modules.widgets.powermenu import powermenu
-from modules.widgets.separators import (
-    pipe,
-    small_spacer,
-    stretch_spacer,
-)
-
-# from modules.widgets.sway_nc import sway_nc
-from modules.widgets.systray import systray
-from modules.widgets.task_list import task_list
-
-# from modules.widgets.touchpad import touchpad
-from modules.widgets.wallpaper import wallpaper
-from modules.widgets.widgetbox import widget_box_1, widget_box_2
+from modules.widget_names import BATTERY_SEP
+from .battery import battery
+from .battery_icon import battery_icon
+from .chord import chord
+from .current_layout_icon import current_layout_icon
+from .github_notif import github_notif
+from .group_box import group_box
+from .mouse_over_clock import mouse_over_clock
+from .os_logo import os_logo
+from .powermenu import powermenu
+from .separators import pipe, small_spacer, stretch_spacer
+from .systray import systray
+from .task_list import task_list
+from .wallpaper import wallpaper
+from .widgetbox import widget_box_1, widget_box_2
 
 # Constants
 MARGIN_SIZE = settings["margin_size"] // 2
@@ -60,11 +44,8 @@ widgets_1: list[_Widget] = [
     systray(),
     widget_box_2,
     github_notif(),
-    # touchpad(),
     battery(),
     battery_icon(),
-    # bt_bat(),
-    # sway_nc(),
     mouse_over_clock(),
     wallpaper(),
     powermenu(),
@@ -106,6 +87,12 @@ def configure_widget(
     decorations=None,
 ):
     """Configures widget properties based on the parameters provided."""
+
+    if scale is not None and hasattr(widget, "scale"):
+        widget.scale = scale
+    if decorations is not None:
+        widget.decorations = decorations
+
     if hasattr(widget, "fontsize") and fontsize_adjustment is not None:
         if widget.fontsize is not None:
             widget.fontsize += fontsize_adjustment
@@ -113,13 +100,12 @@ def configure_widget(
         if widget.font_size is not None:
             widget.font_size += fontsize_adjustment
     if hasattr(widget, "icon_size") and icon_size_adjustment is not None:
-        widget.icon_size += icon_size_adjustment
+        if widget.icon_size is not None:
+            widget.icon_size += icon_size_adjustment
     if hasattr(widget, "margin_y") and margin_adjustment is not None:
-        widget.margin_y += margin_adjustment
-    if scale is not None and hasattr(widget, "scale"):
-        widget.scale = scale
-    if decorations is not None:
-        widget.decorations = decorations
+        if widget.margin_y is not None:
+            widget.margin_y += margin_adjustment
+
     return widget
 
 
@@ -240,15 +226,6 @@ i = 1
 while i < len(widgets_1):
     w = widgets_1[i]
     match w.name:
-        # case "tasklist":
-        #     widgets_1.insert(i, st_spacer)
-        #     i += 2
-        # case "statusnotifier":
-        #     widgets_1.insert(i, st_spacer)
-        #     i += 2
-        # case "chord":
-        #     widgets_1.insert(i, sm_spacer)
-        #     i += 2
         case "battery":
             widgets_1.insert(i, sm_spacer)
             i += 2
@@ -256,7 +233,7 @@ while i < len(widgets_1):
             i += 1
         case "bt_battery":
             ins = pipe(
-                name="battery_sep",
+                name=BATTERY_SEP,
                 foreground=colors["bg2"],
             )
             ins.decorations = GROUP_DECORATION["decorations"]
@@ -268,52 +245,26 @@ while i < len(widgets_1):
             widgets_1.insert(i, sm_spacer)
             i += 2
 
-# Insert Spacer widgets into widgets_2
-i = 1
-while i < len(widgets_2):
-    w = widgets_2[i]
-    match w.name:
-        # case "battery":
-        #     widgets_2.insert(i, st_spacer)
-        #     i += 2
-        case "battery_icon":
-            i += 1
-        case "bt_battery":
-            widgets_2.insert(
-                i,
-                copy.deepcopy(
-                    next(item for item in widgets_1 if item.name == "battery_sep")
-                ),
-            )
-            i += 2
-        case "powermenu":
-            break
-        case _:
-            widgets_2.insert(i, sm_spacer)
-            i += 2
+def _insert_secondary_spacers(widget_list):
+    battery_sep = next((item for item in widgets_1 if item.name == BATTERY_SEP), None)
+    i = 1
+    while i < len(widget_list):
+        w = widget_list[i]
+        match w.name:
+            case "battery_icon":
+                i += 1
+            case "bt_battery":
+                widget_list.insert(i, copy.deepcopy(battery_sep))
+                i += 2
+            case "powermenu":
+                break
+            case _:
+                widget_list.insert(i, sm_spacer)
+                i += 2
 
-# Insert Spacer widgets into widgets_3
-i = 1
-while i < len(widgets_3):
-    w = widgets_3[i]
-    match w.name:
-        # case "battery":
-        #     widgets_3.insert(i, st_spacer)
-        #     i += 2
-        case "battery_icon":
-            i += 1
-        case "bt_battery":
-            widgets_3.insert(
-                i,
-                copy.deepcopy(
-                    next(item for item in widgets_1 if item.name == "battery_sep")
-                ),
-            )
-            i += 2
-        case "powermenu":
-            break
-        case _:
-            widgets_3.insert(i, sm_spacer)
-            i += 2
+
+# Insert Spacer widgets into widgets_2 and widgets_3
+_insert_secondary_spacers(widgets_2)
+_insert_secondary_spacers(widgets_3)
 # Define public exports
 __all__ = ["widgets_1", "widgets_2", "widgets_3"]

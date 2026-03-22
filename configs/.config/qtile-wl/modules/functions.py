@@ -1,11 +1,11 @@
 import contextlib
 import json
+import os
 import subprocess
 
 import notify2
 import psutil
 
-# from libqtile.backend.base import Window
 from libqtile.bar import Bar
 from libqtile.core.manager import Qtile
 from libqtile.layout.floating import Floating
@@ -13,6 +13,7 @@ from libqtile.lazy import lazy
 from libqtile.log_utils import logger
 
 from modules.settings import settings
+from modules.widget_names import GROUPBOX
 
 ms = settings["margin_size"]
 group_layouts = [group["layout"] for group in settings["groups"].values()]
@@ -66,7 +67,7 @@ def toggle_minimize_all(qtile: Qtile, current_group: bool = False):
 
 @lazy.function
 def groupbox_disable_drag(qtile: Qtile):
-    widget = qtile.widgets_map["groupbox"]
+    widget = qtile.widgets_map[GROUPBOX]
     widget.disable_drag = widget.disable_drag is not True  # type: ignore
 
 
@@ -125,125 +126,85 @@ def toggle_gaps(qtile: Qtile):
                     current_layout.single_margin = ms
                 for bar in bars:
                     bar.margin = [0, ms, ms, ms]
+                    is_show = bar.is_show()  # type: ignore
                     bar._configure(qtile, qtile.current_screen, reconfigure=True)
-                    bar.draw()
+                    bar.show(is_show)
             group.layout_all()
+
+
+def _adjust_gaps(qtile: Qtile, delta: int):
+    for group in qtile.groups:
+        current_layout = group.layout
+        if not isinstance(current_layout, Floating):
+            if isinstance(current_layout.margin, int):
+                can_adjust = (
+                    0 < current_layout.margin <= 100
+                    if delta > 0
+                    else current_layout.margin > MARGIN_SIZE_DELTA + 1
+                )
+                if can_adjust:
+                    current_layout.margin += delta
+                    if hasattr(current_layout, "single_margin"):
+                        current_layout.single_margin += delta
+            elif isinstance(current_layout.margin, list):
+                can_adjust = (
+                    all(0 < m <= 100 for m in current_layout.margin)
+                    if delta > 0
+                    else all(m > MARGIN_SIZE_DELTA + 1 for m in current_layout.margin)
+                )
+                if can_adjust:
+                    current_layout.margin = [m + delta for m in current_layout.margin]
+                    if hasattr(current_layout, "single_margin"):
+                        current_layout.single_margin = [
+                            m + delta for m in current_layout.single_margin
+                        ]
+            group.layout_all()
+
+    for screen in qtile.screens:
+        bar = screen.bottom
+        is_show = bar.is_show()  # type: ignore
+        margin = bar.margin  # type: ignore
+        logger.info("margin before set: %s", bar.margin)  # type: ignore
+        to_be_set_margin = []
+        if isinstance(margin, int):
+            if margin > MARGIN_SIZE_DELTA:
+                to_be_set_margin = [0, margin + delta, margin + delta, margin + delta]
+        elif isinstance(margin, list):
+            for i in margin:
+                logger.info("%s", i)
+                if i != 0:
+                    if delta > 0:
+                        if i <= 100:
+                            logger.info(f"i < 100, appending {i + delta}")
+                            to_be_set_margin.append(i + delta)
+                        else:
+                            return
+                    else:
+                        if i >= MARGIN_SIZE_DELTA + 1:
+                            logger.info(f"i > MARGIN_SIZE_DELTA, appending {i + delta}")
+                            to_be_set_margin.append(i + delta)
+                        elif i <= 0:
+                            logger.info("i <= 0, appending 0")
+                            to_be_set_margin.append(0)
+                        else:
+                            return
+                else:
+                    to_be_set_margin.append(0)
+        logger.info("to_be_set_margin: %s", to_be_set_margin)
+        bar.margin = to_be_set_margin  # type: ignore
+        logger.info("margin after set: %s", bar.margin)  # type: ignore
+        bar._configure(qtile, qtile.current_screen, reconfigure=True)  # type: ignore
+        bar.show(is_show)  # type: ignore
 
 
 @lazy.function
 def increase_gaps(qtile: Qtile):
-    groups = qtile.groups
-    for group in groups:
-        current_layout = group.layout
-        if not isinstance(current_layout, Floating):
-            if isinstance(current_layout.margin, int):
-                if current_layout.margin > 0 and current_layout.margin <= 100:
-                    current_layout.margin += MARGIN_SIZE_DELTA
-                    if hasattr(current_layout, "single_margin"):
-                        current_layout.single_margin += MARGIN_SIZE_DELTA
-            elif isinstance(current_layout.margin, list):
-                if all(m > 0 for m in current_layout.margin) and all(
-                    m <= 100 for m in current_layout.margin
-                ):
-                    margin = current_layout.margin
-                    to_be_set_margin = []
-                    for m in margin:
-                        m += MARGIN_SIZE_DELTA
-                        to_be_set_margin.append(m)
-                    current_layout.margin = to_be_set_margin
-                    to_be_set_margin = []
-                    if hasattr(current_layout, "single_margin"):
-                        for m in current_layout.single_margin:
-                            m += MARGIN_SIZE_DELTA
-                            to_be_set_margin.append(m)
-                    current_layout.single_margin = to_be_set_margin
-            group.layout_all()
-
-    # bar = qtile.current_screen.bottom
-    # margin = bar.margin  # type: ignore
-    # logger.info("margin before set: %s", bar.margin)  # type: ignore
-    # to_be_set_margin = []
-    # if isinstance(margin, int):
-    #     if margin > MARGIN_SIZE_DELTA:
-    #         to_be_set_margin = [
-    #             0,
-    #             margin + MARGIN_SIZE_DELTA,
-    #             margin + MARGIN_SIZE_DELTA,
-    #             margin + MARGIN_SIZE_DELTA,
-    #         ]
-    # elif isinstance(margin, list):
-    #     for i in margin:
-    #         logger.info("%s", i)
-    #         if i != 0:
-    #             if i <= 100:
-    #                 logger.info(f"i < 100, appending {i+MARGIN_SIZE_DELTA}")
-    #                 to_be_set_margin.append(i + MARGIN_SIZE_DELTA)
-    #             else:
-    #                 return
-    #         else:
-    #             to_be_set_margin.append(0)
-    # logger.info("to_be_set_margin: %s", to_be_set_margin)
-    # bar.margin = to_be_set_margin  # type: ignore
-    # logger.info("margin after set: %s", bar.margin)  # type: ignore
-    # bar._configure(qtile, qtile.current_screen, reconfigure=True)  # type: ignore
-    # bar.draw()  # type: ignore
+    _adjust_gaps(qtile, MARGIN_SIZE_DELTA)
 
 
 @lazy.function
 def decrease_gaps(qtile: Qtile):
-    groups = qtile.groups
-    for group in groups:
-        current_layout = group.layout
-        if not isinstance(current_layout, Floating):
-            if isinstance(current_layout.margin, int):
-                if current_layout.margin > MARGIN_SIZE_DELTA + 1:
-                    current_layout.margin -= MARGIN_SIZE_DELTA
-                    if hasattr(current_layout, "single_margin"):
-                        current_layout.single_margin -= MARGIN_SIZE_DELTA
-            elif isinstance(current_layout.margin, list):
-                if all(m > MARGIN_SIZE_DELTA + 1 for m in current_layout.margin):
-                    margin = current_layout.margin
-                    to_be_set_margin = []
-                    for m in margin:
-                        m -= MARGIN_SIZE_DELTA
-                        to_be_set_margin.append(m)
-                    current_layout.margin = to_be_set_margin
-                    to_be_set_margin = []
-                    if hasattr(current_layout, "single_margin"):
-                        for m in current_layout.single_margin:
-                            m -= MARGIN_SIZE_DELTA
-                            to_be_set_margin.append(m)
-                    current_layout.single_margin = to_be_set_margin
-            group.layout_all()
-
-    # bar = qtile.current_screen.bottom
-    # margin = bar.margin  # type: ignore
-    # logger.info("margin before set: %s", bar.margin)  # type: ignore
-    # to_be_set_margin = []
-    # if isinstance(margin, int):
-    #     if margin > MARGIN_SIZE_DELTA:
-    #         to_be_set_margin = [
-    #             0,
-    #             margin - MARGIN_SIZE_DELTA,
-    #             margin - MARGIN_SIZE_DELTA,
-    #             margin - MARGIN_SIZE_DELTA,
-    #         ]
-    # elif isinstance(margin, list):
-    #     for i in margin:
-    #         logger.info("%s", i)
-    #         if i >= MARGIN_SIZE_DELTA + 1:
-    #             logger.info(f"i > MARGIN_SIZE_DELTA, appending {i-MARGIN_SIZE_DELTA}")
-    #             to_be_set_margin.append(i - MARGIN_SIZE_DELTA)
-    #         elif i <= 0:
-    #             logger.info("i <= 0, appending 0")
-    #             to_be_set_margin.append(0)
-    #         else:
-    #             return
-    # logger.info("to_be_set_margin: %s", to_be_set_margin)
-    # bar.margin = to_be_set_margin  # type: ignore
-    # logger.info("margin after set: %s", bar.margin)  # type: ignore
-    # bar._configure(qtile, qtile.current_screen, reconfigure=True)  # type: ignore
-    # bar.draw()  # type: ignore
+    _adjust_gaps(qtile, -MARGIN_SIZE_DELTA)
 
 
 @lazy.function
@@ -257,13 +218,8 @@ def suspend_toggle(_):
 
 def location():
     try:
-        # location = requests.get("http://ip-api.com/json").json()
-        with open("/home/ervin/.local/share/location.json", "r") as f:
+        with open(os.path.expanduser("~/.local/share/location.json"), "r") as f:
             from_file = json.load(f)
-        # from_ip = location["city"] + "," + location["countryCode"]
-        # if from_ip == from_file["location"]:
-        #     return from_ip
-        # else:
         return from_file["location"]
     except Exception:
         return "Bucharest,RO"
