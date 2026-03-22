@@ -2,6 +2,7 @@
 export ANDROID_USER_HOME="$XDG_DATA_HOME"/android
 export CARGO_HOME="$XDG_DATA_HOME"/cargo
 export DVDCSS_CACHE="$XDG_DATA_HOME"/dvdcss
+export DOTNET_CLI_HOME="$XDG_DATA_HOME"/dotnet
 export GDBHISTFILE="$XDG_DATA_HOME"/gdb/history
 export GNUPGHOME="$XDG_DATA_HOME"/gnupg
 export GOPATH="$XDG_DATA_HOME"/go
@@ -17,6 +18,7 @@ export NVM_DIR="$XDG_DATA_HOME"/nvm
 export OCTAVE_HISTFILE="$XDG_CACHE_HOME"/octave-hsts
 export OCTAVE_SITE_INITFILE="$XDG_CONFIG_HOME"/octave/octaverc
 export PARALLEL_HOME="$XDG_CONFIG_HOME"/parallel
+export PYENV_ROOT="$XDG_DATA_HOME"/pyenv
 export PYTHONSTARTUP="$XDG_CONFIG_HOME"/pythonrc
 export PYTHON_HISTORY="$XDG_CACHE_HOME"/python_history
 export QT_QPA_PLATFORM=wayland
@@ -24,6 +26,9 @@ export QT_STYLE_OVERRIDE=kvantum
 export RUSTUP_HOME="$XDG_DATA_HOME"/rustup
 export SDL_VIDEODRIVER=wayland
 export SOLARGRAPH_CACHE="$XDG_CACHE_HOME"/solargraph
+export TEXMFHOME=$XDG_DATA_HOME/texmf
+export TEXMFVAR=$XDG_CACHE_HOME/texlive/texmf-var
+export TEXMFCONFIG=$XDG_CONFIG_HOME/texlive/texmf-config
 export WGETRC="$XDG_CONFIG_HOME"/wgetrc
 export WINEPREFIX="$XDG_DATA_HOME"/wine
 # export XDG_CURRENT_DESKTOP=sway
@@ -44,7 +49,7 @@ export LF_ICONS="tw=:st=:ow=:dt=:di=:fi=:ln=:or=:ex=:
 export FZF_DEFAULT_OPTS='--color=bg+:#302D41,bg:#1E1E2E,spinner:#F8BD96,hl:#F28FAD --color=fg:#D9E0EE,header:#F28FAD,info:#DDB6F2,pointer:#F8BD96 --color=marker:#F8BD96,fg+:#F2CDCD,prompt:#DDB6F2,hl+:#F28FAD'
 export PAGER='less'
 export BAT_PAGER='less -r'
-export BROWSER='firefox'
+export BROWSER='firefox-developer-edition'
 # export MOZ_ENABLE_WAYLAND=1
 export OPENSUBTITLES_API_KEY="ANqedh96HuRAYfx5up0nJwI6lg4HhjvE"
 export TF_CPP_MIN_LOG_LEVEL=2

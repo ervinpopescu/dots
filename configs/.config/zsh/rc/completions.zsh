@@ -1,5 +1,7 @@
 # shellcheck disable=all
 
+fpath=(~/.local/share/zsh/completions $fpath)
+
 autoload -Uz compinit
 compinit -d ~/.cache/zcompdump
 zstyle ':completion:*:*:*:*:*' menu select

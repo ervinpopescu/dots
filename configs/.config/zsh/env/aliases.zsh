@@ -35,7 +35,6 @@ alias pacgraph='pacgraph -b "#1e1e2e" -l "#81a1c1" -t "#c9cbff" -d "#f38ba8" -n 
 alias parallel="parallel-moreutils"
 alias rm="rm -ri"
 alias stg="sudo suspend-toggle"
-alias server-ssh="ssh -i ~/.ssh/id_ed25519 -p 8922 ervin@archen.home.ro"
 alias sway="sway --unsupported-gpu"
 alias systeroid-tui="systeroid-tui --bg-color 1e1e2e"
 alias tty-clock="tty-clock -c -C 7 -f '%a, %d %b'"
