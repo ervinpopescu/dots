@@ -7,10 +7,8 @@ return {
     end,
   },
   {
-    "Pocco81/auto-save.nvim",
-    config = function()
-      require("auto-save").setup({ debounce_delay = 1000 })
-    end,
+    "okuuva/auto-save.nvim",
+    opts = { debounce_delay = 1000 },
     lazy = false,
   },
   {
@@ -28,24 +26,6 @@ return {
         lastplace_open_folds = true,
       })
     end,
-  },
-  {
-    "iamcco/markdown-preview.nvim",
-    ft = "markdown",
-    build = function()
-      vim.fn["mkdp#util#install"]()
-    end,
-    config = function()
-      vim.g.mkdp_auto_start = 0
-      vim.g.mkdp_auto_close = 0
-      vim.g.mkdp_echo_preview_url = 1
-      vim.g.mkdp_browser = "/home/ervin/bin/md-preview.py"
-      vim.g.mkdp_markdown_css = "/home/ervin/.config/md-preview/markdown.css"
-      vim.g.mkdp_port = "8555"
-      vim.g.mkdp_open_to_the_world = 0
-      vim.g.mkdp_theme = "dark"
-    end,
-    lazy = true,
   },
   {
     "cappyzawa/trim.nvim",
@@ -111,47 +91,38 @@ return {
     end,
     lazy = false,
   },
-  -- {
-  --   "lervag/vimtex",
-  --   ft = "latex",
-  --   dependencies = { "L3MON4D3/LuaSnip", "sirver/ultisnips", "KeitaNakamura/tex-conceal.vim" },
-  --   config = function()
-  --     vim.g.tex_flavor = "xelatex"
-  --     vim.g.vimtex_view_method = "zathura"
-  --     vim.g.vimtex_compiler_silent = true
-  --     vim.g.vimtex_quickfix_mode = 0
-  --     vim.g.tex_conceal = "abdmg"
-  --     vim.cmd([[
-  --     let g:vimtex_syntax_conceal = {
-  --         \ 'accents': 1,
-  --         \ 'ligatures': 1,
-  --         \ 'cites': 1,
-  --         \ 'fancy': 1,
-  --         \ 'spacing': 1,
-  --         \ 'greek': 1,
-  --         \ 'math_bounds': 1,
-  --         \ 'math_delimiters': 1,
-  --         \ 'math_fracs': 1,
-  --         \ 'math_super_sub': 1,
-  --         \ 'math_symbols': 1,
-  --         \ 'sections': 1,
-  --         \ 'styles': 1,
-  --         \}
-  --     ]])
-  --     vim.cmd("set conceallevel=2")
-  --     vim.cmd('let maplocalleader = ","')
-  --   end,
-  --   lazy = true,
-  -- },
-  -- {
-  --   "KeitaNakamura/tex-conceal.vim",
-  --   config = function()
-  --     vim.cmd([[
-  --       hi Conceal ctermbg=none
-  --     ]])
-  --   end,
-  --   lazy = false,
-  -- },
+  {
+    "lervag/vimtex",
+    ft = "latex",
+    dependencies = { "L3MON4D3/LuaSnip", "sirver/ultisnips" },
+    config = function()
+      vim.g.tex_flavor = "xelatex"
+      vim.g.vimtex_view_method = "zathura"
+      vim.g.vimtex_compiler_silent = true
+      vim.g.vimtex_quickfix_mode = 0
+      vim.g.tex_conceal = "abdmg"
+      vim.cmd([[
+      let g:vimtex_syntax_conceal = {
+          \ 'accents': 1,
+          \ 'ligatures': 1,
+          \ 'cites': 1,
+          \ 'fancy': 1,
+          \ 'spacing': 1,
+          \ 'greek': 1,
+          \ 'math_bounds': 1,
+          \ 'math_delimiters': 1,
+          \ 'math_fracs': 1,
+          \ 'math_super_sub': 1,
+          \ 'math_symbols': 1,
+          \ 'sections': 1,
+          \ 'styles': 1,
+          \}
+      ]])
+      vim.cmd("set conceallevel=2")
+      vim.cmd('let maplocalleader = ","')
+    end,
+    lazy = true,
+  },
   {
     "https://gitlab.com/somini/vim-octave.vim",
     ft = "octave",
@@ -170,8 +141,131 @@ return {
       })
     end,
   },
-  { "tpope/vim-surround" },
-  { "norcalli/nvim-colorizer.lua" },
+  { "kylechui/nvim-surround", event = "VeryLazy", opts = {} },
+  { "catgoose/nvim-colorizer.lua", name = "nvim-colorizer", event = "VeryLazy", opts = {} },
   { "folke/twilight.nvim" },
-  { "shaunsingh/nord.nvim" },
+  { "alaviss/nim.nvim" },
+  { "wsdjeg/vim-fetch" },
+  {
+    "henriklovhaug/Preview.nvim",
+    cmd = { "Preview" },
+    config = function()
+      require("preview").setup()
+    end,
+  },
+  -- { "lewis6991/gitsigns.nvim" },
+  {
+    "mason-org/mason.nvim",
+    opts = {
+      ui = {
+        border = "rounded",
+      },
+    },
+  },
+  {
+    "folke/noice.nvim",
+    opts = {
+      presets = {
+        lsp_doc_border = true, -- add a border to hover docs and signature help
+      },
+    },
+  },
+  {
+    "Exafunction/codeium.nvim",
+  },
+  { "ron-rs/ron.vim", filetype = "ron" },
+  {
+    -- "ervinpopescu/vim-matlab",
+    dir = vim.env.HOME .. "/src/mine/projects/nvim/plugins/vim-matlab",
+    name = "vim-matlab",
+    build = function()
+      vim.cmd(":UpdateRemotePlugins<CR>")
+    end,
+    ft = "matlab",
+  },
+  {
+    "jake-stewart/multicursor.nvim",
+    branch = "1.0",
+    config = function()
+      local mc = require("multicursor-nvim")
+      mc.setup()
+
+      local set = vim.keymap.set
+
+      -- Add or skip cursor above/below the main cursor.
+      set({ "n", "x" }, "<up>", function()
+        mc.lineAddCursor(-1)
+      end)
+      set({ "n", "x" }, "<down>", function()
+        mc.lineAddCursor(1)
+      end)
+      set({ "n", "x" }, "<leader><up>", function()
+        mc.lineSkipCursor(-1)
+      end)
+      set({ "n", "x" }, "<leader><down>", function()
+        mc.lineSkipCursor(1)
+      end)
+
+      -- Add or skip adding a new cursor by matching word/selection
+      set({ "n", "x" }, "<leader>n", function()
+        mc.matchAddCursor(1)
+      end)
+      set({ "n", "x" }, "<leader>s", function()
+        mc.matchSkipCursor(1)
+      end)
+      set({ "n", "x" }, "<leader>N", function()
+        mc.matchAddCursor(-1)
+      end)
+      set({ "n", "x" }, "<leader>S", function()
+        mc.matchSkipCursor(-1)
+      end)
+
+      -- Add and remove cursors with control + left click.
+      set("n", "<c-leftmouse>", mc.handleMouse)
+      set("n", "<c-leftdrag>", mc.handleMouseDrag)
+      set("n", "<c-leftrelease>", mc.handleMouseRelease)
+
+      -- Disable and enable cursors.
+      set({ "n", "x" }, "<c-q>", mc.toggleCursor)
+
+      -- Mappings defined in a keymap layer only apply when there are
+      -- multiple cursors. This lets you have overlapping mappings.
+      mc.addKeymapLayer(function(layerSet)
+        -- Select a different cursor as the main one.
+        layerSet({ "n", "x" }, "<left>", mc.prevCursor)
+        layerSet({ "n", "x" }, "<right>", mc.nextCursor)
+
+        -- Delete the main cursor.
+        layerSet({ "n", "x" }, "<leader>x", mc.deleteCursor)
+
+        -- Enable and clear cursors using escape.
+        layerSet("n", "<esc>", function()
+          if not mc.cursorsEnabled() then
+            mc.enableCursors()
+          else
+            mc.clearCursors()
+          end
+        end)
+      end)
+
+      -- Customize how cursors look.
+      local hl = vim.api.nvim_set_hl
+      hl(0, "MultiCursorCursor", { reverse = true })
+      hl(0, "MultiCursorVisual", { link = "Visual" })
+      hl(0, "MultiCursorSign", { link = "SignColumn" })
+      hl(0, "MultiCursorMatchPreview", { link = "Search" })
+      hl(0, "MultiCursorDisabledCursor", { reverse = true })
+      hl(0, "MultiCursorDisabledVisual", { link = "Visual" })
+      hl(0, "MultiCursorDisabledSign", { link = "SignColumn" })
+    end,
+  },
+  {
+    "sindrets/diffview.nvim",
+    cmd = { "DiffviewOpen", "DiffviewFileHistory" },
+  },
+  {
+    "nvim-treesitter/nvim-treesitter-context",
+    event = "VeryLazy",
+    opts = { max_lines = 3 },
+  },
 }

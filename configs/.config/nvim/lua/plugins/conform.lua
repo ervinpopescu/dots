@@ -1,0 +1,52 @@
+return {
+  "stevearc/conform.nvim",
+  opts = function()
+    local opts = {
+      -- LazyVim will use these options when formatting with the conform.nvim formatter
+      default_format_opts = {
+        timeout_ms = 10000,
+        async = false, -- not recommended to change
+        quiet = false, -- not recommended to change
+        lsp_format = "fallback", -- not recommended to change
+      },
+      formatters_by_ft = {
+        lua = { "stylua" },
+        fish = { "fish_indent" },
+        sh = { "shfmt" },
+        zsh = { "shfmt" },
+        javascript = { "prettier" },
+        toml = { "taplo" },
+        markdown = { "prettier" },
+        jq = { "jqfmt" },
+        python = {
+          -- To fix auto-fixable lint errors.
+          -- "ruff_fix",
+          -- To run the Ruff formatter.
+          "ruff_format",
+          -- To organize the imports.
+          "ruff_organize_imports",
+        },
+        xml = { "xmlformatter" },
+        rust = { "rustfmt" },
+        -- octave = { "matlab_formatter" },
+      },
+      -- The options you set here will be merged with the builtin formatters.
+      -- You can also define any custom formatters here.
+      formatters = {
+        injected = { options = { ignore_errors = true } },
+        jqfmt = {
+          command = os.getenv("XDG_DATA_HOME") .. "/go/bin/jqfmt",
+          args = { "-ob", "-ar", "-op", "pipe" },
+          condition = function(_, ctx)
+            return ctx.filename ~= vim.fn.expand("~/.jq")
+          end,
+        },
+        matlab_formatter = {
+          command = "/home/ervin/src/cloned/github/misc/matlab-formatter-vscode/formatter/matlab_formatter.py",
+          args = { "$FILENAME", "--indentWidth=2" },
+        },
+      },
+    }
+    return opts
+  end,
+}

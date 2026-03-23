@@ -3,14 +3,14 @@
 -- Add any additional options here
 
 -- This file is automatically loaded by plugins.core
+vim.g.python3_host_prog = "/usr/bin/python3"
 vim.g.mapleader = " "
-vim.g.maplocalleader = "\\"
 
 local opt = vim.opt
 
-opt.hlsearch = false
 opt.autowrite = true -- Enable auto write
 opt.clipboard = "unnamedplus" -- Sync with system clipboard
+opt.colorcolumn = "80"
 opt.completeopt = "menu,menuone,noselect"
 opt.conceallevel = 3 -- Hide * markup for bold and italic
 opt.confirm = true -- Confirm to save changes before exiting modified buffer
@@ -19,6 +19,7 @@ opt.expandtab = true -- Use spaces instead of tabs
 opt.formatoptions = "jcroqlnt" -- tcqj
 opt.grepformat = "%f:%l:%c:%m"
 opt.grepprg = "rg --vimgrep"
+opt.hlsearch = false
 opt.ignorecase = true -- Ignore case
 opt.inccommand = "nosplit" -- preview incremental substitute
 opt.laststatus = 0
@@ -27,7 +28,7 @@ opt.mouse = "a" -- Enable mouse mode
 opt.number = true -- Print line number
 opt.pumblend = 10 -- Popup blend
 opt.pumheight = 10 -- Maximum number of entries in a popup
-opt.relativenumber = false -- Relative line numbers
+opt.relativenumber = true -- Relative line numbers
 opt.scrolloff = 4 -- Lines of context
 opt.sessionoptions = { "buffers", "curdir", "tabpages", "winsize" }
 opt.shiftround = true -- Round indent
@@ -43,6 +44,7 @@ opt.splitbelow = true -- Put new windows below current
 opt.splitright = true -- Put new windows right of current
 opt.tabstop = 2 -- Number of spaces tabs count for
 opt.termguicolors = true -- True color support
+opt.textwidth = 80
 opt.timeoutlen = 300
 opt.undofile = true
 opt.undolevels = 10000
@@ -58,3 +60,5 @@ end
 
 -- Fix markdown indentation settings
 vim.g.markdown_recommended_style = 0
+vim.g.matlab_server_launcher = "tmux"
+vim.g.matlab_server_split = "horizontal"
