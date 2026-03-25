@@ -1,0 +1,23 @@
+{{- $hostname := .chezmoi.hostname -}}
+{{- $machine := "" -}}
+{{- if eq $hostname "lenovo" -}}
+{{-   $machine = "lenovo" -}}
+{{- else if eq $hostname "cloudtop" -}}
+{{-   $machine = "cloudtop" -}}
+{{- else -}}
+{{-   $machine = promptStringOnce . "machine" "Machine profile (lenovo/cloudtop)" -}}
+{{- end -}}
+
+encryption = "age"
+
+[data]
+  machine = "{{ $machine }}"
+  hostname = "{{ $hostname }}"
+  is_lenovo = {{ eq $machine "lenovo" }}
+  is_cloudtop = {{ eq $machine "cloudtop" }}
+  has_wayland = {{ eq $machine "lenovo" }}
+  has_battery = {{ eq $machine "lenovo" }}
+
+[age]
+  identity = "~/.config/chezmoi/key.txt"
+  recipient = "age132j5753vcljc0gn6a23y83qu8vls058djgkn934s4tn6tl5ay96qhhhjfg"

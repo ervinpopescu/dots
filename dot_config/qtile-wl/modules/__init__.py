@@ -1,9 +1,10 @@
 from .groups import groups
 from .hooks import apps as apps_hooks
 from .hooks import misc as misc_hooks
-from .hooks import qalttab as qalttab_hooks
+
+# from .hooks import qalttab as qalttab_hooks
 from .hooks import window_rules as window_rules_hooks
-from .idle_timers import idle_timers
+from .idle import idle_inhibitors, idle_timers
 from .keys import keys
 from .layouts import floating_layout, layouts
 from .mouse import mouse
@@ -20,5 +21,5 @@ __all__ = [
     "mouse",
     "screens",
     "window_rules_hooks",
-    "qalttab_hooks",
+    # "qalttab_hooks",
 ]

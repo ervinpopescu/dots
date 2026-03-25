@@ -5,7 +5,6 @@ import subprocess
 
 import notify2
 import psutil
-
 from libqtile.bar import Bar
 from libqtile.core.manager import Qtile
 from libqtile.layout.floating import Floating
@@ -132,7 +131,7 @@ def toggle_gaps(qtile: Qtile):
             group.layout_all()
 
 
-def _adjust_gaps(qtile: Qtile, delta: int):
+def _adjust_gaps(qtile: Qtile, delta: int, also_bar: bool = False):
     for group in qtile.groups:
         current_layout = group.layout
         if not isinstance(current_layout, Floating):
@@ -160,41 +159,49 @@ def _adjust_gaps(qtile: Qtile, delta: int):
                         ]
             group.layout_all()
 
-    for screen in qtile.screens:
-        bar = screen.bottom
-        is_show = bar.is_show()  # type: ignore
-        margin = bar.margin  # type: ignore
-        logger.info("margin before set: %s", bar.margin)  # type: ignore
-        to_be_set_margin = []
-        if isinstance(margin, int):
-            if margin > MARGIN_SIZE_DELTA:
-                to_be_set_margin = [0, margin + delta, margin + delta, margin + delta]
-        elif isinstance(margin, list):
-            for i in margin:
-                logger.info("%s", i)
-                if i != 0:
-                    if delta > 0:
-                        if i <= 100:
-                            logger.info(f"i < 100, appending {i + delta}")
-                            to_be_set_margin.append(i + delta)
+    if also_bar:
+        for screen in qtile.screens:
+            bar = screen.bottom
+            is_show = bar.is_show()  # type: ignore
+            margin = bar.margin  # type: ignore
+            logger.info("margin before set: %s", bar.margin)  # type: ignore
+            to_be_set_margin = []
+            if isinstance(margin, int):
+                if margin > MARGIN_SIZE_DELTA:
+                    to_be_set_margin = [
+                        0,
+                        margin + delta,
+                        margin + delta,
+                        margin + delta,
+                    ]
+            elif isinstance(margin, list):
+                for i in margin:
+                    logger.info("%s", i)
+                    if i != 0:
+                        if delta > 0:
+                            if i <= 100:
+                                logger.info(f"i < 100, appending {i + delta}")
+                                to_be_set_margin.append(i + delta)
+                            else:
+                                return
                         else:
-                            return
+                            if i >= MARGIN_SIZE_DELTA + 1:
+                                logger.info(
+                                    f"i > MARGIN_SIZE_DELTA, appending {i + delta}"
+                                )
+                                to_be_set_margin.append(i + delta)
+                            elif i <= 0:
+                                logger.info("i <= 0, appending 0")
+                                to_be_set_margin.append(0)
+                            else:
+                                return
                     else:
-                        if i >= MARGIN_SIZE_DELTA + 1:
-                            logger.info(f"i > MARGIN_SIZE_DELTA, appending {i + delta}")
-                            to_be_set_margin.append(i + delta)
-                        elif i <= 0:
-                            logger.info("i <= 0, appending 0")
-                            to_be_set_margin.append(0)
-                        else:
-                            return
-                else:
-                    to_be_set_margin.append(0)
-        logger.info("to_be_set_margin: %s", to_be_set_margin)
-        bar.margin = to_be_set_margin  # type: ignore
-        logger.info("margin after set: %s", bar.margin)  # type: ignore
-        bar._configure(qtile, qtile.current_screen, reconfigure=True)  # type: ignore
-        bar.show(is_show)  # type: ignore
+                        to_be_set_margin.append(0)
+            logger.info("to_be_set_margin: %s", to_be_set_margin)
+            bar.margin = to_be_set_margin  # type: ignore
+            logger.info("margin after set: %s", bar.margin)  # type: ignore
+            bar._configure(qtile, qtile.current_screen, reconfigure=True)  # type: ignore
+            bar.show(is_show)  # type: ignore
 
 
 @lazy.function

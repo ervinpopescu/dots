@@ -1,0 +1,17 @@
+README.md
+CLAUDE.md
+LICENSE
+docs/**
+system/**
+markdown/**
+secrets.age
+*.md
+
+{{ if not .is_lenovo }}
+dot_config/qtile-wl/**
+bin/executable_battery-notification.py
+{{ end }}
+
+{{ if not .is_cloudtop }}
+dot_config/qtile/**
+{{ end }}

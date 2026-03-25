@@ -8,5 +8,5 @@ if [ -z "${DISPLAY}" ] && [ "${XDG_VTNR}" -eq 2 ]; then
 fi
 
 if [ -z "$WAYLAND_DISPLAY" ] && [ "$XDG_VTNR" -eq 3 ]; then
-  exec qtile start -b wayland -c ~/.config/qtile-wl/config.py
+  exec qtile start -b wayland -c ~/.config/qtile-wl/config.py 2>&1 >/tmp/qtile-wl.log
 fi
