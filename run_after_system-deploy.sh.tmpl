@@ -1,0 +1,17 @@
+#!/bin/bash
+CHEZMOI_SOURCE="{{ .chezmoi.sourceDir }}"
+SYSTEM_DIR="$CHEZMOI_SOURCE/system"
+
+[ ! -d "$SYSTEM_DIR" ] && exit 0
+
+changed=0
+while IFS= read -r -d '' src; do
+  dest="${src#"$SYSTEM_DIR"}"
+  if ! cmp -s "$src" "$dest" 2>/dev/null; then
+    echo "System file changed: $dest"
+    sudo install -Dm644 "$src" "$dest" 2>/dev/null || echo "WARN: needs sudo for $dest"
+    changed=1
+  fi
+done < <(find "$SYSTEM_DIR" -type f -print0)
+
+[ "$changed" -eq 0 ] && echo "System files: no changes detected."
