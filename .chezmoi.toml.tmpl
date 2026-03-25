@@ -8,6 +8,7 @@
 {{-   $machine = promptStringOnce . "machine" "Machine profile (lenovo/cloudtop)" -}}
 {{- end -}}
 
+sourceDir = "{{ .chezmoi.sourceDir }}"
 encryption = "age"
 
 [data]

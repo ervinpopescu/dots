@@ -5,13 +5,9 @@ docs/**
 system/**
 markdown/**
 secrets.age
-*.md
+pkgs
 
 {{ if not .is_lenovo }}
-dot_config/qtile-wl/**
-bin/executable_battery-notification.py
-{{ end }}
-
-{{ if not .is_cloudtop }}
-dot_config/qtile/**
+.config/qtile-wl/**
+bin/battery-notification.py
 {{ end }}
