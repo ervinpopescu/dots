@@ -17,6 +17,8 @@ encryption = "age"
   is_cloudtop = {{ eq $machine "cloudtop" }}
   has_wayland = {{ eq $machine "lenovo" }}
   has_battery = {{ eq $machine "lenovo" }}
+  opensubtitles_api_key = "{{ promptStringOnce . "opensubtitles_api_key" "OpenSubtitles API key" }}"
+  tstruct_token = "{{ promptStringOnce . "tstruct_token" "Tstruct token" }}"
 
 [age]
   identity = "~/.config/chezmoi/key.txt"
