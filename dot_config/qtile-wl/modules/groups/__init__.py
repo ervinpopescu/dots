@@ -17,7 +17,7 @@ def go_to_group(name: str):
             qtile.groups_map[name].toscreen(toggle=True)
             return
         else:
-            screen = settings["groups"][name]["screen_affinity"]
+            screen = settings.groups[name].screen_affinity
             qtile.focus_screen(screen)
             qtile.groups_map[name].toscreen()
 
@@ -26,26 +26,26 @@ def go_to_group(name: str):
 
 groups = []
 keys_to_be_inserted = []
-for i, name in enumerate(settings["groups"].keys(), 1):
+for i, name in enumerate(settings.groups.keys(), 1):
     groups.append(
         Group(
             name=name,
-            layout=settings["groups"][name]["layout"],
-            label=settings["groups"][name]["label"],
-            screen_affinity=settings["groups"][name]["screen_affinity"],
+            layout=settings.groups[name].layout,
+            label=settings.groups[name].label,
+            screen_affinity=settings.groups[name].screen_affinity,
             layout_opts=None,
         )
     )
     keys_to_be_inserted.extend(
         [
             Key(
-                [settings["keymaps"]["mod"]],
+                [settings.keymaps.mod],
                 str(i),
                 lazy.function(go_to_group(name)),
                 desc=f"Go to group `{name}`",
             ),
             Key(
-                [settings["keymaps"]["mod"], "shift"],
+                [settings.keymaps.mod, "shift"],
                 str(i),
                 lazy.window.togroup(name),
                 desc=f"Move window to group `{name}`",

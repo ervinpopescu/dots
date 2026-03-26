@@ -29,7 +29,7 @@ from .wallpaper import wallpaper
 from .widgetbox import widget_box_1, widget_box_2
 
 # Constants
-MARGIN_SIZE = settings["margin_size"] // 2
+MARGIN_SIZE = settings.margin_size // 2
 SINGLE_DECORATION = decorations["single_decor"]  # type: ignore
 GROUP_DECORATION = decorations["group_single_decor"]  # type: ignore
 

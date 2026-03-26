@@ -62,9 +62,9 @@ def window_rules(client: Window):
                 client.set_position_floating(
                     x=qtile.core.get_screen_info()[0].width  # type: ignore
                     - win["rules"]["w"]  # type: ignore
-                    - settings["margin_size"]
+                    - settings.margin_size
                     - 5,
-                    y=settings["bar_height"] + 2 * settings["margin_size"],
+                    y=settings.bar_height + 2 * settings.margin_size,
                 )
 
             if "set_size_floating" in win["rules"]:

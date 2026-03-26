@@ -12,7 +12,7 @@ from .separators import small_spacer
 from .uptime import uptime
 from .weather import weather
 
-ms = settings["margin_size"] // 2
+ms = settings.margin_size // 2
 decor = decorations["single_decor"]  # type: ignore
 group_decor = decorations["group_single_decor"]  # type: ignore
 sm_spacer = small_spacer(length=ms)

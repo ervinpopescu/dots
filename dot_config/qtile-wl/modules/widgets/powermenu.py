@@ -7,8 +7,8 @@ from modules.settings import colors, settings
 def powermenu():
     return widget.TextBox(
         name="powermenu",
-        font=settings["icon_font"],
-        fontsize=settings["icon_fontsize"],
+        font=settings.icon_font,
+        fontsize=settings.icon_fontsize,
         foreground=colors["yellow"],
         mouse_callbacks={"Button1": lazy.spawn("nwgbar")},
         padding=10,

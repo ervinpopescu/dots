@@ -39,7 +39,7 @@ class BtBattery(widget.GenPollText):
         case: int | NoneType = None
         try:
             data = int(data)
-            self.fontsize = settings["font_size"] + 4
+            self.fontsize = settings.font_size + 4
             if data > 10:
                 self.foreground = colors["lightgreen"]
             else:
