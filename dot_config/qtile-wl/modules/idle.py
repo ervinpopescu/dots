@@ -7,7 +7,7 @@ from .settings import settings
 
 idle_timers = [
     IdleTimer(300, lazy.spawn(os.path.expandvars("$CARGO_HOME/bin/dpms-off"))),
-    IdleTimer(301, lazy.spawn(settings["cmds"]["lock"])),
+    IdleTimer(301, lazy.spawn(settings.cmds.lock)),
     IdleTimer(330, lazy.spawn("systemctl suspend")),
 ]
 

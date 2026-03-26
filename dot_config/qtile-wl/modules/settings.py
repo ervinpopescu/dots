@@ -8,9 +8,11 @@ from libqtile.config import Match
 from libqtile.utils import rgb
 from qtile_extras.layout.decorations.borders import ConditionalBorderWidth, CustomBorder
 
+from modules.models import Settings
+
 
 def load_theme(config_path):
-    theme = settings["theme"]
+    theme = settings.theme
     theme_file = os.path.join(config_path, "themes", f"{theme}.json")
     if not os.path.isfile(theme_file):
         raise FileNotFoundError(f'"{theme_file}" does not exist')
@@ -26,7 +28,7 @@ except AttributeError:
     config_path = str(pathlib.Path(__file__).parent.parent.resolve())
 
 with open(os.path.join(config_path, "json", "settings.json")) as f:
-    settings: dict = json.load(f)
+    settings = Settings(**json.load(f))
 colors = load_theme(config_path)
 
 bar_bg = "2e344000"
@@ -65,7 +67,7 @@ def rounded_corners_purple(ctx, bw, width, height):
 
 
 layout_defaults = dict(
-    margin=settings["margin_size"],
+    margin=settings.margin_size,
     border_width=ConditionalBorderWidth(
         matches=[
             (
@@ -78,5 +80,5 @@ layout_defaults = dict(
     border_normal=CustomBorder(func=rounded_corners_bg0),
     border_focus=CustomBorder(func=rounded_corners_purple),
 )
-widget_defaults = settings["widget_defaults"]
+widget_defaults = settings.widget_defaults.model_dump()
 extension_defaults = widget_defaults.copy()

@@ -9,7 +9,7 @@ def systray():
         icon_size=24,
         icon_theme="Papirus-Dark",
         menu_background=colors["bg0"],
-        menu_font=settings["text_font"],
+        menu_font=settings.text_font,
         menu_fontsize=15,
         menu_icon_size=15,
         menu_width=500,

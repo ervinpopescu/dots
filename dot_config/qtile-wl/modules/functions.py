@@ -14,8 +14,8 @@ from libqtile.log_utils import logger
 from modules.settings import settings
 from modules.widget_names import GROUPBOX
 
-ms = settings["margin_size"]
-group_layouts = [group["layout"] for group in settings["groups"].values()]
+ms = settings.margin_size
+group_layouts = [group.layout for group in settings.groups.values()]
 MARGIN_SIZE_DELTA = ms
 
 

@@ -15,5 +15,5 @@ def os_logo():
         name="arch_logo",
         filename=filename,
         margin=7,
-        mouse_callbacks={"Button1": lazy.spawn(settings["cmds"]["menu"])},
+        mouse_callbacks={"Button1": lazy.spawn(settings.cmds.menu)},
     )
