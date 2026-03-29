@@ -63,7 +63,8 @@ set-option -g @plugin 'tmux-plugins/tpm'
 
 #### THEMING ####
 
-set-option -g @plugin 'catppuccin/tmux'
+set-option -g @plugin 'ervinpopescu/catppuccin-tmux'
+run ~/.config/tmux/plugins/catppuccin-tmux/catppuccin.tmux
 set-option -g @plugin 'tmux-plugins/tmux-battery'
 set-option -g @plugin 'tmux-plugins/tmux-cpu'
 
@@ -94,12 +95,12 @@ set-option -g @catppuccin_application_text "#{pane_current_command}"
 set-option -g @catppuccin_date_time_text "%Y-%m-%d %H:%M"
 
 #### SMART WINDOW NAMES ####
-
-set-option -g @plugin 'ofirgall/tmux-window-name'
-set-option -g @tmux_window_dir_programs "['nvim', 'vim', 'vi', 'git']"
-set-option -g @tmux_window_name_max_name_len "40"
-set-option -g @tmux_window_name_use_tilde "True"
-set-option -g @tmux_window_name_substitute_sets "[('.+ipython([32])', 'ipython\g<1>'), ('^(/usr)?/bin/(.+)', '\g<2>'), ('(bash) (.+)/(.+[ $])(.+)', '\g<3>\g<4>'), ('/home/ervin/.config', 'c')]"
+#
+# set-option -g @plugin 'ofirgall/tmux-window-name'
+# set-option -g @tmux_window_dir_programs "['nvim', 'vim', 'vi', 'git']"
+# set-option -g @tmux_window_name_max_name_len "40"
+# set-option -g @tmux_window_name_use_tilde "True"
+# set-option -g @tmux_window_name_substitute_sets "[('.+ipython([32])', 'ipython\g<1>'), ('^(/usr)?/bin/(.+)', '\g<2>'), ('(bash) (.+)/(.+[ $])(.+)', '\g<3>\g<4>'), ('/home/ervin/.config', 'c')]"
 
 #### RESTORE SESSION ####
 
