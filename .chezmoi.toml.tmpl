@@ -5,7 +5,7 @@
 {{- else if eq $hostname "cloudtop" -}}
 {{-   $machine = "cloudtop" -}}
 {{- else -}}
-{{-   $machine = promptStringOnce . "machine" "Machine profile (lenovo/cloudtop)" -}}
+{{-   $machine = promptStringOnce . "machine" "Machine profile (lenovo/cloudtop/macbook)" -}}
 {{- end -}}
 
 sourceDir = "{{ .chezmoi.sourceDir }}"
@@ -16,8 +16,10 @@ encryption = "age"
   hostname = "{{ $hostname }}"
   is_lenovo = {{ eq $machine "lenovo" }}
   is_cloudtop = {{ eq $machine "cloudtop" }}
+  is_macbook = {{ eq $machine "macbook" }}
+  is_linux = {{ ne $machine "macbook" }}
   has_wayland = {{ eq $machine "lenovo" }}
-  has_battery = {{ eq $machine "lenovo" }}
+  has_battery = {{ or (eq $machine "lenovo") (eq $machine "macbook") }}
   opensubtitles_api_key = "{{ promptStringOnce . "opensubtitles_api_key" "OpenSubtitles API key" }}"
   tstruct_token = "{{ promptStringOnce . "tstruct_token" "Tstruct token" }}"
 
