@@ -3,16 +3,16 @@
 ## "daemons"
 gnome-keyring-daemon --start &
 /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1 &
-/home/ervin/bin/battery-notification.sh &
+battery-notification.py &
 dunst &
 # /usr/lib/kdeconnectd &
 
 ## wallpaper
-swaybg -i "$(xdg-user-dir PICTURES)"/wallpapers/rand/valley.png &
+run_wall_wl.sh rand all &
 
 ## various apps
 # /home/ervin/.config/conky/start_qtile.sh -n &
-yes | /home/ervin/bin/rmshit.py &
+yes | rmshit.py &
 # firefox &
 # alacritty &
 
@@ -25,6 +25,3 @@ blueman-tray &
 # flameshot &
 # waybar &
 # kdeconnect-indicator &
-
-## compositor
-picom &

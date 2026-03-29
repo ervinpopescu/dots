@@ -12,13 +12,13 @@ from modules import (
     layouts,
     misc_hooks,
     mouse,
-    # qalttab_hooks,
+    qalttab_hooks,
     screens,
     window_rules_hooks,
 )
 from modules.settings import config_path, widget_defaults
 
-# assert qalttab_hooks
+assert qalttab_hooks
 assert apps_hooks
 assert window_rules_hooks
 assert misc_hooks

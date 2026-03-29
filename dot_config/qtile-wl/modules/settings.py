@@ -3,12 +3,15 @@ import math
 import os
 import pathlib
 
+# import notify2
 from libqtile import qtile
 from libqtile.config import Match
 from libqtile.utils import rgb
 from qtile_extras.layout.decorations.borders import ConditionalBorderWidth, CustomBorder
 
 from modules.models import Settings
+
+# notify2.init("qtile-wl-cfg")
 
 
 def load_theme(config_path):

@@ -9,7 +9,7 @@ import notify2
 from libqtile.command.client import InteractiveCommandClient
 from rofi import Rofi
 
-notify2.init("rofi_layout")
+# notify2.init("rofi_layout")
 
 c = InteractiveCommandClient()
 with open(
