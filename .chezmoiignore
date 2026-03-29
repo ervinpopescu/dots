@@ -13,3 +13,38 @@ pkgs
 .config/qtile-wl/**
 bin/battery-notification.py
 {{ end }}
+
+{{ if .is_macbook }}
+.config/qtile/**
+.config/qtile-wl/**
+.config/X11/**
+.config/rofi/**
+.config/dunst/**
+.config/picom.conf
+.config/conky/**
+.config/nwg-launchers/**
+.config/libinput-gestures.conf
+.config/spicetify/**
+.config/Code - OSS/**
+bin/autostart.sh
+bin/autostart-wl.sh
+bin/battery-notification.py
+bin/brightnessctl.sh
+bin/bt-bat.py
+bin/hide-show-bar.sh
+bin/libinput-gestures-start.sh
+bin/lock_and_sleep.sh
+bin/mediactl.sh
+bin/mutevol.sh
+bin/pkg_remove_fzf.sh
+bin/reboot-to-win.sh
+bin/run_wall.sh
+bin/run_wall_wl.sh
+bin/second_display.sh
+bin/suspend-toggle
+bin/tail-qtile-log.sh
+bin/volctl.sh
+bin/wallpaper.sh
+bin/wallpaper-wl.sh
+bin/generate_primary_wallpaper.py
+{{ end }}
