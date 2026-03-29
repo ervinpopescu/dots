@@ -6,6 +6,8 @@ system/**
 markdown/**
 secrets.age
 pkgs
+**/__pycache__/**
+**/**.log
 
 {{ if not .is_lenovo }}
 .config/qtile-wl/**

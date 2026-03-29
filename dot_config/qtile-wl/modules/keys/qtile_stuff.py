@@ -7,6 +7,7 @@ from modules.functions import (
     set_layout_all,
     set_layout_current,
     toggle_gaps,
+    toggle_idle_inhibitor,
 )
 from modules.settings import config_path, settings
 from modules.widget_names import WIDGETBOX_1, WIDGETBOX_2
@@ -81,5 +82,11 @@ qtile_keys = [
         "n",
         set_layout_current(),
         desc="Toggle max/default layout on current group",
+    ),
+    Key(
+        [settings.keymaps.mod],
+        "i",
+        toggle_idle_inhibitor(),
+        desc="Toggle idle inhibitor",
     ),
 ]

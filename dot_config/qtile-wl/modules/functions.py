@@ -220,7 +220,22 @@ def suspend_toggle(_):
         ["sudo", "suspend-toggle"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT
     )
     message = p.stdout.decode().strip()
-    notify2.Notification(summary="Suspend toggle", message=message).show()
+    # notify2.Notification(summary="Suspend toggle", message=message).show()
+    subprocess.Popen(["notify-send", "Suspend toggle", message])
+
+
+@lazy.function
+def toggle_idle_inhibitor(qtile: Qtile):
+    active = qtile.core.get_idle_inhibitors(active_only=True)  # type: ignore[attr-defined]
+    if active:
+        qtile.core.remove_idle_inhibitor()  # type: ignore[attr-defined]
+        # notify2.Notification(summary="Idle inhibitor", message="Disabled").show()
+        msg = "Disabled"
+    else:
+        qtile.core.set_idle_inhibitor()  # type: ignore[attr-defined]
+        # notify2.Notification(summary="Idle inhibitor", message="Enabled").show()
+        msg = "Enabled"
+    subprocess.Popen(["notify-send", "Idle inhibitor", msg])
 
 
 def location():
