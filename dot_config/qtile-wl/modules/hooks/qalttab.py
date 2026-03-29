@@ -12,15 +12,35 @@ from libqtile.utils import create_task, get_cache_dir
 from modules.settings import config_path
 
 focus_history: list[Window] = []
-excluded_focus_history = ["scratchpad", "qalttab"]  # for instance, scratchpads
+excluded_groups = ["scratchpad", "qalttab"]  # group names to exclude
+excluded_wm_classes = ["qalttab"]  # wm_class values to exclude
 focus_index = 0
 last_focused_index = None
-message = {}
+message: dict[str, object] = {}
 reloaded = False
 
 CACHE_DIR = get_cache_dir()
 SOCKET_PATH = os.path.join(CACHE_DIR, "qalttab.wayland-0")
 SAVED_HISTORY_PATH = os.path.join(config_path, "json", "focus_history.json")
+
+
+def _is_excluded(window):
+    """Check if a window should be excluded from focus history."""
+    if window.group is None:
+        return True
+    if window.group.name in excluded_groups:
+        return True
+    # Check if window belongs to a ScratchPad (even when toggled to current group)
+    for group in qtile.groups:
+        if hasattr(group, "dropdowns") and any(
+            dd.window == window for dd in group.dropdowns.values() if dd.window is not None
+        ):
+            return True
+    wm_class = window.get_wm_class()
+    if wm_class and wm_class[0] in excluded_wm_classes:
+        return True
+    return False
+
 
 def save_focus_history(qtile):
     global message
@@ -51,42 +71,27 @@ def load_focus_history(qtile):
 
 @hook.subscribe.user("alt_release")  # type: ignore
 def alt_release():
-    logger.debug(
-        "---------------------- user_alt_release | reset_focus_index ----------------------"
-    )
-    logger.debug([win.get_wm_class() for win in focus_history])
-    logger.debug(excluded_focus_history)
-    logger.debug(focus_index)
-    logger.debug(last_focused_index)
+    global focus_index
+    logger.debug("user_alt_release | focus_index=%s", focus_index)
+
+    if focus_history and 0 <= focus_index < len(focus_history):
+        next_window = focus_history[focus_index]
+        qtile.current_screen.set_group(next_window.group)
+        next_window.group.focus(next_window, warp=True)  # type: ignore
+        next_window.bring_to_front()
 
     reset_focus_index()
-    all_windows = qtile.windows_map
-    qalttab_win: Window = None  # type: ignore
-    for wid in all_windows:
-        if hasattr(all_windows[wid], "name"):
-            if all_windows[wid].name == "qalttab":
-                qalttab_win = all_windows[wid]
-    if qalttab_win:
-        qalttab_win.hide()
-        focus_history[focus_index].group.focus(focus_history[focus_index], warp=True)  # type: ignore
 
 
 @hook.subscribe.client_focus
 def record_focus(window):
     global focus_history, message, reloaded
 
-    logger.debug("---------------------- client_focus ----------------------")
-    logger.debug(window)
-    logger.debug([win.get_wm_class() for win in focus_history])
-    logger.debug(excluded_focus_history)
-    logger.debug(focus_index)
-    logger.debug(last_focused_index)
+    logger.warning("record_focus: %s (group=%s) | history=%s",
+                   window.name, window.group.name if window.group else None,
+                   [(w.name, w.group.name if w.group else None) for w in focus_history])
 
-    if (
-        window.group
-        and window.group.name not in excluded_focus_history
-        and not any(ex in window.name for ex in excluded_focus_history)
-    ):
+    if not _is_excluded(window):
         if window in focus_history:
             focus_history.remove(window)
         focus_history.insert(0, window)
@@ -109,21 +114,12 @@ def record_focus(window):
         }
 
         # write focus_history to qalttab socket
-        if os.path.exists(SOCKET_PATH) and not any(ex in window.name for ex in excluded_focus_history):
+        if os.path.exists(SOCKET_PATH) and not _is_excluded(window):
             client = Client(socket_path=SOCKET_PATH, is_json=True)
             create_task(
                 client.async_send(message),
             ).add_done_callback(check_response)  # type: ignore
 
-        all_windows = qtile.windows_map
-        qalttab_win: Window = None  # type: ignore
-
-        for wid in all_windows:
-            if hasattr(all_windows[wid], "name"):
-                if all_windows[wid].name == "qalttab":
-                    qalttab_win = all_windows[wid]
-        if qalttab_win and qtile.current_window != qalttab_win:
-            qalttab_win.hide()
         reloaded = False
 
 
@@ -135,45 +131,42 @@ def check_response(response):
 def cycle_windows(qtile):
     global focus_index, last_focused_index, message, focus_history, reloaded
 
-    logger.debug("---------------------- cycle_windows ----------------------")
-    logger.debug([win.get_wm_class() for win in focus_history])
-    logger.debug(excluded_focus_history)
-    logger.debug(focus_index)
-    logger.debug(last_focused_index)
+    logger.warning("cycle_windows called | focus_index=%s last_focused=%s history=%s",
+                   focus_index, last_focused_index,
+                   [(w.name, w.group.name if w.group else None) for w in focus_history])
 
     if not focus_history:
+        logger.warning("cycle_windows: empty focus_history, returning")
         return
 
     focus_history[:] = [
-        win
-        for win in focus_history
-        if win.group.name not in excluded_focus_history  # type: ignore
+        win for win in focus_history
+        if not _is_excluded(win)
     ]
 
     if not focus_history:
+        logger.warning("cycle_windows: empty after filter, returning")
         return
+
+    logger.warning("cycle_windows: after filter history=%s",
+                   [(w.name, w.group.name if w.group else None) for w in focus_history])
 
     if focus_index == -1:
         focus_index = len(focus_history) - 1
     else:
         focus_index = (focus_index + 1) % len(focus_history)
 
-    if focus_index == 0:
-        focus_index = last_focused_index if last_focused_index is not None else 0  # type: ignore
+    if focus_index >= len(focus_history):
+        focus_index = 0
 
     next_window = focus_history[focus_index]
 
-    if next_window == qtile.current_window:
-        focus_index = (focus_index + 1) % len(focus_history)
-        next_window = focus_history[focus_index]
-
-    # qtile.current_screen.set_group(next_window.group)
-    next_window.group.focus(next_window, warp=False)  # type: ignore
-    next_window.bring_to_front()  # To get a scratchpad possibly hidden behind a newly maximized window.
+    logger.warning("cycle_windows: selected %s (index=%s)", next_window.name, focus_index)
 
     if not reloaded:
         message = {
             "message_type": "cycle_windows",
+            "focus_index": focus_index,
             "windows": [
                 {
                     "class": win.get_wm_class()[0]  # type: ignore
@@ -188,28 +181,15 @@ def cycle_windows(qtile):
             ],
         }
 
-        if (
-            os.path.exists(SOCKET_PATH)
-            and not any(ex in next_window.name for ex in excluded_focus_history)
-        ):
+        if os.path.exists(SOCKET_PATH) and not _is_excluded(next_window):
+            logger.warning("cycle_windows: sending IPC message")
             client = Client(socket_path=SOCKET_PATH, is_json=True)
             create_task(
                 client.async_send(message),
             ).add_done_callback(check_response)  # type: ignore
-
-        all_windows = qtile.windows_map
-        qalttab_win: Window = None  # type: ignore
-
-        for wid in all_windows:
-            if hasattr(all_windows[wid], "name"):
-                if all_windows[wid].name == "qalttab":
-                    qalttab_win = all_windows[wid]
-
-        if qalttab_win:
-            logger.debug(qalttab_win)
-            # qalttab_win.togroup(next_window.group.name)  # type: ignore
-            qalttab_win.group.focus(qalttab_win, warp=True)  # type: ignore
-            qalttab_win.bring_to_front()
+        else:
+            logger.warning("cycle_windows: SKIPPED IPC (socket=%s, excluded=%s)",
+                           os.path.exists(SOCKET_PATH), _is_excluded(next_window))
 
         last_focused_index = focus_index
         reloaded = False
@@ -225,35 +205,13 @@ def reset_focus_index():
 def remove_from_focus_history(group, window):
     global focus_history
 
-    logger.debug(
-        "---------------------- group_window_remove | remove_from_focus_history ----------------------"
-    )
-    logger.debug(window)
-    logger.debug(group)
-    logger.debug([win.get_wm_class() for win in focus_history])
-    logger.debug(excluded_focus_history)
-    logger.debug(focus_index)
-    logger.debug(last_focused_index)
-
-    if (
-        not any(ex in window.name for ex in excluded_focus_history)
-        and window.group.name not in excluded_focus_history
-    ):
+    if not _is_excluded(window) and window in focus_history:
         focus_history.remove(window)
 
 
 @hook.subscribe.client_killed
 def remove_from_history(window):
     global focus_index
-
-    logger.debug(
-        "---------------------- client_killed | remove_from_history ----------------------"
-    )
-    logger.debug(window)
-    logger.debug([win.get_wm_class() for win in focus_history])
-    logger.debug(excluded_focus_history)
-    logger.debug(focus_index)
-    logger.debug(last_focused_index)
 
     if window in focus_history:
         focus_history.remove(window)
@@ -262,18 +220,13 @@ def remove_from_history(window):
         if window.floating:
             return  # Easiest workaround to handle internal pop-ups conflicts.
 
-    if False:
-        return
-
     if len(focus_history) >= 2:
         focus_index = 1
         next_window = focus_history[focus_index]
-        # qtile.current_screen.set_group(next_window.group)
         next_window.group.focus(next_window, warp=False)  # type: ignore
     elif focus_history:
         focus_index = 0
         next_window = focus_history[focus_index]
-        # qtile.current_screen.set_group(next_window.group)
         next_window.group.focus(next_window, warp=False)  # type: ignore
     else:
         focus_index = -1

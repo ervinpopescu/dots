@@ -20,5 +20,5 @@ __all__ = [
     "mouse",
     "screens",
     "window_rules_hooks",
-    # "qalttab_hooks",
+    "qalttab_hooks",
 ]
