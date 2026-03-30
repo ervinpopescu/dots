@@ -24,9 +24,14 @@ class WidgetBox(widget.WidgetBox):
 
     @property
     def actual_padding(self):
-        return self.fontsize / 2 if self.padding is None else self.padding
+        padding = getattr(self, "padding", 1)
+        if padding is None:
+            return getattr(self, "fontsize", 40) / 2
+        return padding
 
     def calculate_length(self):
+        if getattr(self, "layout", None) is None:
+            return 0
         return self.layout.width + self.actual_padding * 2
 
     def draw(self):
