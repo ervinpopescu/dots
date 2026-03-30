@@ -5,26 +5,26 @@ from modules.settings import layout_defaults
 
 layouts = [
     layout.Bsp(**layout_defaults),  # type: ignore
-    layout.Max(  # type: ignore
+    layout.Max(
         border_focus=layout_defaults["border_normal"],
         margin=layout_defaults["margin"],
         border_width=layout_defaults["border_width"],
     ),
-    layout.Zoomy(  # type: ignore
+    layout.Zoomy(
         margin=layout_defaults["margin"],
         columnwidth=500,
     ),
-    layout.MonadWide(  # type: ignore
+    layout.MonadWide(
         max_ratio=0.95,
         min_ratio=0.01,
         **layout_defaults,
     ),
-    layout.MonadTall(  # type: ignore
+    layout.MonadTall(
         max_ratio=0.95,
         min_ratio=0.01,
         **layout_defaults,
     ),
-    layout.MonadThreeCol(  # type: ignore
+    layout.MonadThreeCol(
         border_width=0,
         ratio=0.33333,
         max_ratio=0.95,
@@ -33,16 +33,16 @@ layouts = [
         border_focus=layout_defaults["border_focus"],
         border_normal=layout_defaults["border_normal"],
     ),
-    layout.Spiral(  # type: ignore
+    layout.Spiral(
         new_client_position="bottom",
         **layout_defaults,
     ),
-    layout.Columns(  # type: ignore
+    layout.Columns(
         num_columns=2,
         **layout_defaults,
     ),
 ]
-floating_layout = layout.Floating(  # type: ignore
+floating_layout = layout.Floating(
     float_rules=[
         Match(wm_type="utility"),
         Match(wm_type="notification"),
@@ -51,8 +51,9 @@ floating_layout = layout.Floating(  # type: ignore
         Match(wm_class="file_progress"),
         Match(wm_class="confirm"),
         Match(
-            func=lambda window: window.get_wm_type() == "dialog"
-            and window.name != "Torrent Properties"
+            func=lambda window: (
+                window.get_wm_type() == "dialog" and window.name != "Torrent Properties"
+            )
         ),
         Match(wm_class="download"),
         Match(wm_class="error"),
@@ -73,6 +74,7 @@ floating_layout = layout.Floating(  # type: ignore
         Match(wm_class="matplotlib"),
         Match(wm_class="lightdm-settings"),
         Match(wm_class="me.kavishdevar.librepods"),
+        Match(wm_class="xdg-desktop-portal-gtk"),
         # Match(wm_class="nm-tray"),
         # Match(
         #     func=lambda c: c.name.startswith("Figure") and c.wm_class == "MATLABWindow"

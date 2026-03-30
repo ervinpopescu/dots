@@ -124,8 +124,12 @@ def record_focus(window):
 
 
 def check_response(response):
-    logger.debug(response.result())
-    return
+    try:
+        result = response.result()
+        if result:
+            logger.debug(result)
+    except Exception as e:
+        logger.error("qalttab IPC error: %s", e)
 
 
 def cycle_windows(qtile):
