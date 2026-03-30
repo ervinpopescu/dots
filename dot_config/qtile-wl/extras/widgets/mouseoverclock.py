@@ -18,11 +18,11 @@ class MouseOverClock(widget.Clock):
 
     def mouse_enter(self, *args):
         self.format = self.long_format
-        self.bar.draw()
+        self.draw()
 
     def mouse_leave(self, *args):
         self.format = self.short_format
-        self.bar.draw()
+        self.draw()
 
     @expose_command()
     def toggle_format(self):

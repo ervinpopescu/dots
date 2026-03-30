@@ -15,6 +15,10 @@ class TaskList(widget.TaskList):
             window = self.clicked
             window.kill()
 
+    def update(self, window=None):
+        if not window or window in self.windows:
+            self.draw()
+
     @property
     def windows(self):
         if self.qtile.core.name == "wayland":
