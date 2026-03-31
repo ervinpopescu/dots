@@ -39,7 +39,7 @@ See `dot_config/qtile-wl/CLAUDE.md` for detailed architecture. Entry point: `con
 
 ### Tmux (`dot_config/tmux/`)
 
-Three config files: `tmux.conf` (shared), `tmux.conf.main` and `tmux.conf.mine` (machine-specific).
+Single config file: `tmux.conf`.
 
 ### Neovim (`dot_config/nvim/`)
 

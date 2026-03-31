@@ -21,7 +21,7 @@ case "$1" in
     playerctl next
     sleep 2
     if [[ "$(playerctl metadata | awk '{print $1}' | uniq)" != "spotify" ]];then
-      dunstify\
+      notify-send\
         -a "mediaNotification" \
         -i "$(playerctl metadata | grep artUrl | awk '{$1="";$2=""}1' | sed '3d;s/^[ \t]*//')" \
         -u low \
@@ -33,7 +33,7 @@ case "$1" in
     playerctl previous
     sleep 2
     if [[ "$(playerctl metadata | awk '{print $1}' | uniq)" != "spotify" ]];then
-      dunstify\
+      notify-send\
         -a "mediaNotification" \
         -i "$(playerctl metadata | grep artUrl | awk '{$1="";$2=""}1' | sed '3d;s/^[ \t]*//')" \
         -u low \
@@ -43,7 +43,7 @@ case "$1" in
   ;;
   "play-pause")
     playerctl play-pause 
-    dunstify\
+    notify-send\
       -a "mediaNotification" \
       -i "$(playerctl metadata | grep artUrl | awk '{$1="";$2=""}1' | sed '3d;s/^[ \t]*//')" \
       -u low \
@@ -52,7 +52,7 @@ case "$1" in
   ;;
   "play")
     playerctl play
-    dunstify\
+    notify-send\
       -a "mediaNotification" \
       -i "$(playerctl metadata | grep artUrl | awk '{$1="";$2=""}1' | sed '3d;s/^[ \t]*//')" \
       -u low \
@@ -61,7 +61,7 @@ case "$1" in
   ;;
   "pause")
     playerctl pause 
-    dunstify\
+    notify-send\
       -a "mediaNotification" \
       -i "$(playerctl metadata | grep artUrl | awk '{$1="";$2=""}1' | sed '3d;s/^[ \t]*//')" \
       -u low \

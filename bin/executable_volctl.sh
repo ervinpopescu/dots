@@ -9,10 +9,10 @@ else
 fi
 
 volume="$(pamixer --get-volume-human)"
-dunstify\
+notify-send\
     -a "changeVolume"\
     -u low\
-    -I "$HOME/.local/share/assets/volume.svg"\
+    -i "$HOME/.local/share/assets/volume.svg"\
     -r "$msgId"\
     -h int:value:"$volume" "${volume}"
 

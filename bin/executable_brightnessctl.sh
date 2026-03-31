@@ -10,7 +10,7 @@ function get_brightness {
 function send_notification {
   icon="/usr/share/icons/Papirus-Dark/symbolic/status/display-brightness-symbolic.svg"
   # Send the notification
-  dunstify -I "$icon" -a "brightness" -r 5555 -u low \
+  notify-send -i "$icon" -a "brightness" -r 5555 -u low \
   -h int:value:"$brightness" "${brightness}%"
 }
 

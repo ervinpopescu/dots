@@ -11,8 +11,8 @@ import psutil
 from libqtile.command.client import InteractiveCommandClient
 
 
-def dunstify(string):
-    command = "dunstify -t 5000 -a orar -u normal -r 311213".split()
+def notify_send(string):
+    command = "notify-send -t 5000 -a orar -u normal -r 311213".split()
     subprocess.run(command + ["Error!", string])
 
 
