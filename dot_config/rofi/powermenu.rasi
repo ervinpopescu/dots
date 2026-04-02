@@ -111,4 +111,3 @@ entry {
     text-color: var(normal-foreground);
     background-color: var(nord3);
 }
-
