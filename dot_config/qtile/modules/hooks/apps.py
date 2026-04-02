@@ -3,12 +3,9 @@ import signal
 import subprocess
 
 from libqtile import hook, qtile
-from libqtile.core.manager import Qtile
 
 from modules.functions import check_if_process_running
 from modules.settings import config_path
-
-qtile: Qtile
 
 
 @hook.subscribe.startup_once

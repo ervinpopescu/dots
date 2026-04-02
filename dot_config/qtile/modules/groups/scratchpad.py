@@ -1,12 +1,10 @@
 from libqtile import qtile
 from libqtile.config import DropDown, ScratchPad
-from libqtile.core.manager import Qtile
 
 from modules.settings import settings
 
-qtile: Qtile
 try:
-    screen_info = qtile.core.get_output_info()
+    screen_info = qtile.core.get_output_info()  # type: ignore[attr-defined]
     screen_width = min([screen_info[i].width for i in range(len(screen_info))])
     screen_height = min([screen_info[i].height for i in range(len(screen_info))])
 except AttributeError:

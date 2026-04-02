@@ -55,17 +55,17 @@ for w in widgets_1:
     if not isinstance(
         w, (Battery, widget.BatteryIcon, widget.Spacer, widget.Systray, widget.TaskList)
     ):
-        w.decorations = SINGLE_DECORATION["decorations"]
+        w.decorations = SINGLE_DECORATION["decorations"]  # type: ignore[attr-defined]
 
     if isinstance(
         w,
         (Battery, BtBattery, widget.BatteryIcon, widget.KeyboardLayout, widget.TextBox),
     ):
-        w.decorations = GROUP_DECORATION["decorations"]
+        w.decorations = GROUP_DECORATION["decorations"]  # type: ignore[attr-defined]
 
 # Duplicate widgets_1 into widgets_2 with specific conditions
-widgets_2 = []
-widgets_3 = []
+widgets_2: list = []
+widgets_3: list = []
 sm_spacer = small_spacer(length=MARGIN_SIZE)
 st_spacer = stretch_spacer()
 for w in widgets_1:

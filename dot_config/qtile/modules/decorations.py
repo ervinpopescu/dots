@@ -3,7 +3,7 @@ from qtile_extras.widget.decorations import PowerLineDecoration, RectDecoration
 from modules.settings import decor_bg
 from modules.theme import colors
 
-decorations: dict[dict[RectDecoration | PowerLineDecoration]] = dict(
+decorations: dict = dict(
     single_decor=dict(
         decorations=[
             RectDecoration(

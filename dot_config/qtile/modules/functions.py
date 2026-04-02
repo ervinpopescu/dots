@@ -58,7 +58,7 @@ def toggle_minimize_all(qtile: Qtile, current_group: bool = False):
 @lazy.function
 def groupbox_disable_drag(qtile: Qtile):
     widget = qtile.widgets_map["groupbox"]
-    widget.disable_drag = widget.disable_drag is not True
+    widget.disable_drag = widget.disable_drag is not True  # type: ignore[attr-defined]
 
 
 @lazy.function
