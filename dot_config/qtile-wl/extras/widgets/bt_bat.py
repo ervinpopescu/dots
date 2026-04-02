@@ -1,69 +1,74 @@
 import os
 import subprocess
-from types import NoneType
 
-# from libqtile.command.base import expose_command
-from libqtile.widget import base
-from qtile_extras import widget
+from libqtile.widget.base import BackgroundPoll
+from qtile_extras.widget import modify
 
 from modules.settings import colors, settings
 
 
-class BtBattery(widget.GenPollText):
+class BtBattery(BackgroundPoll):
     defaults = [
         ("update_interval", 60, "Update interval in seconds"),
         ("fontsize", 20, ""),
-        ("foreground", colors["fg2"], ""),
+        ("foreground", colors.get("fg2", "#ffffff")),
     ]
 
     def __init__(self, **config):
-        base.ThreadPoolText.__init__(self, **config)
+        super().__init__("", **config)
+        modify(BtBattery, initialise=False)
         self.add_defaults(BtBattery.defaults)
         self.add_callbacks({"Button3": self.force_update})
 
-    def poll(self):  # type: ignore
-        data = (
-            subprocess.check_output(
-                # os.path.join(os.environ["HOME"], "bin", "bt-bat.sh"),
-                os.path.join(os.environ["HOME"], "bin", "bt-bat.py"),
-                timeout=10,
-            )
-            .decode()
-            .strip()
-        )
-        if data == "":
-            self.foreground = colors["fg0"]
-            return ""
-        left: int | NoneType = None
-        right: int | NoneType = None
-        case: int | NoneType = None
+    def poll(self):
         try:
-            data = int(data)
+            data = (
+                subprocess.check_output(
+                    os.path.join(os.environ["HOME"], "bin", "bt-bat.py"),
+                    timeout=10,
+                )
+                .decode()
+                .strip()
+            )
+        except Exception:
+            return " err"
+
+        if data == "":
+            self.foreground = colors.get("fg0", "#ffffff")
+            return ""
+
+        left = None
+        right = None
+        case = None
+        try:
+            val = int(data)
             self.fontsize = settings.font_size + 4
-            if data > 10:
-                self.foreground = colors["lightgreen"]
+            if val > 10:
+                self.foreground = colors.get("lightgreen", "#00ff00")
             else:
-                self.foreground = colors["red"]
+                self.foreground = colors.get("red", "#ff0000")
+            if self.layout:
+                self.layout.colour = self.foreground
+            return f" {val}"
         except ValueError:
-            data_list = data.split(",")  # type: ignore
-            left = int(data_list[0].replace("L:", ""))
-            right = int(data_list[1].replace("R:", ""))
-            case = int(data_list[2].replace("C:", ""))
-            if left > 10 and right > 10 and case > 30:  # type: ignore
-                self.foreground = colors["lightgreen"]
-            elif left != -1 and right != -1:
-                self.foreground = colors["red"]
-            if case == -1:
-                self.foreground = colors["lightgreen"]
-                data = data.replace(",C:-1", "")  # type: ignore
-            # else:
-            #     return ""
+            try:
+                data_list = data.split(",")
+                left = int(data_list[0].replace("L:", ""))
+                right = int(data_list[1].replace("R:", ""))
+                case = int(data_list[2].replace("C:", ""))
 
-        # self._configure(self.bar.qtile, self.bar)
+                if left > 10 and right > 10 and case > 30:
+                    self.foreground = colors.get("lightgreen", "#00ff00")
+                elif left != -1 and right != -1:
+                    self.foreground = colors.get("red", "#ff0000")
 
-        return f" {data}"
+                if case == -1:
+                    self.foreground = colors.get("lightgreen", "#00ff00")
+                    data = data.replace(",C:-1", "")
+                
+                if self.layout:
+                    self.layout.colour = self.foreground
+                return f" {data}"
+            except Exception:
+                return f" {data}"
 
-    # TODO: IMPLEMENT async_force_update
-    # @expose_command()
-    def async_force_update(self):
-        self.poll()

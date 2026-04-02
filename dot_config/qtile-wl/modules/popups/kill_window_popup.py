@@ -1,16 +1,13 @@
 from libqtile import qtile
 from libqtile.backend.base.window import Window
-from libqtile.core.manager import Qtile
 from libqtile.lazy import lazy
 from libqtile.log_utils import logger
 from qtile_extras.popup.toolkit import PopupRelativeLayout, PopupText
 
 from modules.settings import colors, settings
 
-qtile: Qtile
-
 layout = PopupRelativeLayout(
-    qtile,
+    qtile,  # type: ignore[arg-type]
     width=1000,
     height=400,
     opacity=0.9,

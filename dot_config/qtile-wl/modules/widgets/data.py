@@ -1,6 +1,6 @@
 from libqtile.lazy import lazy
 
-from extras import Uptime
+from extras.widgets.uptime import Uptime
 from modules.settings import settings
 
 

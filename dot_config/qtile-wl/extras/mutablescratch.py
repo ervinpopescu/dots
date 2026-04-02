@@ -22,7 +22,7 @@ class MutableScratch(object):
         self.win_attr = win_attr
         self.grp_name = grp_name
 
-        self.win_stack = []  # Equivalent of focus_history
+        self.win_stack: list = []  # Equivalent of focus_history
 
     def add_current_window(self):
         """Add current window to the MutableScratch system"""

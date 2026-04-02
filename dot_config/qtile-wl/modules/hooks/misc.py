@@ -2,11 +2,7 @@ import os
 import subprocess
 
 from libqtile import hook, qtile
-
-from libqtile.core.manager import Qtile
 from libqtile.utils import send_notification
-
-qtile: Qtile
 
 
 @hook.subscribe.screen_change

@@ -11,7 +11,7 @@ from .qtile_stuff import qtile_keys
 from .window_managing import window_managing_keys
 from .windows_and_groups import windows_and_groups_keys
 
-keys = []
+keys: list = []
 keys.extend(windows_and_groups_keys)
 keys.extend(layouts_keys)
 keys.extend(layout_managing_keys)

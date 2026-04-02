@@ -15,6 +15,7 @@ from modules.settings import colors, settings
 from modules.widget_names import BATTERY_SEP
 from .battery import battery
 from .battery_icon import battery_icon
+from .bt_bat import bt_bat
 from .chord import chord
 from .current_layout_icon import current_layout_icon
 from .github_notif import github_notif
@@ -46,6 +47,7 @@ widgets_1: list[_Widget] = [
     github_notif(),
     battery(),
     battery_icon(),
+    bt_bat(),
     mouse_over_clock(),
     wallpaper(),
     powermenu(),
@@ -72,10 +74,12 @@ for w in widgets_1:
         w.decorations = GROUP_DECORATION["decorations"]  # type: ignore
 
 # Duplicate widgets_1 into widgets_2 with specific conditions
-widgets_2 = []
-widgets_3 = []
+widgets_2: list = []
+widgets_3: list = []
 sm_spacer = small_spacer(name="sm_sp", length=MARGIN_SIZE)
 st_spacer = stretch_spacer(name="st_sp")
+battery_inner_spacer = small_spacer(name="bat_in_sp", length=0)
+battery_inner_spacer.decorations = GROUP_DECORATION["decorations"]
 
 
 def configure_widget(
@@ -227,11 +231,13 @@ while i < len(widgets_1):
     w = widgets_1[i]
     match w.name:
         case "battery":
+            # Insert undecorated spacer before the whole group
             widgets_1.insert(i, sm_spacer)
             i += 2
         case "battery_icon":
             i += 1
         case "bt_battery":
+            # Insert decorated separator before bt_bat
             ins = pipe(
                 name=BATTERY_SEP,
                 foreground=colors["bg2"],
@@ -247,14 +253,23 @@ while i < len(widgets_1):
 
 def _insert_secondary_spacers(widget_list):
     battery_sep = next((item for item in widgets_1 if item.name == BATTERY_SEP), None)
+    bat_inner_sp = next((item for item in widgets_1 if item.name == "bat_in_sp"), None)
     i = 1
     while i < len(widget_list):
         w = widget_list[i]
         match w.name:
+            case "battery":
+                # Insert undecorated spacer before the whole group
+                widget_list.insert(i, sm_spacer)
+                # Add inner decorated spacer after battery
+                if bat_inner_sp:
+                    widget_list.insert(i + 2, copy.deepcopy(bat_inner_sp))
+                i += 4
             case "battery_icon":
                 i += 1
             case "bt_battery":
-                widget_list.insert(i, copy.deepcopy(battery_sep))
+                if battery_sep:
+                    widget_list.insert(i, copy.deepcopy(battery_sep))
                 i += 2
             case "powermenu":
                 break

@@ -3,7 +3,7 @@ from qtile_extras import widget
 
 
 class TaskList(widget.TaskList):
-    defaults = []
+    defaults: list = []
 
     def __init__(self, **config):
         widget.TaskList.__init__(self, **config)
