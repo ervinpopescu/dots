@@ -25,7 +25,7 @@ def load_theme(config_path):
 
 
 try:
-    qtile_info = qtile.qtile_info()
+    qtile_info = qtile.qtile_info()  # type: ignore
     config_path = str(pathlib.Path(qtile_info["config_path"]).parent.resolve())
 except AttributeError:
     config_path = str(pathlib.Path(__file__).parent.parent.resolve())

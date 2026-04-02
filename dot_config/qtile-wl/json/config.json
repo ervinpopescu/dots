@@ -8,5 +8,6 @@
     "theme": "catppuccin",
     "wmname": "LG3D",
     "wl_xcursor_theme": "Bibata-Modern-Ice",
-    "wl_xcursor_size": 30
+    "wl_xcursor_size": 30,
+    "reconfigure_screens": true
 }

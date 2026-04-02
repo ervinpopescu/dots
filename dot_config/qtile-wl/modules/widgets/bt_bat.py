@@ -13,6 +13,6 @@ def bt_bat():
         mouse_callbacks={
             "Button1": lazy.group["scratchpad"].dropdown_toggle("blueman"),
         },
-        padding=2,
+        padding=10,
         update_interval=30,
     )

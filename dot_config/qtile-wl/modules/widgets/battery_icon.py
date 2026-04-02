@@ -7,6 +7,7 @@ def battery_icon():
         name="battery_icon",
         foreground=colors["darkblue"],
         scale=1.6,
+        padding=4,
         theme_path=f"{config_path}/battery-icons/",
         usemask=True,
         update_interval=5,

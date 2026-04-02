@@ -1,3 +1,38 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "qtile-wl-config"
+version = "0.1.0"
+description = "My Qtile Wayland configuration"
+dependencies = [
+    "distro>=1.9.0",
+    "json5>=0.9.6",
+    "jsonpickle>=3.0.0",
+    "notify2>=0.3.1",
+    "psutil>=6.0.0",
+    "pycritty>=0.4.0",
+    "pyinotify>=0.9.6",
+    "pyxdg>=0.28",
+    "qtile>=0.33.0",
+    "qtile-extras>=0.33.0",
+    "xcffib>=1.5.0",
+    "xdo>=0.5",
+    "pydantic>=2.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff",
+    "mypy",
+    "types-psutil",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["modules*", "extras*"]
+
 [tool.black]
 line-length = 98
 
@@ -6,6 +41,3 @@ profile = "black"
 
 [tool.pyright]
 reportGeneralTypeIssues = false
-
-# [dependencies]
-# json5 =

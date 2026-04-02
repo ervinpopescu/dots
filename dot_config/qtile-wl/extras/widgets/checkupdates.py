@@ -1,7 +1,8 @@
 import shutil
 import subprocess
 
-from qtile_extras import widget
+from libqtile.widget.base import BackgroundPoll
+from qtile_extras.widget import modify
 
 from modules.settings import colors
 
@@ -12,15 +13,20 @@ def chkup():
         return str(num)
     except subprocess.CalledProcessError as e:
         if e.returncode == 0:
-            return str(num)
+            return "0"
         elif e.returncode == 2:
             return "0"
         else:
-            shutil.rmtree("/tmp/checkup-db-1000")
-            return chkup()
+            try:
+                shutil.rmtree("/tmp/checkup-db-1000")
+            except Exception:
+                pass
+            return "0"
+    except Exception:
+        return "0"
 
 
-class CheckUpdates(widget.GenPollText):
+class CheckUpdates(BackgroundPoll):
     defaults = [
         ("update_interval", 3600, "Update interval in seconds"),
         ("padding", 5, ""),
@@ -29,11 +35,14 @@ class CheckUpdates(widget.GenPollText):
     ]
 
     def __init__(self, **config):
-        widget.GenPollText.__init__(self, **config)
+        super().__init__("0", **config)
+        modify(CheckUpdates, initialise=False)
         self.add_defaults(CheckUpdates.defaults)
 
     def poll(self):
         data = chkup()
         self.foreground = colors["lightgreen"] if data == "0" else colors["red"]
-        # self._configure(self.bar.qtile, self.bar)
+        if self.layout:
+            self.layout.colour = self.foreground
         return data
+

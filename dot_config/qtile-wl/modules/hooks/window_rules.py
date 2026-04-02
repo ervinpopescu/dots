@@ -1,16 +1,28 @@
 import json
 import os
+from typing import TYPE_CHECKING, Optional, cast
 
-import json5
+import json5  # type: ignore
+import libqtile.core.manager
 from libqtile import hook, qtile
 from libqtile.backend.base import Window  # type: ignore
-from libqtile.core.manager import Qtile
 from libqtile.log_utils import logger
 
 from modules.matches import matches
 from modules.settings import config_path, settings
 
-qtile: Qtile
+
+def get_screen_width_safe() -> int:
+    default_width = 1920
+    if not TYPE_CHECKING and hasattr(qtile, "core") and hasattr(qtile.core, "running") and qtile.core.running:
+        try:
+            _core = cast(libqtile.core.manager.Core, qtile.core)
+            screen_info = _core.get_output_info()
+            if screen_info:
+                return max([output.width for output in screen_info])
+        except Exception:
+            pass
+    return default_width
 
 
 @hook.subscribe.client_new
@@ -34,10 +46,10 @@ def window_rules(client: Window):
     wm_class = client.get_wm_class()
     if wm_class:
         wm_class = wm_class[0]
-    role = client.get_wm_role()
+    role: Optional[str] = client.get_wm_role()
     if not role:
         role = None
-    name = client.name
+    name: Optional[str] = client.name
     if not name:
         name = None
 
@@ -60,7 +72,7 @@ def window_rules(client: Window):
                     f"set_position_floating: class:{rules_wm_class},name:{rules_name}"
                 )
                 client.set_position_floating(
-                    x=qtile.core.get_screen_info()[0].width  # type: ignore
+                    x=get_screen_width_safe()
                     - win["rules"]["w"]  # type: ignore
                     - settings.margin_size
                     - 5,

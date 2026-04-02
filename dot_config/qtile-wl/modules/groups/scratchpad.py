@@ -1,10 +1,7 @@
 from libqtile import qtile
 from libqtile.config import DropDown, ScratchPad
-from libqtile.core.manager import Qtile
 
 from modules.settings import settings
-
-qtile: Qtile
 
 
 def fullscreen_dropdown_geometry():
@@ -58,7 +55,7 @@ scratchpad = ScratchPad(
         ),
         DropDown(
             "htop",
-            settings.cmds.htop,
+            " ".join(settings.cmds.htop),
             opacity=settings.dropdown_opacity,
             **fullscreen_dropdown_geometry(),
             on_focus_lost_hide=False,
@@ -97,7 +94,7 @@ scratchpad = ScratchPad(
         ),
         DropDown(
             "update",
-            settings.cmds.update,
+            " ".join(settings.cmds.update),
             opacity=settings.dropdown_opacity,
             **fullscreen_dropdown_geometry(),
             on_focus_lost_hide=False,
