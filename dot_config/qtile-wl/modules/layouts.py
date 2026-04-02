@@ -5,26 +5,27 @@ from modules.settings import layout_defaults
 
 layouts = [
     layout.Bsp(**layout_defaults),  # type: ignore
-    layout.Max(
+    layout.Max(  # type: ignore
         border_focus=layout_defaults["border_normal"],
         margin=layout_defaults["margin"],
         border_width=layout_defaults["border_width"],
     ),
-    layout.Zoomy(
+    layout.Zoomy(  # type: ignore
         margin=layout_defaults["margin"],
         columnwidth=500,
+        property_small="1.0",
     ),
-    layout.MonadWide(
+    layout.MonadWide(  # type: ignore
         max_ratio=0.95,
         min_ratio=0.01,
         **layout_defaults,
     ),
-    layout.MonadTall(
+    layout.MonadTall(  # type: ignore
         max_ratio=0.95,
         min_ratio=0.01,
         **layout_defaults,
     ),
-    layout.MonadThreeCol(
+    layout.MonadThreeCol(  # type: ignore
         border_width=0,
         ratio=0.33333,
         max_ratio=0.95,
@@ -33,12 +34,15 @@ layouts = [
         border_focus=layout_defaults["border_focus"],
         border_normal=layout_defaults["border_normal"],
     ),
-    layout.Spiral(
+    layout.Spiral(  # type: ignore
         new_client_position="bottom",
         **layout_defaults,
     ),
-    layout.Columns(
+    layout.Columns(  # type: ignore
         num_columns=2,
+        **layout_defaults,
+    ),
+    layout.TreeTab(  # type: ignore
         **layout_defaults,
     ),
 ]
@@ -50,6 +54,7 @@ floating_layout = layout.Floating(
         Match(wm_type="splash"),
         Match(wm_class="file_progress"),
         Match(wm_class="confirm"),
+        Match(wm_class="dialog"),
         Match(
             func=lambda window: (
                 window.get_wm_type() == "dialog" and window.name != "Torrent Properties"
