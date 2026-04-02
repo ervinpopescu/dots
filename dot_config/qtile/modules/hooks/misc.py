@@ -5,9 +5,6 @@ import psutil
 import signal
 
 from libqtile import hook, qtile
-from libqtile.core.manager import Qtile
-
-qtile: Qtile
 
 @hook.subscribe.screen_change
 def screen_change(event):

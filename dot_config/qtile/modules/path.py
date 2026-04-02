@@ -1,9 +1,6 @@
 import pathlib
 
 from libqtile import qtile
-from libqtile.core.manager import Qtile
-
-qtile: Qtile
 
 try:
     qtile_info = qtile.qtile_info()  # type: ignore
