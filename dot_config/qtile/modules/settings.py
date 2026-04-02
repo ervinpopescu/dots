@@ -28,8 +28,10 @@ def load_theme():
 
 
 # notify2.init("qtile config")
-qtile: Qtile
-qtile_info = qtile.qtile_info()
+try:
+    qtile_info = qtile.qtile_info()  # type: ignore
+except AttributeError:
+    qtile_info = {}
 if len(qtile_info) != 0:
     config_path = str(pathlib.Path(qtile_info["config_path"]).parent.resolve())
 else:
