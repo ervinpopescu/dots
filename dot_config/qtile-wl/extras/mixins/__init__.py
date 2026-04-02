@@ -1,12 +1,8 @@
 import os
-from typing import TYPE_CHECKING
 
 from libqtile.images import Img
 from libqtile.log_utils import logger
 from libqtile.popup import Popup
-
-if TYPE_CHECKING:
-    from typing import Any
 
 
 class _BaseMixin:

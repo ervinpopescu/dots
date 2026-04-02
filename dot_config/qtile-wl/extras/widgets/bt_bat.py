@@ -11,7 +11,7 @@ class BtBattery(BackgroundPoll):
     defaults = [
         ("update_interval", 60, "Update interval in seconds"),
         ("fontsize", 20, ""),
-        ("foreground", colors.get("fg2", "#ffffff")),
+        ("foreground", colors.get("fg2", "#ffffff"), ""),
     ]
 
     def __init__(self, **config):
