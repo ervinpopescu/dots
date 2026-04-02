@@ -5,9 +5,13 @@ from libqtile.core.manager import Qtile
 from modules.settings import settings
 
 qtile: Qtile
-screen_info = qtile.core.get_screen_info()
-screen_width = min([screen_info[i].width for i in range(len(screen_info))])
-screen_height = min([screen_info[i].height for i in range(len(screen_info))])
+try:
+    screen_info = qtile.core.get_output_info()
+    screen_width = min([screen_info[i].width for i in range(len(screen_info))])
+    screen_height = min([screen_info[i].height for i in range(len(screen_info))])
+except AttributeError:
+    screen_width = 1920
+    screen_height = 1080
 scratchpad = ScratchPad(
     name="scratchpad",
     single=True,
