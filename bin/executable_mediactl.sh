@@ -4,13 +4,13 @@ player_status() {
   if [[ "$(playerctl status)" == "Playing" ]]
   then
     printf '%s\n' ""
-  else 
-    printf '%s\n' "" 
+  else
+    printf '%s\n' ""
   fi
 }
 
 play_pause_text() {
-  cat << EOF 
+  cat << EOF
 $(player_status)
 $(playerctl metadata title; playerctl metadata artist)
 EOF
@@ -42,13 +42,13 @@ case "$1" in
     fi
   ;;
   "play-pause")
-    playerctl play-pause 
+    playerctl play-pause
     notify-send\
       -a "mediaNotification" \
       -i "$(playerctl metadata | grep artUrl | awk '{$1="";$2=""}1' | sed '3d;s/^[ \t]*//')" \
       -u low \
       -r '263723' \
-      "$(play_pause_text)"  
+      "$(play_pause_text)"
   ;;
   "play")
     playerctl play
@@ -57,15 +57,15 @@ case "$1" in
       -i "$(playerctl metadata | grep artUrl | awk '{$1="";$2=""}1' | sed '3d;s/^[ \t]*//')" \
       -u low \
       -r '263723' \
-      "$(play_pause_text)"  
+      "$(play_pause_text)"
   ;;
   "pause")
-    playerctl pause 
+    playerctl pause
     notify-send\
       -a "mediaNotification" \
       -i "$(playerctl metadata | grep artUrl | awk '{$1="";$2=""}1' | sed '3d;s/^[ \t]*//')" \
       -u low \
       -r '263723' \
-      "$(play_pause_text)"  
+      "$(play_pause_text)"
   ;;
 esac
