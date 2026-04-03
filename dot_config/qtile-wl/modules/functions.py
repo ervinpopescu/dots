@@ -3,8 +3,8 @@ import json
 import os
 import subprocess
 
-import notify2
-import psutil
+import notify2  # type: ignore
+import psutil  # type: ignore
 from libqtile.bar import Bar
 from libqtile.core.manager import Qtile
 from libqtile.layout.floating import Floating

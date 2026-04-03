@@ -1,4 +1,4 @@
-from psutil import sensors_temperatures
+from psutil import sensors_temperatures  # type: ignore
 from qtile_extras import widget
 
 from modules.settings import colors, settings

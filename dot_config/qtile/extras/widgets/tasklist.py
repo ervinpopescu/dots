@@ -5,7 +5,7 @@ import xcffib
 import shlex
 import asyncio
 
-import psutil
+import psutil  # type: ignore
 from copy import deepcopy
 from qtile_extras.popup.toolkit import PopupImage
 from modules.path import config_path

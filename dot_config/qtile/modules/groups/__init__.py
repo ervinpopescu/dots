@@ -1,6 +1,6 @@
 import os
 
-import jsonpickle
+import jsonpickle  # type: ignore
 from libqtile import hook
 from libqtile.config import EzKey, Group, Key
 from libqtile.lazy import lazy
