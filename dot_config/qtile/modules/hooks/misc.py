@@ -1,7 +1,7 @@
 import contextlib
 import os
 import subprocess
-import psutil
+import psutil  # type: ignore
 import signal
 
 from libqtile import hook, qtile

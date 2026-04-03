@@ -2,8 +2,8 @@ import contextlib
 import json
 import subprocess
 
-import notify2
-import psutil
+import notify2  # type: ignore
+import psutil  # type: ignore
 
 # from libqtile.backend.base import Window
 # from libqtile.bar import Bar

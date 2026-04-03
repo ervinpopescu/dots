@@ -1,5 +1,5 @@
 from libqtile.widget import base
-from psutil import sensors_battery
+from psutil import sensors_battery  # type: ignore
 from qtile_extras import widget
 
 from modules.settings import colors

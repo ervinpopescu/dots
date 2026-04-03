@@ -34,5 +34,6 @@ with open(os.path.join(config_path, "json", "config.json")) as f:
         if key != "theme":
             exec(f"{key}=val")
 
-def focus_on_window_activation(win):
-    return "feh_thumbnail" not in win.get_wm_class()
+
+
+focus_on_window_activation = "smart"
