@@ -8,9 +8,9 @@ print(bookmark)
 file = os.path.join(os.path.expanduser("~"), ".local", "share", "bookmarks")
 
 
-def dunstify(title, string):
+def notify_send(title, string):
     subprocess.run(
-        ["dunstify", "-a", "bookmark", "-u", "normal", "-r", "42523", title, string]
+        ["notify-send", "-a", "bookmark", "-u", "normal", "-r", "42523", title, string]
     )
 
 
@@ -20,11 +20,11 @@ with open(file, "r") as f:
 already_added = False
 for i in range(len(bookmarks)):
     if bookmark in bookmarks[i]:
-        dunstify("Oops", "Already bookmarked!")
+        notify_send("Oops", "Already bookmarked!")
         already_added = True
 
 if not already_added:
-    dunstify("Bookmark added", bookmark)
+    notify_send("Bookmark added", bookmark)
     bookmarks.append(bookmark + "\n")
 
 with open(file, "w") as f:

@@ -14,8 +14,8 @@ gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
 
 
-def dunstify(string):
-    command = "dunstify -t 5000 -a orar -u normal -r 311213".split()
+def notify_send(string):
+    command = "notify-send -t 5000 -a orar -u normal -r 311213".split()
     subprocess.run(command + ["Error!", string])
 
 
@@ -125,7 +125,7 @@ def get_schedule(refresh: bool):
             return list_of_lists
 
         else:
-            dunstify("`orar.json` not found,\nplease run `orar.py -r`")
+            notify_send("`orar.json` not found,\nplease run `orar.py -r`")
             exit(1)
 
 
