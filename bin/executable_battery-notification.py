@@ -6,9 +6,9 @@ ac_power_online_filename = "/sys/class/power_supply/ACAD/online"
 battery_percentage_filename = "/sys/class/power_supply/BAT1/capacity"
 
 
-def dunstify(notification, urgency, id):
+def notify_send(notification, urgency, id):
     subprocess.run(
-        f"dunstify -a batteryNotification -I /usr/share/icons/Papirus/24x24/panel/battery-low.svg -u {urgency} -r {id}".split()
+        f"notify-send -a batteryNotification -i /usr/share/icons/Papirus/24x24/panel/battery-low.svg -u {urgency} -r {id}".split()
         + [notification]
     )
 
@@ -21,10 +21,8 @@ while True:
     with open(battery_percentage_filename, "r") as f:
         percentage = int(f.read())
     if percentage < 10:
-        if AC_online:
-            subprocess.run(f"dunstify -C {notification_id}".split())
-        else:
-            dunstify(
+        if not AC_online:
+            notify_send(
                 notification="charge your laptop!",
                 urgency="critical",
                 id=notification_id,

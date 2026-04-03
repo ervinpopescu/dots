@@ -1,6 +1,6 @@
 #!/bin/bash
 
-dunstify\
+notify-send\
     -a "birthdayNotification"\
     -u normal\
     -r "635325"\
