@@ -9,10 +9,10 @@ from extras.widgets import (
     BatteryIcon,
     BtBattery,
 )
-
 from modules.decorations import decorations
 from modules.settings import colors, settings
 from modules.widget_names import BATTERY_SEP
+
 from .battery import battery
 from .battery_icon import battery_icon
 from .bt_bat import bt_bat
@@ -250,6 +250,7 @@ while i < len(widgets_1):
         case _:
             widgets_1.insert(i, sm_spacer)
             i += 2
+
 
 def _insert_secondary_spacers(widget_list):
     battery_sep = next((item for item in widgets_1 if item.name == BATTERY_SEP), None)

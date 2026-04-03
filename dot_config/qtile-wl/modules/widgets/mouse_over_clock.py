@@ -20,5 +20,5 @@ def mouse_over_clock():
         mouse_callbacks={"Button1": lazy.spawn("gsimplecal")},
         padding=10,
         name="mouse_over_clock",
-        update_interval=1,
+        update_interval=30,
     )

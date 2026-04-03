@@ -10,5 +10,5 @@ def battery_icon():
         padding=4,
         theme_path=f"{config_path}/battery-icons/",
         usemask=True,
-        update_interval=5,
+        update_interval=30,
     )
