@@ -175,8 +175,7 @@ return {
   },
   { "ron-rs/ron.vim", filetype = "ron" },
   {
-    dir = vim.env.HOME .. "/src/mine/projects/nvim/plugins/vim-matlab",
-    name = "vim-matlab",
+    "ervinpopescu/vim-matlab",
     config = function()
       require("vim-matlab").setup({
         matlab_cmd = "setsid xwayland-satellite :1 >/dev/null 2>&1 & for i in {1..50}; do xset -display :1 q >/dev/null 2>&1 && break || sleep 0.1; done; export DISPLAY=:1; xrdb -load ~/.config/X11/Xresources; QT_QPA_PLATFORM=xcb LD_PRELOAD=/usr/lib/libstdc++.so:/usr/lib/libfreetype.so LD_LIBRARY_PATH=/usr/lib/dri/ matlab -nodesktop -nosplash -webui",
