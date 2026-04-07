@@ -57,7 +57,7 @@
       "qtile_yay_update",
       "--hold",
       "-e",
-      "sh -x -c \"sudo pacman -Sy && sudo powerpill -Su --noconfirm && env CARGO_TARGET_DIR=./target yay -Su --noconfirm --overwrite '*'\""
+      "sh -x -c \"env CARGO_TARGET_DIR=./target yay -Syyu --noconfirm --overwrite '*'\""
     ],
     "wallpaper": [
       "rofi-wallpaper"
@@ -77,12 +77,12 @@
     "www": {
       "label": "",
       "layout": "max",
-      "screen_affinity": 2
+      "screen_affinity": 1
     },
     "coding": {
       "label": "",
       "layout": "max",
-      "screen_affinity": 1
+      "screen_affinity": 2
     },
     "media": {
       "label": "",
