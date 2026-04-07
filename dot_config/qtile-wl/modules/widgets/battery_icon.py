@@ -5,10 +5,9 @@ from modules.settings import colors, config_path
 def battery_icon():
     return BatteryIcon(
         name="battery_icon",
-        foreground=colors["darkblue"],
+        foreground=colors["yellow"],
         scale=1.6,
         padding=4,
         theme_path=f"{config_path}/battery-icons/",
-        usemask=True,
         update_interval=30,
     )
