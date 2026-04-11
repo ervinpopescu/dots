@@ -1,6 +1,11 @@
 #!/bin/bash
 
-folder="$(xdg-user-dir PICTURES)/wallpapers/rand"
+base_folder="$(xdg-user-dir PICTURES)/wallpapers"
+if stat "$base_folder/rand" >/dev/null 2>&1 && [ -d "$base_folder/rand" ]; then
+    folder="$base_folder/rand"
+else
+    folder="$base_folder"
+fi
 wallpaper_folder_data="$XDG_DATA_HOME/wallpaper"
 cache_until_now="$wallpaper_folder_data/tillnow"
 # primary_display_wallpaper="$wallpaper_folder_data/output.png"
