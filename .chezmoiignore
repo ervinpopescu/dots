@@ -8,6 +8,7 @@ secrets.age
 pkgs
 **/__pycache__/**
 **/**.log
+.config/qtile{,-wl}/json/keys.json
 
 {{ if not .is_lenovo }}
 .config/qtile-wl/**
