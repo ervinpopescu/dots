@@ -1,7 +1,7 @@
 from libqtile.lazy import lazy
 from qtile_extras import widget
 
-# import os
+import os
 # import subprocess
 from modules.settings import colors, settings
 
@@ -10,7 +10,7 @@ def wallpaper():
     return widget.TextBox(
         font=settings.icon_font,
         foreground=colors["red"],
-        mouse_callbacks={"Button1": lazy.spawn("/home/ervin/bin/run_wall.sh rand all")},
+        mouse_callbacks={"Button1": lazy.spawn(os.path.expanduser("~/bin/run_wall.sh rand all"))},
         padding=10,
         text="",
     )
