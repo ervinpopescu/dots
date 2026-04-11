@@ -86,28 +86,10 @@ def rounded_corners_purple(ctx, bw, width, height):
 
 
 layout_defaults = dict(
-    # margin=[
-    #     settings.margin_size,
-    #     settings.margin_size,
-    #     settings.margin_size,
-    #     settings.margin_size,
-    # ],
     margin=settings.margin_size,
-    border_width=ConditionalBorderWidth(
-        matches=[
-            (
-                Match(title="qalttab"),
-                0,
-            )
-        ],
-        default=4,
-    ),
-    # border_focus=colors["purple"],
-    # border_normal=colors["bg0"],
-    # border_focus=RoundedCorners(colour=colors["purple"]),
-    # border_normal=RoundedCorners(colour=colors["bg0"]),
-    border_normal=CustomBorder(func=rounded_corners_bg0),
-    border_focus=CustomBorder(func=rounded_corners_purple),
+    border_width=4,
+    border_normal=colors["bg0"],
+    border_focus=colors["purple"],
 )
 widget_defaults = {
     "font": "Font Awesome 6 Free Solid",
