@@ -18,8 +18,8 @@ element-text, element-icon , mode-switcher {
 }
 
 window {
-    height: 900px;
-    width: 900 px;
+    height: {{ if .is_cloudtop }}600{{ else }}900{{ end }}px;
+    width: {{ if .is_cloudtop }}600{{ else }}900{{ end }} px;
     border: 5px;
     border-color: @border-col;
     background-color: @bg-col;

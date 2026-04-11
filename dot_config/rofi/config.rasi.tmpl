@@ -1,6 +1,6 @@
 configuration{
     modi: "run,drun";
-    font: "CodeNewRoman Nerd Font Mono 35";
+    font: "{{ if .is_cloudtop }}Caskaydia Cove Nerd Font Mono 15{{ else }}CodeNewRoman Nerd Font Mono 35{{ end }}";
     show-icons: true;
     icon-theme: "Papirus-Dark";
     terminal: "alacritty";
@@ -21,8 +21,8 @@ element-text, element-icon , mode-switcher {
 }
 
 window {
-    height: 1120px;
-    width: 2000 px;
+    height: {{ if .is_cloudtop }}560{{ else }}1120{{ end }}px;
+    width: {{ if .is_cloudtop }}1000{{ else }}2000{{ end }} px;
     border: 5px;
     border-color: @border-col;
     background-color: @bg-col;
