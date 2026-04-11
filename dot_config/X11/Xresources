@@ -31,7 +31,7 @@ alttab.font: xft:CaskaydiaCove Nerd Font Mono Bold-30
 *color8:	#988BA2
 *color9:	#F28FAD
 *foreground:	#D9E0EE
-Xcursor.size:	48
+Xcursor.size:    24
 Xcursor.theme:	Bibata-Modern-Ice
 Xft.antialias:	1
 Xft.autohint:	0
