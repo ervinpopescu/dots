@@ -68,7 +68,9 @@ set-option -g @plugin 'tmux-plugins/tpm'
 
 set-option -g @plugin 'ervinpopescu/catppuccin-tmux'
 run ~/.config/tmux/plugins/catppuccin-tmux/catppuccin.tmux
+{{ if .has_battery -}}
 set-option -g @plugin 'tmux-plugins/tmux-battery'
+{{ end -}}
 set-option -g @plugin 'tmux-plugins/tmux-cpu'
 
 set-option -g @catppuccin_flavour 'mocha'
@@ -92,7 +94,7 @@ set-option -g @catppuccin_status_right_separator_inverse "yes"
 set-option -g @catppuccin_status_connect_separator "no"
 set-option -g @catppuccin_status_fill "all"
 set-option -g @catppuccin_status_modules_left ""
-set-option -g @catppuccin_status_modules_right "application session battery date_time"
+set-option -g @catppuccin_status_modules_right "application session {{ if .has_battery }}battery {{ end }}date_time"
 
 set-option -g @catppuccin_application_text "#{pane_current_command}"
 set-option -g @catppuccin_date_time_text "%Y-%m-%d %H:%M"
