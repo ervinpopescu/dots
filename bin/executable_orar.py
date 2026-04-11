@@ -81,12 +81,12 @@ def get_schedule(refresh: bool):
             if len(list) == 3:
                 list.append(list[-1])
 
-        with open("/home/ervin/.local/state/orar.json", "w") as f:
+        with open(os.path.expanduser("~") + "/.local/state/orar.json", "w") as f:
             json.dump(list_of_lists, f)
         return list_of_lists
     else:
-        if "orar.json" in os.listdir("/home/ervin/.local/state/"):
-            with open("/home/ervin/.local/state/orar.json", "r") as f:
+        if "orar.json" in os.listdir(os.path.expanduser("~") + "/.local/state/"):
+            with open(os.path.expanduser("~") + "/.local/state/orar.json", "r") as f:
                 local = json.load(f)
             list_of_lists = local
             list_of_dicts = []

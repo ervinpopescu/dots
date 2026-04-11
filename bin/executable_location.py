@@ -4,7 +4,8 @@ import json
 
 import requests
 
-API_KEY = "AIzaSyCPtv9xFgnklV8vZj9lP6WhWXxRDx5TLP4"
+import os
+API_KEY = os.environ.get("GOOGLE_MAPS_API_KEY", "")
 post_data = {"considerIp": "true"}
 geolocate_response = requests.post(
     url=f"https://www.googleapis.com/geolocation/v1/geolocate?key={API_KEY}"
@@ -23,7 +24,7 @@ for component in geocode_response["results"][0]["address_components"]:
     if "country" in component["types"]:
         country_code = component["short_name"]
 location = dict(location=f"{locality},{country_code}")
-with open("/home/ervin/.local/share/location.json", "w") as f:
+with open(os.path.expanduser("~") + "/.local/share/location.json", "w") as f:
     json.dump(
         obj=location,
         fp=f,

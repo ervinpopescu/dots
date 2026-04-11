@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export DW_BIN="/home/ervin/.local/share/dw/bin/dw"
+export DW_BIN="$HOME/.local/share/dw/bin/dw"
 DW_DIR="$HOME/dw-playground/"
 
 [ -d "$DW_DIR" ] || mkdir "$DW_DIR"

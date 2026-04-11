@@ -11,7 +11,7 @@ dunst &
 run_wall_wl.sh rand all &
 
 ## various apps
-# /home/ervin/.config/conky/start_qtile.sh -n &
+# $HOME/.config/conky/start_qtile.sh -n &
 yes | rmshit.py &
 # firefox &
 # alacritty &
