@@ -15,10 +15,10 @@ def screen_change(event):
 async def change_wallpaper():
     with open(os.path.expanduser("~/.local/share/wallpaper/log")) as f:
         path = f.readlines()
-    if path is not None or path.len() != 0:
-        subprocess.call(f"run_wall.sh {path} all".split())
+    if path and len(path) > 0:
+        subprocess.call([os.path.expanduser("~/bin/run_wall.sh"), path[-1].strip(), "all"])
     else:
-        subprocess.call("run_wall.sh rand all".split())
+        subprocess.call([os.path.expanduser("~/bin/run_wall.sh"), "rand", "all"])
 
 @hook.subscribe.client_killed
 def switch_group(client):
