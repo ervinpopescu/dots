@@ -22,9 +22,11 @@ def notify_send(string):
 class CellRendererTextWindow(Gtk.Window):
     def __init__(self, l: list):
         super().__init__()
-        self.liststore = Gtk.ListStore(str, str, str, str)
+        self.liststore = Gtk.ListStore(str, str, str)
         for row in l:
-            self.liststore.append([row[0], row[1], row[2], row[3]])
+            # Ensure row has at least 3 elements
+            padded_row = (row + ["", "", ""])[:3]
+            self.liststore.append(padded_row)
         treeview = Gtk.TreeView(model=self.liststore)
         Gtk.TreeViewColumnSizing(2)
         treeview.set_grid_lines(3)
@@ -45,17 +47,10 @@ class CellRendererTextWindow(Gtk.Window):
 
         renderer_text_3 = Gtk.CellRendererText()
         renderer_text_3.set_alignment(0.5, 0.5)
-        semigr_a = Gtk.TreeViewColumn("444Ca", renderer_text_3, text=2)
-        semigr_a.set_fixed_width(200)
-        semigr_a.set_alignment(0.5)
-        treeview.append_column(semigr_a)
-
-        renderer_text_4 = Gtk.CellRendererText()
-        renderer_text_4.set_alignment(0.5, 0.5)
-        semigr_b = Gtk.TreeViewColumn("444Cb", renderer_text_4, text=3)
-        semigr_b.set_fixed_width(200)
-        semigr_b.set_alignment(0.5)
-        treeview.append_column(semigr_b)
+        disciplina = Gtk.TreeViewColumn("Disciplina", renderer_text_3, text=2)
+        disciplina.set_fixed_width(400)
+        disciplina.set_alignment(0.5)
+        treeview.append_column(disciplina)
 
         sw = Gtk.ScrolledWindow()
         sw.add(treeview)
@@ -78,8 +73,6 @@ def get_schedule(refresh: bool):
         list_of_lists.pop(0)
         for list in list_of_lists:
             list.pop(0)
-            if len(list) == 3:
-                list.append(list[-1])
 
         with open(os.path.expanduser("~") + "/.local/state/orar.json", "w") as f:
             json.dump(list_of_lists, f)
@@ -93,6 +86,9 @@ def get_schedule(refresh: bool):
             i = 0
             while i in range(len(list_of_lists)):
                 current = list_of_lists[i]
+                if len(current) < 2:
+                    i += 1
+                    continue
                 day = current[0]
                 if day != "":
                     list_of_dicts.append(
@@ -118,7 +114,7 @@ def get_schedule(refresh: bool):
                 d["dict"] = {}
                 for l in d["list"]:
                     l[0] = l[0].split("-")[0]
-                    d["dict"][l[0]] = l[2]
+                    d["dict"][l[0]] = l[1] if len(l) > 1 else ""
                 del d["list"]
 
             # print(json.dumps(list_of_dicts, indent=2))
