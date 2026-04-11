@@ -35,7 +35,7 @@ def run(view, app, to_open):
     view.load(QtCore.QUrl(to_open))
     loadCSS(
         view,
-        "/home/ervin/.config/md-preview/markdown.css",
+        os.path.expanduser("~") + "/.config/md-preview/markdown.css",
         "script1",
     )
     view.show()

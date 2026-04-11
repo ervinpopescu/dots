@@ -27,7 +27,7 @@ xmousepasteblock &
 ## various apps
 yes | rmshit.py &
 plank &
-# /home/ervin/.config/conky/start_qtile.sh -n &
+# $HOME/.config/conky/start_qtile.sh -n &
 # firefox &
 # codium &
 # alacritty &
@@ -41,7 +41,7 @@ systray_profile.py &
 pa-applet --disable-key-grabbing --disable-notifications &
 
 ## compositor
-picom --config /home/ervin/.config/picom.conf &>/dev/null &
+picom --config $HOME/.config/picom.conf &>/dev/null &
 
 pids=$(jobs -p)
 printf '%s\n' "$pids" >/tmp/autostart_pids

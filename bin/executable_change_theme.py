@@ -10,9 +10,9 @@ while True:
         sunrise = f.read().strip()
     with open("/tmp/sunset", "r") as f:
         sunset = f.read().strip()
-    with open("/home/ervin/.config/qtile/config.json") as f:
+    with open(os.path.expanduser("~") + "/.config/qtile/config.json") as f:
         config = json.load(f)
-    with open("/home/ervin/.config/qtile/themes.json") as f:
+    with open(os.path.expanduser("~") + "/.config/qtile/themes.json") as f:
         themes = json.load(f)
     now = datetime.now().strftime("%H:%M:%S")
     if now > sunset or now < sunrise:

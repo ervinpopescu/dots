@@ -116,7 +116,7 @@ draw.rounded_rectangle(
 )
 image.save(
     os.path.join(
-        os.environ.get("XDG_DATA_HOME", "/home/ervin/.local/share"),
+        os.environ.get("XDG_DATA_HOME", os.path.expanduser("~") + "/.local/share"),
         "wallpaper",
         "output.png",
     ),

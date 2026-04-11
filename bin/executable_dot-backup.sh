@@ -1,6 +1,6 @@
 #!/bin/bash
 
-DOTS_FOLDER="/home/ervin/www/src/mine/dots"
+DOTS_FOLDER="$HOME/www/src/mine/dots"
 
 cd "$DOTS_FOLDER" || exit 1
 

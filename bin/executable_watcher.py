@@ -10,7 +10,7 @@ c = InteractiveCommandClient()
 
 
 class Watcher(Observer):
-    DIRECTORY_TO_WATCH = "/home/ervin/.config/qtile/"
+    DIRECTORY_TO_WATCH = os.path.expanduser("~") + "/.config/qtile/"
 
     def __init__(self):
         self.observer = Observer()
