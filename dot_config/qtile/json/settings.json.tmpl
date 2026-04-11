@@ -26,7 +26,7 @@
       "virtualbox"
     ]
   ],
-  "bar_height": 56,
+  "bar_height": {{ if .is_cloudtop }}30{{ else }}56{{ end }},
   "cmds": {
     "blueman": [
       "blueman-manager"
@@ -83,7 +83,7 @@
     "update": [
       "alacritty",
       "-o",
-      "font.size=8",
+      "font.size={{ if .is_cloudtop }}13{{ else }}8{{ end }}",
       "--class",
       "qtile_yay_update",
       "-e",
@@ -91,59 +91,67 @@
     ],
     "wallpaper": [
       "rofi-wallpaper"
-    ]
+    ],
+    "browser": "firefox-developer-edition"
   },
-  "dropdown_opacity": 0.8,
+  "dropdown_opacity": {{ if .is_cloudtop }}0.95{{ else }}0.8{{ end }},
   "extension_defaults": {
     "font": "Font Awesome 6 Free Solid",
-    "fontsize": 30,
+    "fontsize": {{ if .is_cloudtop }}20{{ else }}30{{ end }},
     "padding": 6
   },
-  "font_size": 30,
+  "font_size": {{ if .is_cloudtop }}20{{ else }}30{{ end }},
   "keymaps": {
     "mod": "mod4",
     "alt": "mod1"
   },
-  "groups": {
-    "labels": [
-      "",
-      "",
-      "",
-      "",
-      "",
-      ""
-    ],
-    "layouts": [
-      "monadwide",
-      "max",
-      "max",
-      "max",
-      "bsp",
-      "monadthreecol"
-    ],
-    "names": [
-      "coding",
-      "www",
-      "social",
-      "settings",
-      "etc",
-      "media"
-    ],
-    "screen_affinities": [
-      2,
-      1,
-      0,
-      0,
-      1,
-      0
-    ]
-  },
+  "groups": [
+    {
+      "name": "coding",
+      "label": "",
+      "layout": "{{ if .is_cloudtop }}max{{ else }}monadwide{{ end }}",
+      "screen_affinity": {{ if .is_cloudtop }}0{{ else }}2{{ end }}
+    },
+    {
+      "name": "www",
+      "label": "",
+      "layout": "max",
+      "screen_affinity": 1
+    },
+    {
+      "name": "social",
+      "label": "",
+      "layout": "max",
+      "screen_affinity": {{ if .is_cloudtop }}1{{ else }}0{{ end }}
+    },
+    {
+      "name": "settings",
+      "label": "",
+      "layout": "max",
+      "screen_affinity": {{ if .is_cloudtop }}2{{ else }}0{{ end }}
+    },
+    {
+      "name": "etc",
+      "label": "",
+      "layout": "{{ if .is_cloudtop }}max{{ else }}bsp{{ end }}",
+      "screen_affinity": {{ if .is_cloudtop }}2{{ else }}1{{ end }}
+    },
+    {
+      "name": "media",
+      "label": "",
+      "layout": "{{ if .is_cloudtop }}max{{ else }}monadthreecol{{ end }}",
+      "screen_affinity": {{ if .is_cloudtop }}2{{ else }}0{{ end }}
+    }
+  ],
   "icon_font": "Font Awesome 6 Free Solid",
-  "margin_size": 20,
+  {{- if .is_cloudtop }}
+  "icon_fontsize": 20,
+  {{- end }}
+  "margin_size": {{ if .is_cloudtop }}10{{ else }}20{{ end }},
   "text_font": "CaskaydiaCove Nerd Font Mono Bold",
   "widget_defaults": {
     "font": "Font Awesome 6 Free Solid",
-    "fontsize": 30,
+    "fontsize": {{ if .is_cloudtop }}20{{ else }}30{{ end }},
     "padding": 6
   }
 }

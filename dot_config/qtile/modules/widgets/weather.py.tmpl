@@ -8,9 +8,9 @@ from modules.settings import settings
 
 def weather():
     return Weather(
-        font=settings["text_font"],
-        fontsize=settings["font_size"],
-        appkey="REDACTED_OPENWEATHER_KEY",
+        font=settings.text_font,
+        fontsize=settings.font_size,
+        appkey="{{ .openweather_api_key }}",
         format="{icon} {temp:.0f}°{units_temperature}",
         location=location(),
         mouse_callbacks={
