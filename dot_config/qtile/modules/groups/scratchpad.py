@@ -36,7 +36,7 @@ scratchpad = ScratchPad(
         ),
         DropDown(
             "htop",
-            settings.cmds.htop,
+            " ".join(settings.cmds.htop),
             opacity=settings.dropdown_opacity,
             width=1 - 2 * settings.margin_size / screen_width - 0.05,
             height=1 - 2 * settings.margin_size / screen_height - 0.05,
@@ -46,7 +46,7 @@ scratchpad = ScratchPad(
         ),
         DropDown(
             "blueman",
-            settings.cmds.blueman,
+            " ".join(settings.cmds.blueman),
             opacity=settings.dropdown_opacity,
             width=1 / 2,
             height=1 / 2,

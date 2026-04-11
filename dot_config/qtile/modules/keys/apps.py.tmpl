@@ -32,7 +32,7 @@ apps_keys = [
             ),
             Key(
                 [],
-                "p",
+                {{ if .is_cloudtop }}"p"{{ else }}"a"{{ end }},
                 lazy.group["scratchpad"].dropdown_toggle("pavucontrol"),
                 desc="Open `PulseAudio Volume Control`",
             ),
@@ -73,14 +73,14 @@ apps_keys = [
     ),
     Key(
         [settings.keymaps.mod],
-        "a",
+        {{ if .is_cloudtop }}"p"{{ else }}"a"{{ end }},
         lazy.spawn(settings.cmds.menu),
         desc="Open rofi application menu",
     ),
     # Key(
     #     [settings.keymaps.mod],
     #     "b",
-    #     lazy.spawn("/home/ervin/bin/bookmarks.py"),
+    #     lazy.spawn(os.path.expanduser("~/bin/bookmarks.py")),
     #     desc="Open bookmarks",
     # ),
     Key(
@@ -92,7 +92,7 @@ apps_keys = [
     Key(
         [settings.keymaps.mod],
         "c",
-        lazy.spawn("/home/ervin/.config/conky/start_qtile.sh -n"),
+        lazy.spawn(os.path.expanduser("~/.config/conky/start_qtile.sh -n")),
         desc="Open conky",
     ),
     Key(
@@ -104,7 +104,7 @@ apps_keys = [
     Key(
         [settings.keymaps.mod],
         "m",
-        lazy.spawn("/home/ervin/bin/start-spotify.py"),
+        lazy.spawn(os.path.expanduser("~/bin/start-spotify.py")),
         desc="Start Spotify (and/or GLava)",
     ),
     Key(
@@ -115,7 +115,7 @@ apps_keys = [
     ),
     # Key(
     #     [settings.keymaps.mod],
-    #     "p",
+    #     {{ if .is_cloudtop }}"p"{{ else }}"a"{{ end }},
     #     lazy.spawn("nwggrid -b 0e1e2eef -f -n 32"),
     #     desc="Open nwggrid application menu",
     # ),
@@ -146,7 +146,7 @@ apps_keys = [
     # Key(
     #     [settings.keymaps.mod, "shift"],
     #     "i",
-    #     lazy.spawn("/home/ervin/bin/bookmarkthis.py"),
+    #     lazy.spawn(os.path.expanduser("~/bin/bookmarkthis.py")),
     #     desc="Add bookmark",
     # ),
     Key(
