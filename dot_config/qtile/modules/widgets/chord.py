@@ -1,13 +1,14 @@
-from qtile_extras import widget
+from libqtile import widget
 
 from modules.settings import colors, settings
 
 
 def chord():
     return widget.Chord(
-        font=settings["text_font"],
-        fontsize=settings["font_size"],
-        foreground=colors["darkblue"],
-        fmt="chord {}",
-        padding=10,
+        chords_colors={
+            "launch": (colors["red"], colors["bg0"]),
+        },
+        font=settings.text_font,
+        fontsize=settings.font_size,
+        name_transform=lambda name: name.upper(),
     )

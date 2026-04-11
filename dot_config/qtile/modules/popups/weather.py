@@ -25,7 +25,7 @@ def weather_popup(qtile):
     wttr = "\n".join(wttr)
     controls = [
         PopupText(
-            font=settings["text_font"],
+            font=settings.text_font,
             pos_x=10,
             pos_y=10,
             fontsize=25,
@@ -52,11 +52,11 @@ def weather_popup(qtile):
         layout._configure(qtile)
     layout.popup.win.window.set_property("ROUNDED_CORNERS_EXCLUDE", 0, "CARDINAL", 32)
     layout.show(
-        # x=2880 - layout.width - settings["margin_size"],
-        x=widget_offset + settings["margin_size"],
+        # x=2880 - layout.width - settings.margin_size,
+        x=widget_offset + settings.margin_size,
         y=screen_height
         - layout.height
         - qtile.current_screen.bottom.info()["size"]
-        - settings["margin_size"],
+        - settings.margin_size,
         warp_pointer=True,
     )

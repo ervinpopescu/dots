@@ -4,8 +4,8 @@ from libqtile.config import Screen
 from modules.settings import bar_bg, settings
 from modules.widgets import widgets_1, widgets_2, widgets_3
 
-bh = settings["bar_height"]
-ms = settings["margin_size"]
+bh = settings.bar_height
+ms = settings.margin_size
 
 def statusbar(widgets, margin, size):
     return bar.Bar(

@@ -26,7 +26,7 @@ def music_layout():
             PopupText(
                 "",
                 name="title",
-                font=settings["text_font"],
+                font=settings.text_font,
                 fontsize=25,
                 pos_x=0.3,
                 pos_y=0.1,
@@ -38,7 +38,7 @@ def music_layout():
             PopupText(
                 "",
                 name="artist",
-                font=settings["text_font"],
+                font=settings.text_font,
                 fontsize=25,
                 pos_x=0.3,
                 pos_y=0.24,
@@ -50,7 +50,7 @@ def music_layout():
             PopupText(
                 "",
                 name="album",
-                font=settings["text_font"],
+                font=settings.text_font,
                 fontsize=25,
                 pos_x=0.3,
                 pos_y=0.38,

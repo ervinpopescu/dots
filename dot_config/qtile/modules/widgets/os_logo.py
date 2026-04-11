@@ -14,5 +14,5 @@ def os_logo():
     return widget.Image(
         filename=filename,
         margin=7,
-        mouse_callbacks={"Button1": lazy.spawn(settings["cmds"]["menu"])},
+        mouse_callbacks={"Button1": lazy.spawn(settings.cmds.menu)},
     )

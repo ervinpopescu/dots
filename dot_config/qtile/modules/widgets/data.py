@@ -6,8 +6,8 @@ from modules.settings import settings
 
 def uptime():
     return Uptime(
-        font=settings["text_font"],
-        fontsize=settings["font_size"],
+        font=settings.text_font,
+        fontsize=settings.font_size,
         mouse_callbacks={
             "Button1": lazy.group["scratchpad"].dropdown_toggle("htop"),
         },

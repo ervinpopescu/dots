@@ -8,7 +8,7 @@ from modules.settings import colors, settings
 
 def wallpaper():
     return widget.TextBox(
-        font=settings["icon_font"],
+        font=settings.icon_font,
         foreground=colors["red"],
         mouse_callbacks={"Button1": lazy.spawn("/home/ervin/bin/run_wall.sh rand all")},
         padding=10,
