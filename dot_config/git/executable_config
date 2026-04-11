@@ -12,8 +12,15 @@ gpgsign = true
 mnemonicprefix = true
 renames = true
 submodule = log
-tool = vscode
+; tool = vscode
+tool = nvimdiff
 wordregex = .
+
+[difftool]
+    prompt = true
+
+[difftool "nvimdiff"]
+    cmd = "nvim -d \"$LOCAL\" \"$REMOTE\""
 
 [difftool "vscode"]
 cmd = code -r --wait --diff $LOCAL $REMOTE
@@ -41,5 +48,18 @@ email = ervin.popescu10@gmail.com
 name = ervinpopescu
 signingkey = ~/.ssh/id_ed25519.pub
 
+[includeIf "gitdir:~/prjs/cgn/"]
+  path = ~/prjs/cgn/.gitconfig
+
 [core]
-editor = code -r --wait
+; editor = code -r --wait
+editor = nvim
+	pager = delta
+[safe]
+	directory = /usr/share/zsh/plugins/zsh-completions
+[interactive]
+	diffFilter = delta --color-only
+[delta]
+	navigate = true
+[merge]
+	conflictStyle = zdiff3
