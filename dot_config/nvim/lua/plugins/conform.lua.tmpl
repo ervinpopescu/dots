@@ -28,7 +28,10 @@ return {
         },
         xml = { "xmlformatter" },
         rust = { "rustfmt" },
-        -- octave = { "matlab_formatter" },
+        {{- if and (not .is_cloudtop) (lookPath "matfmt") }}
+        octave = { "matlab_formatter" },
+        {{- end }}
+        json = { "jq" },
       },
       -- The options you set here will be merged with the builtin formatters.
       -- You can also define any custom formatters here.
@@ -42,8 +45,8 @@ return {
           end,
         },
         matlab_formatter = {
-          command = "/home/ervin/src/cloned/github/misc/matlab-formatter-vscode/formatter/matlab_formatter.py",
-          args = { "$FILENAME", "--indentWidth=2" },
+          command = "matfmt",
+          args = { "$FILENAME", "--indent-width", "2" },
         },
       },
     }
