@@ -2,3 +2,4 @@
 **/lazy-lock.json
 **/.vscode/
 **/keys.json
+dot_config/qtile/json/keys.json
