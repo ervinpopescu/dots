@@ -60,19 +60,19 @@ de_keys = [
         desc="Brightness down by 10%",
     ),
     Key(
-        [settings["keymaps"]["mod"]],
+        [settings.keymaps.mod],
         "space",
         lazy.widget["keyboardlayout"].next_keyboard(),
         desc="Cycle through available keyboard layouts",
     ),
     # Key(
-    #     [settings["keymaps"]["mod"]],
+    #     [settings.keymaps.mod],
     #     "space",
     #     lazy.spawn(["ibus", "engine", "shin"]),
     #     desc="Activate shin",
     # ),
     Key(
-        [settings["keymaps"]["alt"]],
+        [settings.keymaps.alt],
         "F5",
         groupbox_disable_drag(),
         desc="Disable GroupBox widget group drag",

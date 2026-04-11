@@ -7,8 +7,8 @@ def group_box():
     return widget.GroupBox(
         active=colors["darkblue"],
         disable_drag=True,
-        font=settings["icon_font"],
-        fontsize=settings["font_size"],
+        font=settings.icon_font,
+        fontsize=settings.font_size,
         hide_unused=True,
         inactive=colors["bg3"],
         margin_x=14,

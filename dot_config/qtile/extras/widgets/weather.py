@@ -9,7 +9,7 @@ from modules.settings import colors
 
 class Weather(OpenWeather):
     defaults = [
-        ("appkey", "REDACTED_OPENWEATHER_KEY", ""),
+        ("appkey", "ce4579dd88a8d4877a8c23f2a10d61cc", ""),
         ("padding", 5, ""),
         ("fontsize", 12, ""),
         ("foreground", "#D9E0EE", ""),

@@ -18,8 +18,8 @@ with open(
     ),
     "r",
 ) as f:
-    group_layouts = json.load(f)["groups"]["layouts"]
-print(group_layouts)
+    group["layout"]s = [group["layout"] for group in json.load(f)["groups"]]
+print(group["layout"]s)
 
 groups = c.get_groups()
 keys = list(groups.keys())

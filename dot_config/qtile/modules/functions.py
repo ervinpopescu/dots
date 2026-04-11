@@ -15,8 +15,8 @@ from modules.settings import settings
 
 # from libqtile.log_utils import logger
 
-ms = settings["margin_size"]
-def_group_layouts = settings["groups"]["layouts"]
+ms = settings.margin_size
+def_group_layouts = [group.layout for group in settings.groups]
 
 
 @lazy.function

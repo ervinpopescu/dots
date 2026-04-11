@@ -12,7 +12,7 @@ class CPUTemp(widget.GenPollText):
     defaults = [
         ("update_interval", 5, ""),
         ("padding", 10, ""),
-        ("font", settings["text_font"], ""),
+        ("font", settings.text_font, ""),
         ("fontsize", 34, ""),
         ("foreground", colors["darkblue"], ""),
     ]

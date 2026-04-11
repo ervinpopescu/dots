@@ -25,7 +25,7 @@ from modules.settings import colors, settings
 
 #     controls = [
 #         PopupText(
-#             font=settings["text_font"],
+#             font=settings.text_font,
 #             pos_x=1 / 20,
 #             pos_y=1 / 8,
 #             width=0.9,
@@ -38,7 +38,7 @@ from modules.settings import colors, settings
 #             wrap=True,
 #         ),
 #         PopupText(
-#             font=settings["text_font"],
+#             font=settings.text_font,
 #             pos_x=1 / 3 - 0.1,
 #             pos_y=2 / 3,
 #             width=0.1,
@@ -54,7 +54,7 @@ from modules.settings import colors, settings
 #             },
 #         ),
 #         PopupText(
-#             font=settings["text_font"],
+#             font=settings.text_font,
 #             pos_x=2 / 3,
 #             pos_y=2 / 3,
 #             width=0.1,
@@ -84,7 +84,7 @@ layout = PopupRelativeLayout(
     close_on_click=False,
     controls=[
         PopupText(
-            font=settings["text_font"],
+            font=settings.text_font,
             pos_x=1 / 20,
             pos_y=1 / 8,
             width=0.9,
@@ -98,7 +98,7 @@ layout = PopupRelativeLayout(
             name="question",
         ),
         PopupText(
-            font=settings["text_font"],
+            font=settings.text_font,
             pos_x=1 / 3 - 0.1,
             pos_y=2 / 3,
             width=0.1,
@@ -112,7 +112,7 @@ layout = PopupRelativeLayout(
             can_focus=True,
         ),
         PopupText(
-            font=settings["text_font"],
+            font=settings.text_font,
             pos_x=2 / 3,
             pos_y=2 / 3,
             width=0.1,

@@ -8,8 +8,8 @@ def kbd_layout():
         configured_keyboards=["us", "ro std"],
         display_map={"us": "us", "ro std": "ro"},
         fmt="{}",
-        font=settings["text_font"],
-        fontsize=settings["font_size"],
+        font=settings.text_font,
+        fontsize=settings.font_size,
         foreground=colors["darkblue"],
         padding=10,
     )

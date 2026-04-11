@@ -12,13 +12,13 @@ from modules.groups.scratchpad import scratchpad
 
 groups = [
     Group(
-        name=settings["groups"]["names"][i],
-        layout=settings["groups"]["layouts"][i],
-        label=settings["groups"]["labels"][i],
-        screen_affinity=settings["groups"]["screen_affinities"][i],
+        name=settings.groups[i].name,
+        layout=settings.groups[i].layout,
+        label=settings.groups[i].label,
+        screen_affinity=settings.groups[i].screen_affinity,
         layout_opts=None,
     )
-    for i in range(len(settings["groups"]["names"]))
+    for i in range(len(settings.groups))
 ]
 groups.append(scratchpad)
 
@@ -43,17 +43,18 @@ def go_to_group(name: str):
 
 
 keys_to_be_inserted = []
-for i, name in enumerate(settings["groups"]["names"], 1):
+for i, group in enumerate(settings.groups, 1):
+    name = group.name
     keys_to_be_inserted.extend(
         [
             Key(
-                [settings["keymaps"]["mod"]],
+                [settings.keymaps.mod],
                 str(i),
                 lazy.function(go_to_group(name)),
                 desc=f"Go to group `{name}`",
             ),
             Key(
-                [settings["keymaps"]["mod"], "shift"],
+                [settings.keymaps.mod, "shift"],
                 str(i),
                 lazy.window.togroup(name),
                 desc=f"Move window to group `{name}`",

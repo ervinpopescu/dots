@@ -7,7 +7,7 @@ from modules.settings import colors, config_path, settings
 def github_notif():
     return GithubNotifications(
         active_colour=colors["red"],
-        icon_size=settings["bar_height"] - 15,
+        icon_size=settings.bar_height - 15,
         inactive_colour=colors["darkblue"],
         mouse_callbacks={
             "Button1": lazy.spawn(

@@ -41,8 +41,8 @@ def resize_and_move_client(client: Window):
         if key in [wm_class_0, wm_class_1, role, name]:
             if "set_position_floating" in win and key == "gsimplecal":
                 client.set_position_floating(
-                    x=qtile.core.get_output_info()[0][2] - win["w"] - settings["margin_size"] - 5,  # type: ignore[attr-defined]
-                    y=settings["bar_height"] + 2 * settings["margin_size"],
+                    x=qtile.core.get_output_info()[0][2] - win["w"] - settings.margin_size - 5,  # type: ignore[attr-defined]
+                    y=settings.bar_height + 2 * settings.margin_size,
                 )
 
             if "set_size_floating" in win:

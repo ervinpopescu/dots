@@ -1,29 +1,23 @@
 from libqtile.lazy import lazy
-from qtile_extras import widget
 
-from modules.popups import music_layout
+from modules.popups.music_popup import music_popup
 from modules.settings import colors, settings
+from qtile_extras import widget
 
 
 def music():
     return widget.Mpris2(
-        font=settings["text_font"],
-        foreground=colors["darkblue"],
-        format="{xesam:title} - {xesam:artist}",
+        display_metadata=["xesam:title", "xesam:artist"],
+        font=settings.text_font,
+        max_chars=30,
         mouse_callbacks={
-            "Button1": lazy.widget["mpris2"].show_popup(),
-            "Button3": lazy.widget["mpris2"].force_update(),
+            "Button1": lazy.window.function(
+                music_popup(
+                    width=1 / 4,
+                    height=1 / 3,
+                    x=settings.margin_size,
+                    y=settings.bar_height + 2 * settings.margin_size,
+                )
+            )
         },
-        popup_layout=music_layout(),
-        popup_show_args={
-            "relative_to": 1,
-            "x": settings["margin_size"],
-            "y": settings["bar_height"] + 2 * settings["margin_size"],
-            # "centered": True,
-            "warp_pointer": True,
-        },
-        scroll_delay=10,
-        scroll_interval=0.01,
-        scroll=True,
-        width=300,
     )

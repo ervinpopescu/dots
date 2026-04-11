@@ -6,10 +6,10 @@ from modules.settings import settings
 
 def cpu_temp():
     return CPUTemp(
-        font=settings["text_font"],
-        fontsize=settings["font_size"],
+        font=settings.text_font,
+        fontsize=settings.font_size,
         fmt="🌡️{}",
         mouse_callbacks={"Button1": lazy.group["scratchpad"].dropdown_toggle("htop")},
         padding=10,
-        update_interval=300,
+        update_interval=5,
     )
