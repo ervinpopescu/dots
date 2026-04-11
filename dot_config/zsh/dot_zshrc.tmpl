@@ -1,8 +1,16 @@
 # source /usr/share/zsh/plugins/zsh-defer/zsh-defer.plugin.zsh
 # plugins
+{{ if eq .machine "cloudtop" -}}
+[ -f /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh ] && source /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+[ -f /usr/share/z/z.sh ] && source /usr/share/z/z.sh
+export NVM_DIR="$HOME/.local/share/nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+{{ else -}}
 source /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.plugin.zsh
 source /usr/share/zsh/plugins/zsh-z/zsh-z.plugin.zsh
 source /usr/share/nvm/init-nvm.sh
+{{ end -}}
 
 # modules
 source "$ZDOTDIR/rc/keys.zsh"
@@ -11,7 +19,9 @@ source "$ZDOTDIR/rc/completions.zsh"
 source "$ZDOTDIR/rc/prompt.zsh"
 source "$ZDOTDIR/rc/command_not_found_handler.zsh"
 source "$ZDOTDIR/rc/misc.zsh"
+{{ if ne .machine "cloudtop" -}}
 source "$ZDOTDIR/rc/hooks.zsh"
+{{ end -}}
 
 # zsh-abbr is special, needs to be at the end
 ABBR_TMPDIR=/tmp/zsh-abbr-user/

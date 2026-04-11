@@ -1,0 +1,36 @@
+{{ if eq .machine "cloudtop" -}}
+typeset -U path PATH
+path=(
+  $HOME/bin
+  $HOME/.jenv/bin
+  $HOME/.local/bin
+  $XDG_DATA_HOME/go/bin
+  $HOME/.config/qtile/scripts
+  $HOME/work/docs/4G/cloud/mine/scripts
+  $HOME/work/docs/4G/cloud/google/scripts
+  $HOME/work/docs/5G/x/scripts/
+  $HOME/work/docs/5G/common/scripts/
+  $HOME/.local/share/gem/ruby/3.1.0/bin
+  $HOME/node/bin
+  $path
+)
+export PATH
+export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
+. "/usr/local/google/home/ervinadrian/.local/share/cargo/env"
+{{ else -}}
+typeset -U path PATH
+path=(
+    $XDG_DATA_HOME/dw/bin
+    $XDG_DATA_HOME/go/bin
+    $XDG_DATA_HOME/spicetify
+    $XDG_DATA_HOME/cargo/bin
+    $CARGO_HOME/target/release
+    $CARGO_HOME/target/debug
+    $HOME/bin
+    $HOME/.local/bin
+    $HOME/.config/qtile/scripts
+    $HOME/.nimble/bin
+    $path
+)
+export PATH
+{{ end -}}

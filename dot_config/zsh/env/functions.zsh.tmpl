@@ -1,0 +1,528 @@
+function calculator() {
+  if [[ -z "$1" || "$1" == "-h" || "$1" == "--help" ]]; then
+    echo "Usage: calculator <expression>"
+    return 1
+  fi
+  if ! command -v bc >/dev/null 2>&1; then
+    echo "Error: bc is not installed."
+    return 1
+  fi
+  printf "%s\n" "$@" | bc -l
+}
+
+function mkcd() {
+  if [[ -z "$1" || "$1" == "-h" || "$1" == "--help" ]]; then
+    echo "Usage: mkcd <directory>"
+    return 1
+  fi
+  mkdir -p "$1" && cd "$1"
+}
+
+function clear_terminal() {
+  /bin/clear
+  tmux list-sessions &>/dev/null
+  ret=$?
+  if [ $ret -eq 0 ]; then
+    tmux clearhist
+  fi
+}
+
+function qtile_to_json() {
+  python3 -c \
+    '''
+import sys, json, ast
+evald = ast.literal_eval(sys.stdin.read())
+if not isinstance(evald, tuple):
+  print(json.dumps(evald, indent=2))
+else:
+  print(json.dumps(ast.literal_eval(evald[1]), indent=2))
+'''
+}
+
+function get_github_token() {
+  keepassxc-cli show ~/.local/share/keepass/Passwords.kdbx "qtile github token" -sa password
+}
+
+function birthday_notification() {
+  dunstify \
+    -a "birthdayNotification" \
+    -u normal \
+    -r "635325" \
+    "$(birthday -W 0 -f ~/.local/share/birthdays)"
+}
+
+function server-ssh() {
+  ssh -ti ~/.ssh/id_ed25519 ervin@aslan.home.ro "$@"
+}
+
+function server_services() {
+  server-ssh -C 'systemctl status calibre-server calibre-web transmission radarr sonarr jellyfin' |
+    grep -E "●|○|Active|Status" |
+    /bin/cat
+}
+
+function server_last_upg() {server-ssh -C 'pachist.sh | grep upgraded | tail -1 | cut -f1 -d " "'}
+
+function server_du() {server-ssh -C 'df -h -x tmpfs -x devtmpfs -x squashfs'}
+
+function server_fail2ban_stats() {server-ssh -C 'sudo fail2ban-client stats'}
+
+function server_status() {
+  if ! server-ssh -C 'server-status.py'; then
+    echo "server: down"
+    return 1
+  fi
+
+  echo "------------------------------------------------"
+  printf "Services:\n%s\n" "$(server_services | tr '\n' '\0' | xargs -0 printf "  %s\n")"
+
+  echo "------------------------------------------------"
+  printf "Last upgrade time: %s\n" "$(server_last_upg)"
+
+  echo "------------------------------------------------"
+  printf "Disk usage:\n%s\n" "$(server_du | tr '\n' '\0' | xargs -0 printf "  %s\n")"
+
+  echo "------------------------------------------------"
+  printf "fail2ban stats:\n%s" "$(server_fail2ban_stats | tr '\n' '\0' | xargs -0 printf "  %s\n")"
+}
+
+function git_last_commits() {
+  for branch in $(git branch -r | grep -v HEAD); do
+    printf "%-40s\\t%20s\\n" "$branch" "$(git show --format="%h %ci" $branch | head -n 1)"
+  done | sort -k3,3 -k4,4 -k5,5
+}
+
+{{ if eq .machine "cloudtop" -}}
+function epoch_to_utc() {
+  if [[ -z "$1" || "$1" == "-h" || "$1" == "--help" ]]; then
+    echo "Usage: epoch_to_utc <epoch>"
+    return 1
+  fi
+  local epoch="$1"
+  local size=${#epoch}
+  if [[ $size -gt 10 ]]; then
+    epoch=$(calculator "$epoch/1000")
+  fi
+  date -d @"$epoch" -u '+%Y-%m-%dT%H:%M:%SZ' 2>/dev/null || echo "Error: Invalid epoch '$1'"
+}
+
+function sql_array() {
+  if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+    echo "Usage: echo -e 'line1\nline2' | sql_array"
+    return 0
+  fi
+  sed -e 's/^/"/' -e 's/$/",/' -e '$s/",$/"/' -e '$a )' -e '1i('
+}
+
+function json2md() {
+  if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+    echo "Usage: json2md [file]"
+    return 0
+  fi
+  if ! command -v mlr >/dev/null 2>&1; then
+    echo "Error: miller (mlr) is not installed."
+    return 1
+  fi
+  if [[ -n "$1" ]]; then
+    mlr --j2c cat "$1" | csv2md
+  else
+    mlr --j2c cat | csv2md
+  fi
+}
+
+function jcat() {
+  if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+    echo "Usage: jcat [file]"
+    return 0
+  fi
+  if ! command -v jq >/dev/null 2>&1; then
+    echo "Error: jq is not installed."
+    return 1
+  fi
+  if [[ -n "$1" ]]; then
+    jq -C <"$1" | less -r
+  else
+    jq -C | less -r
+  fi
+}
+
+### fact tables
+
+function fact_fields() {
+  if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+    echo "Usage: fact_fields [project_id:dataset.table]"
+    return 0
+  fi
+  local target="${1:-{{ .fact_table }}}"
+  bq show --format json "$target" | jq '.schema.fields[].name' -r | sort
+}
+
+function gen_query() (
+  local org case_number filename
+  usage() {
+    echo "Usage: gen_query <org> <case_number> <filename>"
+  }
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+    -h | --help)
+      usage
+      return 0
+      ;;
+    -*)
+      echo "Unknown option: $1"
+      usage
+      return 1
+      ;;
+    *)
+      if [[ -z "$org" ]]; then
+        org="$1"
+      elif [[ -z "$case_number" ]]; then
+        case_number="$1"
+      elif [[ -z "$filename" ]]; then
+        filename="$1"
+      else
+        echo "Too many arguments"
+        usage
+        return 1
+      fi
+      ;;
+    esac
+    shift
+  done
+  if [[ -z "$org" || -z "$case_number" || -z "$filename" ]]; then
+    echo "Missing arguments"
+    usage
+    return 1
+  fi
+  local TENANT_PROJECT=$(xcurl -v "$case_number" "/organizations/$org" | jq '.apigeeProjectId' -r)
+  if [[ -z "$TENANT_PROJECT" || "$TENANT_PROJECT" == "null" ]]; then
+    echo "Error: Could not find TENANT_PROJECT for org $org"
+    return 1
+  fi
+  local QUERY="""SELECT * \
+FROM \
+  \`$TENANT_PROJECT.analytics_${org//-/_}.api_fact\` \
+WHERE \
+  TIMESTAMP_TRUNC(client_received_start_timestamp, DAY) = TIMESTAMP_TRUNC(CURRENT_TIMESTAMP(), DAY)
+"""
+  [[ ! -d "sql" ]] && mkdir -p "sql"
+  echo "$QUERY" >! "sql/$filename.sql"
+  if ! gcertstatus -quiet; then gcert; fi
+  admin_session --reason="vector/$case_number"
+)
+
+function run_query() {
+  if [[ $1 == "" || $1 == "-h" || $1 == "--help" ]]; then
+    echo "run_query <sql_file> [-j | --json | -f format] <extra_args>"
+    return 1
+  fi
+  filename="$1"
+  shift
+  project_id="$(grep -i -A1 'from' $filename | grep '`' | tail -1 | cut -d "." -f1 | tr -d "[:blank:]" | sed 's/^`//')"
+  format="csv"
+  local -a bq_args
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+    -j | --json)
+      format="json"
+      shift 1
+      ;;
+    -f | --format)
+      format="$2"
+      shift 2
+      ;;
+    -f=* | --format=*)
+      format="${1#*=}"
+      shift 1
+      ;;
+    -? | --help)
+      echo "run_query <sql_file> [-j | --json | -f format] <extra_args>"
+      return 1
+      ;;
+    --)
+      shift
+      bq_args+=("$@")
+      break
+      ;;
+    *)
+      bq_args+=("$1")
+      shift 1
+      ;;
+    esac
+  done
+  bq \
+    query \
+    --project_id="$project_id" \
+    --use_legacy_sql=false \
+    --format="$format" \
+    -n 10000000 \
+    -q \
+    "${bq_args[@]}" \
+    <$filename
+}
+
+function run_query_formats() {
+  local filename output format="csv"
+  local -a bq_args
+
+  usage() {
+    echo "run_query_formats [-j | --json] <sql_file> [-o <output_file>] [extra_args]"
+  }
+
+  if [[ $# -eq 0 ]]; then
+    usage
+    return 1
+  fi
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+    -h | --help)
+      usage
+      return 0
+      ;;
+    -j | --json)
+      format="json"
+      shift
+      ;;
+    -o | --output)
+      output="$2"
+      shift 2
+      ;;
+    -o=* | --output=*)
+      output="${1#*=}"
+      shift 1
+      ;;
+    *)
+      if [[ -z "$filename" ]]; then
+        filename="$1"
+      else
+        bq_args+=("$1")
+      fi
+      shift
+      ;;
+    esac
+  done
+
+  if [[ -z "$filename" ]]; then
+    usage
+    return 1
+  fi
+
+  if [[ "$output" != "" ]]; then
+    filename_without_extension="$output"
+  else
+    path_without_extension="${filename%.*}"
+    filename_without_extension="${path_without_extension##*/}"
+  fi
+
+  if [[ "$format" == "json" ]]; then
+    run_query $filename --format=json "${bq_args[@]}" | tee json/$filename_without_extension.json | json2md | cat -lmd
+  else
+    run_query $filename "${bq_args[@]}" | tee csv/$filename_without_extension.csv | mlr --c2j cat | tee json/$filename_without_extension.json | json2md | cat -lmd
+  fi
+  head -c 200 json/$filename_without_extension.json
+}
+
+function paste_query() {
+  local format="csv"
+  if [[ "$1" == "--json" || "$1" == "-j" ]]; then
+    format="json"
+    shift
+  fi
+
+  if [[ $1 == "" || $1 == "-h" || $1 == "--help" ]]; then
+    echo "paste_query [-j | --json] <sql_file> <extra_args>"
+    return 1
+  fi
+  filename="$1"
+  shift
+  copy <(
+    cat $filename
+    echo
+    if [[ "$format" == "json" ]]; then
+      out="$(run_query $filename --format=json "$@")"
+      echo "$out" | jq
+    else
+      out="$(run_query $filename "$@")"
+      echo "$out"
+      echo
+      echo "$out" | csv2md | cat -lmd
+    fi
+  )
+}
+
+### consults
+CONS_BASE="$HOME/work/SME/vConsults"
+
+function cons() {
+  if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+    echo "Usage: cons [consult_name]"
+    return 0
+  fi
+  if [[ -n "$1" ]]; then
+    local folder="$CONS_BASE/$1*"
+    local consult=$(basename $~folder)
+    if [[ "$consult" =~ "\*" ]]; then
+      echo "No such consult found locally in $CONS_BASE"
+      return 1
+    fi
+    if ! tmux ls -F "#{session_name}" 2>/dev/null | grep -q "^$consult$"; then
+      tmux new -A -s "$consult" -d
+      tmux send -t "$consult" "cd $CONS_BASE/$consult" ENTER
+    fi
+    sleep 0.5
+    tmux switch -t "$consult"
+  else
+    cd "$CONS_BASE" || return 1
+  fi
+}
+
+function run_mkcons() {
+  if [[ -z "$1" ]]; then return 1; fi
+  cd "$CONS_BASE/$1" || return 1
+  mkdir -p conf csv har json logs sql ss traces txt pcap yaml
+  touch README.md
+}
+
+function mkcons() {
+  if [[ -z "$1" || "$1" == "-h" || "$1" == "--help" ]]; then
+    echo "Usage: mkcons <consult_name>"
+    return 1
+  fi
+  local consult_name="$1"
+  local folder="$CONS_BASE/$consult_name*"
+  if [[ -d $~folder ]]; then
+    echo "Consult found locally, not creating."
+    echo "Opening consult..."
+    cons "$consult_name"
+    return 0
+  fi
+  tmux new -s "$consult_name" -d -n "$consult_name"
+  mkdir -p "$CONS_BASE/$consult_name"
+  tmux send -t "$consult_name" "run_mkcons $consult_name; clear" ENTER
+  sleep 0.5
+  tmux switch -t "$consult_name"
+}
+
+function mvcons() {
+  if [[ $# -ne 2 || $1 == "-h" || $1 == "--help" ]]; then
+    echo "Usage: mvcons <search_pattern> <new_name>"
+    return 1
+  fi
+  local pattern="$1"
+  local new_name="$2"
+  local folder=$(fd "$pattern" "$CONS_BASE" --max-depth 1 --type d | head -n 1)
+  local session_name=$(tmux ls -F "#{session_name}" 2>/dev/null | rg "$pattern" | head -n 1)
+
+  if [[ -z "$folder" || ! -d "$folder" ]]; then
+    echo "No such consult found locally for pattern '$pattern'"
+    return 1
+  fi
+
+  if [[ -n "$session_name" ]]; then
+    tmux rename -t "$session_name" "$new_name"
+    mv "$folder" "$CONS_BASE/$new_name"
+    tmux switch -t "$new_name"
+  else
+    echo "No active session found for '$pattern'. Renaming folder only."
+    mv "$folder" "$CONS_BASE/$new_name"
+  fi
+}
+
+function zcons() {
+  if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+    echo "Usage: zcons [extra_zip_args]"
+    return 0
+  fi
+  local zip_name="$(basename "$(pwd)" | cut -d "-" -f1).zip"
+  zip "$zip_name" -r $(find . -mindepth 1 -maxdepth 1 -not -empty -type d) "$@"
+}
+
+function clink() {
+  if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+    echo "Usage: clink [case_number]"
+    return 0
+  fi
+  local url
+  if [[ -z "$1" ]]; then
+    local case_num=$(basename "$(pwd)" | sed -E 's/^([0-9]+)-.*/\1/')
+    url="https://b.corp.google.com/$case_num"
+  else
+    url="https://b.corp.google.com/$1"
+  fi
+  if command -v google-chrome >/dev/null 2>&1; then
+    google-chrome "$url"
+  elif command -v xdg-open >/dev/null 2>&1; then
+    xdg-open "$url"
+  else
+    echo "URL: $url"
+  fi
+}
+
+function tl() {
+  if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+    echo "Usage: tl (list tmux sessions with consult info)"
+    return 0
+  fi
+  tmux ls -F "#{session_name}" 2>/dev/null | rg -o '^[0-9]+' | xargs -I{} zsh -c "fd {} $CONS_BASE --hidden --max-depth 1" | xargs stat | rg 'File|Birth|Modify' | awk '{$1=""; session=system("basename "$2); $2=""; print $0}' | paste - - - - - - | awk '{print $1,"|",$2,$3,"|",$5,$6}' | column -t | sort -k2 -k3
+}
+
+function tk() {
+  if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+    echo "Usage: tk (kill session and archive folder)"
+    return 0
+  fi
+  local session=$(tl | fzf --reverse | cut -d" " -f1)
+  if [[ -n "$session" ]]; then
+    tmux kill-session -t "$session"
+    local folder="$CONS_BASE/$session"
+    if [[ -d "$folder" ]]; then
+      local archive_dir="$CONS_BASE/.old"
+      mkdir -p "$archive_dir"
+      mv "$folder" "$archive_dir/" && echo "Archived $session to .old/"
+    fi
+  fi
+}
+
+function copy() {
+  if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+    echo "Usage: some_command | copy OR copy file"
+    return 0
+  fi
+  local b64
+  if [[ -t 0 && $# -eq 0 ]]; then
+    return
+  fi
+  b64=$(cat "$@" | base64 -w 0)
+  printf "\033]52;c;%s\a" "$b64" > /dev/tty
+}
+
+function ac() {
+  if [[ $# -eq 0 || "$1" == "-h" || "$1" == "--help" ]]; then
+    echo "Usage: ac <pattern1> [pattern2] ..."
+    return 1
+  fi
+  local dest="$CONS_BASE/.old"
+  mkdir -p "$dest"
+  for p in "$@"; do
+    local f=$(fd "$p" "$CONS_BASE" --max-depth 1 --type d --exclude .old | head -n 1)
+    if [[ -n "$f" ]]; then
+      mv "$f" "$dest/" && echo "Archived $(basename "$f")"
+    else
+      echo "No consult found for '$p'"
+    fi
+  done
+}
+
+function aac() {
+  if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+    echo "Usage: aac (archive all consults older than 7 days)"
+    return 0
+  fi
+  local dest="$CONS_BASE/.old"
+  mkdir -p "$dest"
+  fd --min-depth 1 --max-depth 1 --type d --exclude .old --changed-before 7d . "$CONS_BASE" | while read -r f; do
+    mv "$f" "$dest/" && echo "Moved $(basename "$f") to .old/"
+  done
+}
+{{ end -}}
