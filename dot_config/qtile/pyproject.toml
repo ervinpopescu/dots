@@ -1,6 +1,60 @@
+[build-system]
+build-backend = "setuptools.build_meta"
+requires = ["setuptools>=61"]
+
+[project]
+name = "qtile-config"
+version = "0.1.0"
+description = "My Qtile configuration"
+requires-python = ">=3.12"
+classifiers = [
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+]
+dependencies = [
+  "aiohttp",
+  "dbus-fast>=4",
+  "dbus-python>=1.4",
+  "distro>=1.9",
+  "jsonpickle>=3",
+  "notify2>=0.3.1",
+  "psutil>=6",
+  "pycritty>=0.4",
+  "pydantic>=2",
+  "pyinotify>=0.9.6",
+  "pyjson5>=0.9.6",
+  "pyxdg>=0.28",
+  "qtile>=0.33",
+  "qtile-extras>=0.33",
+  "requests>=2.32.5",
+  "xcffib>=1.5",
+  "xdo>=0.5",
+]
+
+[project.optional-dependencies]
+dev = ["mypy", "ruff", "types-psutil"]
+
+[tool.setuptools]
+packages.find.where = ["."]
+packages.find.include = ["modules*", "extras*"]
+
+[tool.uv]
+# qtile = { path = "/usr/local/google/home/ervinadrian/prjs/apps/qtile" }
+# qtile = { git = "https://github.com/qtile/qtile", branch = "master" }
+[tool.uv.sources]
+qtile = { git = "https://github.com/sohanglal/qtile", branch = "fix/reload-config-skip-main" }
+
 [tool.black]
 line-length = 98
+
 [tool.isort]
 profile = "black"
+
+[tool.mypy]
+ignore_missing_imports = true
+dependencies = ["pydantic"]
+
 [tool.pyright]
 reportGeneralTypeIssues = false

@@ -20,8 +20,14 @@ encryption = "age"
   is_linux = {{ ne $machine "macbook" }}
   has_wayland = {{ eq $machine "lenovo" }}
   has_battery = {{ or (eq $machine "lenovo") (eq $machine "macbook") }}
+  openweather_api_key = "{{ promptStringOnce . "openweather_api_key" "OpenWeather API key" }}"
   opensubtitles_api_key = "{{ promptStringOnce . "opensubtitles_api_key" "OpenSubtitles API key" }}"
   tstruct_token = "{{ promptStringOnce . "tstruct_token" "Tstruct token" }}"
+{{- if eq $machine "cloudtop" }}
+  fact_table = "{{ promptStringOnce . "fact_table" "BigQuery Fact Table (project:dataset.table)" }}"
+{{- else }}
+  fact_table = ""
+{{- end }}
 
 [age]
   identity = "~/.config/chezmoi/key.txt"
