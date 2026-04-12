@@ -108,7 +108,10 @@ def build_widget_lists():
     ]
 
     for w in widgets_1:
-        if not isinstance(
+        if w.name in ["image", "powermenu"]:
+            if hasattr(w, "decorations"):
+                w.decorations = END_CAP_DECOR["decorations"]
+        elif not isinstance(
             w, (Battery, widget.BatteryIcon, widget.Spacer, widget.Systray, widget.TaskList)
         ):
             if hasattr(w, "decorations"):
@@ -201,6 +204,10 @@ def build_widget_lists():
 
     _insert_secondary_spacers(widgets_2)
     _insert_secondary_spacers(widgets_3)
+
+    widgets_1.append(sm_spacer())
+    widgets_2.append(sm_spacer())
+    widgets_3.append(sm_spacer())
 
     return widgets_1, widgets_2, widgets_3
 

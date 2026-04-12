@@ -28,6 +28,17 @@ decorations: dict = dict(
             ),
         ],
     ),
+    end_cap_decor=dict(
+        decorations=[
+            RectDecoration(
+                colour=decor_bg,
+                radius=10,
+                filled=True,
+                padding_y=0,
+                padding_x=0,
+            ),
+        ],
+    ),
     double_decor=dict(
         decorations=[
             RectDecoration(
