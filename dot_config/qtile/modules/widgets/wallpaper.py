@@ -9,6 +9,7 @@ from modules.settings import colors, settings
 
 def wallpaper():
     return widget.TextBox(
+        decorations=[],
         font=settings.icon_font,
         foreground=colors["red"],
         mouse_callbacks={"Button1": lazy.spawn(os.path.expanduser("~/bin/run_wall.sh rand all"))},

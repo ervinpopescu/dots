@@ -1,4 +1,4 @@
-from libqtile import widget
+from qtile_extras import widget
 from libqtile.lazy import lazy
 
 from modules.settings import colors, settings
@@ -8,6 +8,7 @@ def powermenu():
     return widget.TextBox(
         "",
         background=colors["darkblue"],
+        decorations=[],
         font=settings.icon_font,
         fontsize=settings.font_size,
         foreground=colors["red"],
