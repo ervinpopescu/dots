@@ -2,11 +2,11 @@ import json
 import os
 
 from libqtile.backend.wayland.inputs import InputConfig
-
 from modules import (
     apps_hooks,
     floating_layout,
     groups,
+    idle_inhibitors,
     idle_timers,
     keys,
     layouts,
@@ -22,6 +22,7 @@ assert qalttab_hooks
 assert apps_hooks
 assert window_rules_hooks
 assert misc_hooks
+assert idle_inhibitors
 assert idle_timers
 assert widget_defaults
 assert layouts
@@ -36,8 +37,6 @@ with open(os.path.join(config_path, "json", "config.json")) as f:
     for key, val in config.items():
         if key != "theme":
             globals()[key] = val
-
-
 
 
 wl_input_rules = {

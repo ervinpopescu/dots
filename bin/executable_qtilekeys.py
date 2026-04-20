@@ -4,12 +4,12 @@ import argparse
 import os
 import pathlib
 import re
-
 from textwrap import dedent
+
+import gi
+import jsonpickle
 from libqtile.command.client import InteractiveCommandClient
 from markdownTable import markdownTable
-import jsonpickle
-import gi
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
@@ -64,9 +64,7 @@ def multireplace(string, replacements, ignore_case=False):
     pattern = re.compile("|".join(rep_escaped), re_mode)
 
     # For each match, look up the new string in the replacements, being the key the normalized old string
-    return pattern.sub(
-        lambda match: replacements[normalize_old(match.group(0))], string
-    )
+    return pattern.sub(lambda match: replacements[normalize_old(match.group(0))], string)
 
 
 class CellRendererTextWindow(Gtk.Window):
@@ -146,9 +144,7 @@ def keyslist():
             ]:
                 continue
             else:
-                keyslist[row_index][col_index] = multireplace(
-                    string, replace_dict, False
-                )
+                keyslist[row_index][col_index] = multireplace(string, replace_dict, False)
 
     return keyslist
 

@@ -1,25 +1,25 @@
 from __future__ import division, print_function, unicode_literals
-import subprocess
-import os
-import xcffib
-import shlex
-import asyncio
 
-import psutil  # type: ignore
+import asyncio
+import itertools
+import os
+import shlex
+import struct
+import subprocess
+import time
 from copy import deepcopy
-from qtile_extras.popup.toolkit import PopupImage
-from modules.path import config_path
-from libqtile.utils import create_task
+
+import xcffib
 from libqtile.log_utils import logger
-from libqtile.widget import base, systray
+from libqtile.widget import base
+from modules.path import config_path
 from qtile_extras import widget
+from qtile_extras.popup.toolkit import PopupImage
 from qtile_extras.widget.mixins import ExtendedPopupMixin
 
-import itertools
-import struct
-import time
 # import io
 # import png
+
 
 # :python3:buffer: we need to get a binary stream in both
 # Python 2 and Python 3.
@@ -29,24 +29,26 @@ def binary(stream):
     else:
         return stream
 
+
 class FormatError(Exception):
     pass
+
 
 class NotImplemented(Exception):
     pass
 
+
 class Channel:
     def __init__(self, **k):
         self.__dict__.update(k)
+
 
 class XWD:
     def __init__(self, input, xwd_header=None):
         if xwd_header:
             self.__dict__.update(xwd_header)
         self.xwd_header = xwd_header
-        self.info_dict = dict(
-            h=self.pixmap_height, w=self.pixmap_width, xwd_header=xwd_header
-        )
+        self.info_dict = dict(h=self.pixmap_height, w=self.pixmap_width, xwd_header=xwd_header)
         self.input = input
 
     def info(self):
@@ -73,9 +75,7 @@ class XWD:
 
         if self.visual_class != 4:
             # TrueColor
-            raise NotImplementedError(
-                "Cannot handle visual_class {!r}".format(self.visual_class)
-            )
+            raise NotImplementedError("Cannot handle visual_class {!r}".format(self.visual_class))
 
         # Associate each mask with its channel colour.
         channels = [
@@ -112,7 +112,7 @@ class XWD:
         self.channels = channels
 
         v = ""
-        for (bits, chans) in itertools.groupby(channels, lambda c: c.bits):
+        for bits, chans in itertools.groupby(channels, lambda c: c.bits):
             v += "".join(c.name for c in chans)
             v += str(bits)
         self._uni_format = v
@@ -139,7 +139,7 @@ class XWD:
             )
 
         for s in range(0, len(row), bpp):
-            pix = row[s: s + bpp]
+            pix = row[s : s + bpp]
             # pad to 4 bytes
             pad = b"\x00" * (4 - len(pix))
             if self.byte_order == 1:
@@ -148,7 +148,7 @@ class XWD:
             else:
                 fmt = "<L"
                 pix = pix + pad
-            v, = struct.unpack(fmt, pix)
+            (v,) = struct.unpack(fmt, pix)
 
             cs = self.channels
             # Note: Could permute channels here
@@ -158,6 +158,7 @@ class XWD:
 
             yield pixel
 
+
 def xwd_open(f):
     # From XWDFile.h:
     # "Values in the file are most significant byte first."
@@ -165,18 +166,16 @@ def xwd_open(f):
 
     header = f.read(8)
 
-    header_size, = struct.unpack(fmt, header[:4])
+    (header_size,) = struct.unpack(fmt, header[:4])
 
     # There are no magic numbers, so as a sanity check,
     # we check that the size is "reasonable" (< 65536)
     if header_size >= 65536:
         raise FormatError("header_size too big: {!r}".format(header[:4]))
 
-    version, = struct.unpack(fmt, header[4:8])
+    (version,) = struct.unpack(fmt, header[4:8])
     if version != 7:
-        raise FormatError(
-            "Sorry only version 7 supported, not version {!r}".format(version)
-        )
+        raise FormatError("Sorry only version 7 supported, not version {!r}".format(version))
 
     fields = [
         "pixmap_format",
@@ -206,7 +205,7 @@ def xwd_open(f):
 
     res = dict(header_size=header_size, version=version)
     for field in fields:
-        v, = struct.unpack(fmt, f.read(4))
+        (v,) = struct.unpack(fmt, f.read(4))
         res[field] = v
 
     xwd_header_size = 8 + 4 * len(fields)
@@ -226,6 +225,7 @@ def xwd_open(f):
     xwd = XWD(input=f, xwd_header=res)
     return xwd
 
+
 def ffs(x):
     """
     Returns the index, counting from 0, of the
@@ -233,15 +233,18 @@ def ffs(x):
     """
     return (x & -x).bit_length() - 1
 
+
 def is_contiguous(x):
     """
     Check that x is a contiguous series of binary bits.
     """
     return is_power_of_2((x >> ffs(x)) + 1)
 
+
 def is_power_of_2(x):
     assert x > 0
     return not (x & (x - 1))
+
 
 class TaskList(widget.TaskList, ExtendedPopupMixin):
     defaults = [
@@ -345,7 +348,6 @@ class TaskList(widget.TaskList, ExtendedPopupMixin):
             original_map_state = self.win.window.get_attributes().map_state
             if original_map_state == xcffib.xproto.MapState.Unmapped:
                 self.win.window.map()
-            await self.start_feh(x, y)
             # await self._update_popup()
             self.extended_popup.show(**self.popup_show_args)
             logger.info("popup shown")
@@ -404,54 +406,3 @@ class TaskList(widget.TaskList, ExtendedPopupMixin):
                 height=1,
             ),
         )
-
-    async def start_feh(self, x, y):
-        rx1, tx1 = os.pipe()
-        await asyncio.create_subprocess_exec(
-            *shlex.split(f"xwd -id {hex(self.win.wid)}"),
-            stdout=tx1,
-            stderr=subprocess.DEVNULL,
-        )
-        os.close(tx1)
-        rx2, tx2 = os.pipe()
-        await asyncio.create_subprocess_exec(
-            *shlex.split("magick xwd:- PNG:- "),
-            stdin=rx1,
-            stdout=tx2,
-            stderr=subprocess.DEVNULL,
-        )
-        os.close(rx1)
-        os.close(tx2)
-        feh = await asyncio.create_subprocess_exec(
-            *shlex.split("feh --scale-down --zoom fill --class feh_thumbnail -"),
-            stdin=rx2,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.DEVNULL,
-        )
-        os.close(rx2)
-        self.thumbnail_pid = feh.pid
-        logger.info(self.thumbnail_pid)
-        await asyncio.sleep(0.4)
-        window = next(
-            win
-            for win in list(self.qtile.windows_map.values())
-            if win.get_pid() == self.thumbnail_pid and not isinstance(win, systray.Icon)
-        )
-        if window:
-            # add "SKIP_TASKBAR" to _NET_WM_STATE atom (for X11)
-            if window.qtile.core.name == "x11":
-                net_wm_state = list(
-                    window.window.get_property("_NET_WM_STATE", "ATOM", unpack=int)
-                )
-                skip_taskbar = window.qtile.core.conn.atoms["_NET_WM_STATE_SKIP_TASKBAR"]
-                if net_wm_state:
-                    if skip_taskbar not in net_wm_state:
-                        net_wm_state.append(skip_taskbar)
-                else:
-                    net_wm_state = [skip_taskbar]
-                window.window.set_property("_NET_WM_STATE", net_wm_state)
-                self.draw()
-                box_start = self.margin_x
-            x = x + self._box_end_positions[-1] - box_start
-            # bar_y = self.bar.
-            window.set_position_floating(x, self.bar.y - 300 - max(self.bar.margin) * 2)

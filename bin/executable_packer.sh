@@ -147,6 +147,7 @@ print_stdout () {
 output () {
 	exit_status="$1"
 
+	# shellcheck disable=SC2034
 	mapfile -t stdout_lines < <(print_stdout)
 
 	if [[ $exit_status -eq 0 ]]; then

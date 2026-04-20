@@ -13,6 +13,7 @@ __all__ = [
     "apps_hooks",
     "floating_layout",
     "groups",
+    "idle_inhibitors",
     "idle_timers",
     "keys",
     "layouts",

@@ -1,10 +1,10 @@
 #!/bin/python
 
 import json
+import os
 
 import requests
 
-import os
 API_KEY = os.environ.get("GOOGLE_MAPS_API_KEY", "")
 post_data = {"considerIp": "true"}
 geolocate_response = requests.post(

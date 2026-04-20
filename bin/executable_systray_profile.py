@@ -11,7 +11,7 @@ import gi
 gi.require_version("Gtk", "3.0")
 gi.require_version("AppIndicator3", "0.1")
 from gi.repository import AppIndicator3 as appindicator
-from gi.repository import Gio, GLib, GObject
+from gi.repository import GLib
 from gi.repository import Gtk as gtk
 
 
@@ -22,7 +22,7 @@ class Indicator:
         self.battery_profile = None
         self.vbc()
 
-        icons_folder = "/usr/share/icons/Papirus-Dark/symbolic/status"
+        _icons_folder = "/usr/share/icons/Papirus-Dark/symbolic/status"
         # self.filenames = {
         #     "ic": f"{icons_folder}/power-profile-balanced-symbolic.svg",
         #     "bs": f"{icons_folder}/power-profile-power-saver-symbolic.svg",
@@ -30,9 +30,7 @@ class Indicator:
         # }
         # self.icon_filename: str = self.filenames[self.vp]
         self.icon_filename = os.path.join(
-            os.getenv(
-                "XDG_DATA_HOME", os.path.join(os.path.expanduser("~/.local/share"))
-            ),
+            os.getenv("XDG_DATA_HOME", os.path.join(os.path.expanduser("~/.local/share"))),
             "systray_profile",
             "cogs.svg",
         )
@@ -58,9 +56,7 @@ class Indicator:
                 self.battery_profile = "off"
 
     def vpc(self):
-        vpcheck = (
-            subprocess.check_output("ideapad-perf -vp".split()).decode("utf-8").strip()
-        )
+        vpcheck = subprocess.check_output("ideapad-perf -vp".split()).decode("utf-8").strip()
         match vpcheck:
             case "Running in Extreme Performance mode.":
                 self.vp = "ep"

@@ -2,19 +2,20 @@
 
 import io
 import json
-import pathlib
-from matplotlib.colors import colorConverter
 import os
+import pathlib
 import sys
-from libqtile.command.client import InteractiveCommandClient
-from PIL import Image, ImageDraw
-from libqtile.backend.x11 import xcbq
+
 import gi
+from libqtile.backend.x11 import xcbq
+from libqtile.command.client import InteractiveCommandClient
+from matplotlib.colors import colorConverter
+from PIL import Image, ImageDraw
 
 gi.require_version("Gdk", "3.0")
 gi.require_version("GdkPixbuf", "2.0")
 
-from gi.repository import GdkPixbuf, Gdk
+from gi.repository import GdkPixbuf
 
 c = InteractiveCommandClient()
 qtile_info = c.qtile_info()
@@ -25,9 +26,7 @@ else:
 with open(os.path.join(config_path, "json", "settings.json")) as f:
     settings: dict = json.load(f)
 systray_screen_index = c.widget["systray"].screen.info()["index"]
-systray_screen = xcbq.Connection(os.environ.get("DISPLAY")).pseudoscreens[
-    systray_screen_index
-]
+systray_screen = xcbq.Connection(os.environ.get("DISPLAY")).pseudoscreens[systray_screen_index]
 screen = dict(
     x=systray_screen.x,
     y=systray_screen.y,

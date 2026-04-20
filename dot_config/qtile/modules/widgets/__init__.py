@@ -1,9 +1,7 @@
 from typing import TYPE_CHECKING, Any, Protocol, cast
 
+from extras.widgets import Battery, BtBattery, TaskList, WidgetBox  # noqa: F401
 from libqtile.widget.base import _Widget
-from qtile_extras import widget
-
-from extras.widgets import Battery, BtBattery, TaskList, WidgetBox
 from modules.decorations import decorations
 from modules.settings import colors
 
@@ -27,13 +25,14 @@ from modules.widgets.os_logo import os_logo
 from modules.widgets.powermenu import powermenu
 from modules.widgets.separators import pipe, small_spacer, stretch_spacer
 from modules.widgets.systray import systray
-from modules.widgets.task_list import task_list
+from modules.widgets.task_list import task_list  # noqa: F401
 
 # from modules.widgets.touchpad import touchpad
 from modules.widgets.wallpaper import wallpaper
 
 # from modules.widgets.weather import weather
-from modules.widgets.widgetbox import widget_box_1, widget_box_2
+from modules.widgets.widgetbox import widget_box_1, widget_box_2  # noqa: F401
+from qtile_extras import widget
 
 if TYPE_CHECKING:
 

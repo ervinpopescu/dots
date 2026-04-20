@@ -1,6 +1,7 @@
 return {
   "neovim/nvim-lspconfig",
   opts = function(_, opts)
+    {{ if .is_cloudtop -}}
     -- Start of your custom lemminx logic
     local project_root = vim.fn.getcwd()
     local xsd_path = project_root .. "/xsd"
@@ -30,9 +31,11 @@ return {
     end
     -- End of custom lemminx logic
 
+    {{ end -}}
     -- Merge custom server configurations
     opts.servers = vim.tbl_deep_extend("force", opts.servers or {}, {
       stylua = { enabled = false },
+      {{ if .is_cloudtop -}}
       lemminx = {
         filetypes = { "xml" },
         settings = {
@@ -42,6 +45,7 @@ return {
           },
         },
       },
+      {{ end -}}
       lua_ls = {
         settings = {
           Lua = {

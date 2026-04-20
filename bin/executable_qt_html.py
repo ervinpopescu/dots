@@ -3,6 +3,7 @@
 import argparse
 import os
 import sys
+
 from PyQt5 import QtCore, QtWebEngineWidgets, QtWidgets
 
 
@@ -20,9 +21,7 @@ def loadCSS(view, path, name):
     css.innerText = String.raw `{css}`;
     }})()"""
     script = QtWebEngineWidgets.QWebEngineScript()
-    view.page().runJavaScript(
-        SCRIPT, QtWebEngineWidgets.QWebEngineScript.ApplicationWorld
-    )
+    view.page().runJavaScript(SCRIPT, QtWebEngineWidgets.QWebEngineScript.ApplicationWorld)
     script.setName(name)
     script.setSourceCode(SCRIPT)
     script.setInjectionPoint(QtWebEngineWidgets.QWebEngineScript.DocumentReady)
