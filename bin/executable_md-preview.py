@@ -2,7 +2,6 @@
 
 import argparse
 import contextlib
-import os
 import subprocess
 import sys
 from time import sleep
@@ -22,9 +21,7 @@ def check_if_process_running(process_name):
     """
     # Iterate over the all the running process
     for proc in psutil.process_iter():
-        with contextlib.suppress(
-            psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess
-        ):
+        with contextlib.suppress(psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
             # Check if process name contains the given name string.
             if process_name.lower() in proc.name().lower():
                 return True

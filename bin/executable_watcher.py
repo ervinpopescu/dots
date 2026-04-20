@@ -1,5 +1,6 @@
 #!/bin/python
 
+import os
 import time
 
 from libqtile.command.client import InteractiveCommandClient
@@ -37,20 +38,12 @@ class Handler(FileSystemEventHandler):
         if event.is_directory:
             return None
 
-        elif (
-            event.event_type == "created"
-            and not null_ls_condition
-            and not cpython_condition
-        ):
+        elif event.event_type == "created" and not null_ls_condition and not cpython_condition:
             # Take any action here when a file is first created.
             print(f"Received created event - {event.src_path}.")
             c.reload_config()
 
-        elif (
-            event.event_type == "modified"
-            and not null_ls_condition
-            and not cpython_condition
-        ):
+        elif event.event_type == "modified" and not null_ls_condition and not cpython_condition:
             # Taken any action here when a file is modified.
             print(f"Received modified event - {event.src_path}.")
             c.reload_config()

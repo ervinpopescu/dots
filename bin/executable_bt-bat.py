@@ -1,11 +1,8 @@
 #!/bin/python
-import json
 import subprocess
-import time
 from asyncio import get_event_loop, new_event_loop, set_event_loop
 from binascii import hexlify
 from datetime import datetime
-from pathlib import Path
 from time import time_ns
 
 from bleak import BleakScanner
@@ -33,10 +30,7 @@ class AirpodScanner:
         strongest_beacon = None
         i = 0
         while i < len(self.recent_beacons):
-            if (
-                time_ns() - self.recent_beacons[i]["time"]
-                > AirpodScanner.RECENT_BEACONS_MAX_T_NS
-            ):
+            if time_ns() - self.recent_beacons[i]["time"] > AirpodScanner.RECENT_BEACONS_MAX_T_NS:
                 self.recent_beacons.pop(i)
                 continue
             if (
@@ -68,11 +62,7 @@ class AirpodScanner:
                     bytearray(a.manufacturer_data[AirpodScanner.AIRPODS_MANUFACTURER])
                 )
                 data_length = len(
-                    hexlify(
-                        bytearray(
-                            a.manufacturer_data[AirpodScanner.AIRPODS_MANUFACTURER]
-                        )
-                    )
+                    hexlify(bytearray(a.manufacturer_data[AirpodScanner.AIRPODS_MANUFACTURER]))
                 )
                 if data_length == AirpodScanner.AIRPODS_DATA_LENGTH:
                     return data_hex
@@ -114,35 +104,25 @@ class AirpodScanner:
         # Checking left AirPod for availability and storing charge in variable
         status_tmp = int("" + chr(raw[12 if flip else 13]), 16)
         left_status = (
-            100
-            if status_tmp == 10
-            else (status_tmp * 10 + 5 if status_tmp <= 10 else -1)
+            100 if status_tmp == 10 else (status_tmp * 10 + 5 if status_tmp <= 10 else -1)
         )
 
         # Checking right AirPod for availability and storing charge in variable
         status_tmp = int("" + chr(raw[13 if flip else 12]), 16)
         right_status = (
-            100
-            if status_tmp == 10
-            else (status_tmp * 10 + 5 if status_tmp <= 10 else -1)
+            100 if status_tmp == 10 else (status_tmp * 10 + 5 if status_tmp <= 10 else -1)
         )
 
         # Checking AirPods case for availability and storing charge in variable
         status_tmp = int("" + chr(raw[15]), 16)
         case_status = (
-            100
-            if status_tmp == 10
-            else (status_tmp * 10 + 5 if status_tmp <= 10 else -1)
+            100 if status_tmp == 10 else (status_tmp * 10 + 5 if status_tmp <= 10 else -1)
         )
 
         # On 14th position we can get charge status of AirPods
         charging_status = int("" + chr(raw[14]), 16)
-        charging_left: bool = (
-            charging_status & (0b00000010 if flip else 0b00000001)
-        ) != 0
-        charging_right: bool = (
-            charging_status & (0b00000001 if flip else 0b00000010)
-        ) != 0
+        charging_left: bool = (charging_status & (0b00000010 if flip else 0b00000001)) != 0
+        charging_right: bool = (charging_status & (0b00000001 if flip else 0b00000010)) != 0
         charging_case: bool = (charging_status & 0b00000100) != 0
 
         # Return result info in dict format

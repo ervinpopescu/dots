@@ -6,9 +6,7 @@ import os
 import re
 import shutil
 import subprocess
-from importlib.metadata import version
 from logging import getLogger
-import textwrap
 from typing import TYPE_CHECKING
 
 import git
@@ -162,9 +160,7 @@ class UpdateQtile:
                         index + 2,
                         '  export LDFLAGS="$LDFLAGS -L/usr/lib/wlroots0.16"\n',
                     )
-                if re.match(r".*cd qtile", line) and re.match(
-                    ".*git describe", lines[index + 1]
-                ):
+                if re.match(r".*cd qtile", line) and re.match(".*git describe", lines[index + 1]):
                     lines.insert(
                         index + 1,
                         "  git remote add upstream https://github.com/qtile/qtile.git\n",

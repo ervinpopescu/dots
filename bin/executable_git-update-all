@@ -1,9 +1,9 @@
 #!/bin/bash
 
 set -e
-current=$(git branch | grep '*' | awk '{print $2}')
-all_branches=($(git branch | sed 's/*//' | awk '{print $1}' | xargs))
-for b in ${all_branches[@]}; do
+current=$(git branch | grep '\*' | awk '{print $2}')
+mapfile -t all_branches < <(git branch | sed 's/\*//' | awk '{print $1}')
+for b in "${all_branches[@]}"; do
 	echo Checkin\' out branch $b...
 	git checkout $b
 	echo Fetchin\' branch $b...

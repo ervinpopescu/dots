@@ -1,0 +1,2 @@
+[lint]
+per-file-ignores = { "bin/*" = ["E402", "E741"], "bin/executable_pop-report.py" = ["F403", "F405"] }

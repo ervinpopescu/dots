@@ -107,7 +107,7 @@ class TimedPopup(QLabel):
 
     def closeEvent(self, event):
         # Delete topic file
-        if self.topicPath != None and os.path.isfile(self.topicPath):
+        if self.topicPath is not None and os.path.isfile(self.topicPath):
             os.remove(self.topicPath)
         # Delete object
         self.mainwin.close()

@@ -33,7 +33,7 @@ do
 		cd $f
 
 		# Check for modified files
-		if [ $(git status | grep modified -c) -ne 0 ]
+		if [ "$(git status | grep modified -c)" -ne 0 ]
 		then
 			mod=1
 			echo -en "\033[0;31m"
@@ -42,7 +42,7 @@ do
 		fi
 
 		# Check for untracked files
-		if [ $(git status | grep Untracked -c) -ne 0 ]
+		if [ "$(git status | grep Untracked -c)" -ne 0 ]
 		then
 			mod=1
 			echo -en "\033[0;31m"
@@ -51,7 +51,7 @@ do
 		fi
 
 		# Check for unpushed changes
-		if [ $(git status | grep 'Your branch is ahead' -c) -ne 0 ]
+		if [ "$(git status | grep 'Your branch is ahead' -c)" -ne 0 ]
 		then
 				mod=1
 				echo -en "\033[0;31m"

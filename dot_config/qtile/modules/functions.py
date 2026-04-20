@@ -10,7 +10,6 @@ import psutil  # type: ignore
 from libqtile.core.manager import Qtile
 from libqtile.layout.floating import Floating
 from libqtile.lazy import lazy
-
 from modules.settings import settings
 
 # from libqtile.log_utils import logger
@@ -77,8 +76,8 @@ def set_layout_all(qtile: Qtile):
         for g in groups:
             g.setlayout("max")
     else:
-        for g, l in zip(groups, def_group_layouts):
-            g.setlayout(l)
+        for g, layout in zip(groups, def_group_layouts):
+            g.setlayout(layout)
 
 
 @lazy.function
@@ -185,9 +184,7 @@ def check_if_process_running(process_name):
     """
     # Iterate over the all the running process
     for proc in psutil.process_iter():
-        with contextlib.suppress(
-            psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess
-        ):
+        with contextlib.suppress(psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
             # Check if process name contains the given name string.
             if process_name.lower() in proc.name().lower():
                 return True
