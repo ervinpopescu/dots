@@ -3,7 +3,6 @@ import json
 import os
 import subprocess
 
-import notify2  # type: ignore
 import psutil  # type: ignore
 from libqtile.bar import Bar
 from libqtile.core.manager import Qtile
@@ -37,9 +36,7 @@ def window_to_next_group(qtile: Qtile):
 
 @lazy.function
 def switch_win_in_group(qtile: Qtile):
-    focus_history = [
-        win for win in qtile.current_group.focus_history if win.name != "qalttab"
-    ]
+    focus_history = [win for win in qtile.current_group.focus_history if win.name != "qalttab"]
     logger.info(focus_history)
     try:
         win = focus_history[-2]
@@ -186,9 +183,7 @@ def _adjust_gaps(qtile: Qtile, delta: int, also_bar: bool = False):
                                 return
                         else:
                             if i >= MARGIN_SIZE_DELTA + 1:
-                                logger.info(
-                                    f"i > MARGIN_SIZE_DELTA, appending {i + delta}"
-                                )
+                                logger.info(f"i > MARGIN_SIZE_DELTA, appending {i + delta}")
                                 to_be_set_margin.append(i + delta)
                             elif i <= 0:
                                 logger.info("i <= 0, appending 0")
@@ -253,9 +248,7 @@ def check_if_process_running(process_name):
     """
     # Iterate over the all the running process
     for proc in psutil.process_iter():
-        with contextlib.suppress(
-            psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess
-        ):
+        with contextlib.suppress(psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
             # Check if process name contains the given name string.
             if process_name.lower() in proc.name().lower():
                 return True
