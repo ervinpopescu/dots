@@ -14,7 +14,12 @@ from modules.settings import config_path, settings
 
 def get_screen_width_safe() -> int:
     default_width = 1920
-    if not TYPE_CHECKING and hasattr(qtile, "core") and hasattr(qtile.core, "running") and qtile.core.running:
+    if (
+        not TYPE_CHECKING
+        and hasattr(qtile, "core")
+        and hasattr(qtile.core, "running")
+        and qtile.core.running
+    ):
         try:
             _core = cast(libqtile.core.manager.Core, qtile.core)
             screen_info = _core.get_output_info()
@@ -64,13 +69,8 @@ def window_rules(client: Window):
         rules_wm_class = win["wm_class"]
         rules_name = win.get("name", None)
         if rules_wm_class == wm_class and rules_name == name:
-            if (
-                "set_position_floating" in win["rules"]
-                and rules_wm_class == "gsimplecal"
-            ):
-                logger.info(
-                    f"set_position_floating: class:{rules_wm_class},name:{rules_name}"
-                )
+            if "set_position_floating" in win["rules"] and rules_wm_class == "gsimplecal":
+                logger.info(f"set_position_floating: class:{rules_wm_class},name:{rules_name}")
                 client.set_position_floating(
                     x=get_screen_width_safe()
                     - win["rules"]["w"]  # type: ignore
@@ -80,15 +80,11 @@ def window_rules(client: Window):
                 )
 
             if "set_size_floating" in win["rules"]:
-                logger.info(
-                    f"set_size_floating: class:{rules_wm_class},name:{rules_name}"
-                )
+                logger.info(f"set_size_floating: class:{rules_wm_class},name:{rules_name}")
                 client.set_size_floating(w=win["rules"]["w"], h=win["rules"]["h"])
 
             if "toggle_floating" in win["rules"]:
-                logger.info(
-                    f"toggle_floating: class:{rules_wm_class},name:{rules_name}"
-                )
+                logger.info(f"toggle_floating: class:{rules_wm_class},name:{rules_name}")
                 client.toggle_floating()
 
             if "center" in win["rules"]:
@@ -100,9 +96,7 @@ def window_rules(client: Window):
                 client.keep_above()
 
             if "toggle_fullscreen" in win["rules"]:
-                logger.info(
-                    f"toggle_fullscreen: class:{rules_wm_class},name:{rules_name}"
-                )
+                logger.info(f"toggle_fullscreen: class:{rules_wm_class},name:{rules_name}")
                 client.toggle_fullscreen()
 
             return

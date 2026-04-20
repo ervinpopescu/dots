@@ -13,9 +13,7 @@ from rofi import Rofi
 
 c = InteractiveCommandClient()
 with open(
-    os.path.join(
-        (pathlib.Path(c.qtile_info()["config_path"]).parent), "json", "settings.json"
-    ),
+    os.path.join((pathlib.Path(c.qtile_info()["config_path"]).parent), "json", "settings.json"),
     "r",
 ) as f:
     group_layouts = [group["layout"] for group in json.load(f)["groups"].values()]

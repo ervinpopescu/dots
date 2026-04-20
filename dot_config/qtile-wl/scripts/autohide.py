@@ -1,7 +1,5 @@
 #!/bin/python
 
-import os
-import sys
 from time import sleep
 
 from libqtile.command.client import InteractiveCommandClient

@@ -15,12 +15,14 @@ Lua files are formatted with **StyLua**: 2-space indentation, spaces (not tabs),
 **Entry point:** `init.lua` sets `maplocalleader = "\"` and loads `config.lazy`.
 
 **Config layer** (`lua/config/`):
+
 - `lazy.lua` — bootstraps lazy.nvim, imports LazyVim base plugins + `lazyvim.plugins.extras.lang.python`, then imports user plugins from `lua/plugins/`
 - `options.lua` — vim options (leader = space, 2-space tabs, 80-col colorcolumn, system clipboard, rg as grepprg)
 - `keymaps.lua` — custom keymaps: `-` for Oil file browser, `<leader>z` for Zen Mode
 - `autocmds.lua` — auto-center on insert, restore cursor shape on exit, filetype detection (`.m` → octave), Ruff hover disabled in favor of Pyright, wrap/list settings, rust colorcolumn=100, double-undo hack for auto-save in rust/python
 
 **Plugin specs** (`lua/plugins/`): each file returns a lazy.nvim plugin spec table.
+
 - `colorscheme.lua` — Catppuccin theme
 - `disabled.lua` — explicitly disables flash.nvim and neo-tree
 - `conform.lua` — formatter config (stylua, shfmt, prettier, ruff_format, rustfmt, taplo, custom jqfmt)

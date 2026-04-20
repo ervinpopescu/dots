@@ -45,4 +45,3 @@ class CheckUpdates(BackgroundPoll):
         if self.layout:
             self.layout.colour = self.foreground
         return data
-

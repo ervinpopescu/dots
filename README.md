@@ -9,7 +9,6 @@
    ▀▀▀ ▀▀    ▀▀▀▀       ▀▀▀▀    ▀▀▀▀▀▀
 ```
 
-
 ## [Features](./markdown/features.md)
 
 ## Install ([+Arch](./markdown/archinstall.md))

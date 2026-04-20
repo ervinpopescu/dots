@@ -1,6 +1,5 @@
 #!/bin/python
 import argparse
-import contextlib
 import json
 import os
 import pathlib

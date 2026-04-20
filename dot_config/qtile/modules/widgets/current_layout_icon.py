@@ -13,9 +13,7 @@ def current_layout_icon():
         scale=0.8,
         mouse_callbacks={
             "Button2": set_layout_all(),
-            "Button3": lazy.spawn(
-                os.path.join(config_path, "scripts", "rofi_layout.py")
-            ),
+            "Button3": lazy.spawn(os.path.join(config_path, "scripts", "rofi_layout.py")),
         },
         use_mask=True,
         foreground=colors["darkblue"],

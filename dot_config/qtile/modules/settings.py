@@ -5,12 +5,11 @@ import pathlib
 from os import path
 
 from libqtile import qtile
-from libqtile.config import Match
 from libqtile.utils import rgb
 
 from modules.models import Settings
+
 # from qtile_extras.layout.decorations.borders import RoundedCorners
-from qtile_extras.layout.decorations.borders import ConditionalBorderWidth, CustomBorder
 
 
 def load_theme():

@@ -11,9 +11,7 @@ def wallpaper():
         name="wallpaper",
         font=settings.icon_font,
         foreground=colors["red"],
-        mouse_callbacks={
-            "Button1": lazy.spawn("/home/ervin/bin/run_wall_wl.sh rand all")
-        },
+        mouse_callbacks={"Button1": lazy.spawn("/home/ervin/bin/run_wall_wl.sh rand all")},
         padding=10,
         text="",
     )

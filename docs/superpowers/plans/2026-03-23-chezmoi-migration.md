@@ -15,6 +15,7 @@
 ### Task 1: Install chezmoi and generate age key pair
 
 **Files:**
+
 - Create: `~/.config/chezmoi/key.txt` (local only, never committed)
 
 - [ ] **Step 1: Install chezmoi**
@@ -52,6 +53,7 @@ Expected: chezmoi version output and age key header line (`# created:` + `AGE-SE
 ### Task 2: Initialize chezmoi and create config scaffolding
 
 **Files:**
+
 - Create: `.chezmoi.toml.tmpl`
 - Create: `.chezmoiignore`
 
@@ -133,6 +135,7 @@ git commit -m "chezmoi: add config template and ignore rules"
 This is the big structural move. Rename `configs/.config/` → `dot_config/`, `configs/bin/` → `bin/`, `configs/etc/` + `configs/usr/` → `system/`.
 
 **Files:**
+
 - Move: `configs/.config/*` → `dot_config/`
 - Move: `configs/bin/*` → `bin/` (with `executable_` prefix)
 - Move: `configs/etc/*` → `system/etc/`
@@ -155,7 +158,7 @@ mkdir -p dot_config system bin
 git mv configs/.config/* dot_config/
 ```
 
-- [ ] **Step 3: Move bin scripts with executable_ prefix**
+- [ ] **Step 3: Move bin scripts with executable\_ prefix**
 
 ```bash
 for f in configs/bin/*; do
@@ -207,6 +210,7 @@ git commit -m "chezmoi: restructure configs/ into chezmoi source layout"
 ### Task 4: Convert machine-specific files to templates
 
 **Files:**
+
 - Rename+modify: `dot_config/zsh/.zprofile` → `dot_config/zsh/.zprofile.tmpl`
 - Rename+modify: `dot_config/zsh/env/vars.zsh` → `dot_config/zsh/env/vars.zsh.tmpl`
 
@@ -239,12 +243,14 @@ git mv dot_config/zsh/env/vars.zsh dot_config/zsh/env/vars.zsh.tmpl
 Edit `dot_config/zsh/env/vars.zsh.tmpl`: replace the hardcoded secret values with template variables and wrap wayland-specific exports in conditionals.
 
 The two secrets lines become:
+
 ```zsh
 export OPENSUBTITLES_API_KEY="{{ .opensubtitles_api_key }}"
 export TSTRUCT_TOKEN="{{ .tstruct_token }}"
 ```
 
 The wayland-specific block gets wrapped:
+
 ```zsh
 {{ if .has_wayland -}}
 export QT_QPA_PLATFORM=wayland
@@ -254,6 +260,7 @@ export SDL_VIDEODRIVER=wayland
 ```
 
 And the `MOZ_ENABLE_WAYLAND` conditional at the end:
+
 ```zsh
 {{ if .has_wayland -}}
 export MOZ_ENABLE_WAYLAND=1
@@ -283,6 +290,7 @@ git commit -m "chezmoi: convert zprofile and vars.zsh to machine-conditional tem
 ### Task 5: Encrypt secrets
 
 **Files:**
+
 - Create: `secrets.age`
 - Create: `~/.config/chezmoi/chezmoidata.toml` (local only, never committed)
 - Create: `dot_config/qtile-wl/encrypted_github_token` (replaces plaintext)
@@ -346,6 +354,7 @@ git commit -m "chezmoi: encrypt secrets with age"
 ### Task 6: Create system files deployment script
 
 **Files:**
+
 - Create: `run_after_system-deploy.sh.tmpl`
 
 - [ ] **Step 1: Create the run_after script**
@@ -398,6 +407,7 @@ chezmoi apply --dry-run --verbose
 ```
 
 Expected: list of file operations without actually writing anything. Verify:
+
 - `.config/zsh/.zprofile` contains wayland block (lenovo)
 - `.config/zsh/env/vars.zsh` contains decrypted secrets and wayland vars
 - `.config/qtile-wl/` files are included
@@ -441,6 +451,7 @@ git commit -m "chezmoi: fixes from initial apply testing"
 ### Task 8: Merge cloudtop-specific files into single branch
 
 **Files:**
+
 - Add: `dot_config/qtile/` (from cloudtop branch)
 - Add: any cloudtop-only files from `configs/bin/`, `configs/.config/`
 
@@ -501,6 +512,7 @@ git commit -m "chezmoi: merge cloudtop-specific configs into single branch"
 ### Task 9: Clean up and update README
 
 **Files:**
+
 - Delete: `configs/` directory (should be empty/gone after Task 3)
 - Modify: `README.md`
 
@@ -514,15 +526,18 @@ ls configs/ 2>/dev/null && echo "WARN: configs/ still exists" || echo "OK: confi
 
 Replace the install section with chezmoi instructions:
 
-```markdown
+````markdown
 ## Install ([+Arch](./markdown/archinstall.md))
 
 ### Prerequisites
+
 ```console
 pacman -S chezmoi age
 ```
+````
 
 ### Setup
+
 ```console
 # Clone and initialize
 chezmoi init ervinpopescu/dots
@@ -542,14 +557,15 @@ sudo cp -a "$(chezmoi source-path)/system/usr/." /usr/
 # Apply
 chezmoi apply
 ```
-```
+
+````
 
 - [ ] **Step 3: Commit**
 
 ```bash
 git add -A
 git commit -m "chezmoi: update README with new install instructions, remove old configs/"
-```
+````
 
 ---
 

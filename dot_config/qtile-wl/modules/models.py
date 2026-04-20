@@ -2,6 +2,7 @@ from typing import Dict, List, Optional
 
 from pydantic import BaseModel
 
+
 class Commands(BaseModel):
     blueman: List[str]
     emoji: List[str]
@@ -16,19 +17,23 @@ class Commands(BaseModel):
     wallpaper: List[str]
     browser: str
 
+
 class Keymaps(BaseModel):
     mod: str
     alt: str
+
 
 class Group(BaseModel):
     label: str
     layout: str
     screen_affinity: int
 
+
 class WidgetDefaults(BaseModel):
     font: str
     fontsize: int
     padding: int
+
 
 class Settings(BaseModel):
     bar_height: int

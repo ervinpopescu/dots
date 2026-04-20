@@ -1,7 +1,6 @@
 from qtile_extras import widget
 
 
-
 def systray():
     return widget.Systray(
         icon_size=24,

@@ -1,15 +1,17 @@
 import contextlib
 import os
-import subprocess
-import psutil  # type: ignore
 import signal
+import subprocess
 
+import psutil  # type: ignore
 from libqtile import hook, qtile
+
 
 @hook.subscribe.screen_change
 def screen_change(event):
     qtile.reconfigure_screens()
     qtile.reconfigure_screens()
+
 
 @hook.subscribe.screens_reconfigured
 async def change_wallpaper():
@@ -20,12 +22,14 @@ async def change_wallpaper():
     else:
         subprocess.call([os.path.expanduser("~/bin/run_wall.sh"), "rand", "all"])
 
+
 @hook.subscribe.client_killed
 def switch_group(client):
     with contextlib.suppress(AttributeError):
         num_windows_in_group = len(client.group.info()["windows"])
         if num_windows_in_group == 0:
             qtile.current_screen.toggle_group(qtile.current_screen.previous_group)
+
 
 @hook.subscribe.startup
 def set_properties():

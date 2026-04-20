@@ -1,5 +1,4 @@
 from libqtile import qtile
-from libqtile.backend.base.window import Window
 from libqtile.lazy import lazy
 from libqtile.log_utils import logger
 from qtile_extras.popup.toolkit import PopupRelativeLayout, PopupText

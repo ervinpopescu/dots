@@ -116,6 +116,7 @@ dot_config/qtile/**
 Files that are mostly shared but differ per-machine use `.tmpl`:
 
 **`.zprofile.tmpl`** — conditionally starts Wayland (lenovo) or just X11:
+
 ```zsh
 {{ if .has_wayland -}}
 if [ -z "$WAYLAND_DISPLAY" ] && [ "$XDG_VTNR" -eq 3 ]; then
@@ -129,6 +130,7 @@ fi
 ```
 
 **`vars.zsh.tmpl`** — machine-specific env vars and secrets:
+
 ```zsh
 # XDG vars, shared tool configs...
 {{ if .has_wayland -}}
@@ -157,6 +159,7 @@ export TSTRUCT_TOKEN="{{ .tstruct_token }}"
 **Inline secrets** (e.g., API keys in `vars.zsh`): chezmoi does not auto-decrypt `.age` files in `.chezmoidata/`. Instead, secrets are stored in a `secrets.age` file at the repo root (age-encrypted, committed) and decrypted into `~/.config/chezmoi/chezmoidata.toml` (local, not committed) by a `run_once_` setup script on first apply.
 
 The plaintext `chezmoidata.toml` (never committed) contains:
+
 ```toml
 opensubtitles_api_key = "<value>"
 tstruct_token = "<value>"
@@ -167,6 +170,7 @@ Chezmoi automatically reads `~/.config/chezmoi/chezmoidata.toml` and makes the v
 **Important:** `chezmoidata.toml` must be decrypted manually before the first `chezmoi apply` on a new machine (see New Machine Setup). Chezmoi renders all templates before executing scripts, so a `run_once_` script cannot bootstrap this — the data file must already exist.
 
 To update secrets:
+
 ```bash
 # Edit the plaintext file
 $EDITOR ~/.config/chezmoi/chezmoidata.toml
@@ -178,11 +182,11 @@ cd "$(chezmoi source-path)" && git add secrets.age && git commit -m "update secr
 
 ### Secret inventory
 
-| Secret | Current location | Chezmoi location |
-|--------|-----------------|-----------------|
-| `github_token` | `qtile-wl/github_token` (plaintext file) | `encrypted_dot_config/qtile-wl/github_token` |
-| `OPENSUBTITLES_API_KEY` | `zsh/env/vars.zsh` (hardcoded) | `secrets.age` → `chezmoidata.toml` |
-| `TSTRUCT_TOKEN` | `zsh/env/vars.zsh` (hardcoded) | `secrets.age` → `chezmoidata.toml` |
+| Secret                  | Current location                         | Chezmoi location                             |
+| ----------------------- | ---------------------------------------- | -------------------------------------------- |
+| `github_token`          | `qtile-wl/github_token` (plaintext file) | `encrypted_dot_config/qtile-wl/github_token` |
+| `OPENSUBTITLES_API_KEY` | `zsh/env/vars.zsh` (hardcoded)           | `secrets.age` → `chezmoidata.toml`           |
+| `TSTRUCT_TOKEN`         | `zsh/env/vars.zsh` (hardcoded)           | `secrets.age` → `chezmoidata.toml`           |
 
 ## System Files Deployment
 
@@ -243,6 +247,7 @@ chezmoi apply
 ```
 
 **Notes:**
+
 - Step 3 is critical: chezmoi renders templates (including `vars.zsh.tmpl` which references secrets) at the start of `apply`, before any `run_once_`/`run_after_` scripts execute. The `chezmoidata.toml` must exist before the first apply.
 - Step 4 is needed because `/etc/zsh/zshenv` sets `ZDOTDIR=$HOME/.config/zsh`, which must be in place before zsh can find configs deployed by `chezmoi apply`. On existing machines where `/etc/zsh/zshenv` is already correct, step 4 can be skipped.
 

@@ -1,10 +1,7 @@
-import os
-
 from libqtile.config import Key
 from libqtile.lazy import lazy
 
 from modules.functions import (
-    switch_win_in_group,
     toggle_minimize_all,
     window_to_next_group,
     window_to_prev_group,

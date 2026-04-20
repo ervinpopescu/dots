@@ -24,6 +24,7 @@ qtile cmd-obj -o cmd -f reload_config
 ## Code Style
 
 Enforced via `pyproject.toml`:
+
 - **Black** with `line-length = 98`
 - **isort** with `profile = "black"`
 
@@ -56,13 +57,13 @@ config.py
 
 User-facing configuration lives in `json/` — edit these instead of Python when possible:
 
-| File | Purpose |
-|------|---------|
-| `json/settings.json` | Bar height, fonts, margins, group definitions, commands, keymaps |
-| `json/config.json` | Qtile global flags (follow_mouse_focus, cursor_warp, theme, xcursor) |
-| `json/window_rules.json` | Per-app floating rules, sizes, positions |
-| `json/matches.json` | App class → workspace group mapping |
-| `json/themes.json` | Available theme names |
+| File                     | Purpose                                                              |
+| ------------------------ | -------------------------------------------------------------------- |
+| `json/settings.json`     | Bar height, fonts, margins, group definitions, commands, keymaps     |
+| `json/config.json`       | Qtile global flags (follow_mouse_focus, cursor_warp, theme, xcursor) |
+| `json/window_rules.json` | Per-app floating rules, sizes, positions                             |
+| `json/matches.json`      | App class → workspace group mapping                                  |
+| `json/themes.json`       | Available theme names                                                |
 
 `json/config.json` is loaded via `exec()` in `config.py`, so every key becomes a top-level Qtile variable.
 
@@ -81,6 +82,7 @@ Six named groups defined in `json/settings.json`: `www`, `coding`, `media`, `set
 ### Key bindings
 
 Split across `keys/`:
+
 - `apps.py` — launchers, scratchpad dropdowns, KeyChord submenus
 - `windows_and_groups.py` — workspace navigation
 - `layouts.py` / `layout_managing.py` / `window_managing.py` — layout control

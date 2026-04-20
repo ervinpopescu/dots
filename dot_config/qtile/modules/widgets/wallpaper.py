@@ -1,7 +1,8 @@
+import os
+
 from libqtile.lazy import lazy
 from qtile_extras import widget
 
-import os
 # import subprocess
 from modules.settings import colors, settings
 

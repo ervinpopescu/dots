@@ -1,11 +1,7 @@
-from qtile_extras import widget
-
 from extras.widgets import WidgetBox
 from modules.decorations import decorations
 from modules.settings import colors
 
-from .kbd_layout import kbd_layout
-from .kbd_layout_icon import kbd_layout_icon
 from .separators import small_spacer
 from .uptime import uptime
 from .weather import weather

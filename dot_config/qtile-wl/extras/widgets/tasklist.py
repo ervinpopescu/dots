@@ -23,9 +23,7 @@ class TaskList(widget.TaskList):
     def windows(self):
         if self.qtile.core.name == "wayland":
             windows = [
-                w
-                for w in self.bar.screen.group.windows
-                if w.match(~Match(title="qalttab"))
+                w for w in self.bar.screen.group.windows if w.match(~Match(title="qalttab"))
             ]
             return windows
         return self.bar.screen.group.windows
