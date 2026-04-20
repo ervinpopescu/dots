@@ -1,327 +1,63 @@
-<!DOCTYPE html>
-<html>
-<body>
-	<h2>Directory Tree</h2><p>
-	<a href="/"></a><br>
-	├── <a href="/configs/">configs</a><br>
-	│   ├── <a href="/configs/bin/">bin</a><br>
-	│   │   ├── <a href="/configs/bin/alacritty-nemo">alacritty-nemo</a><br>
-	│   │   ├── <a href="/configs/bin/alert.sh">alert.sh</a><br>
-	│   │   ├── <a href="/configs/bin/all_disk_usage.sh">all_disk_usage.sh</a><br>
-	│   │   ├── <a href="/configs/bin/autostart.sh">autostart.sh</a><br>
-	│   │   ├── <a href="/configs/bin/autostart-wl.sh">autostart-wl.sh</a><br>
-	│   │   ├── <a href="/configs/bin/battery-notification.py">battery-notification.py</a><br>
-	│   │   ├── <a href="/configs/bin/birthday-notification.sh">birthday-notification.sh</a><br>
-	│   │   ├── <a href="/configs/bin/bookmarks.py">bookmarks.py</a><br>
-	│   │   ├── <a href="/configs/bin/bookmarkthis.py">bookmarkthis.py</a><br>
-	│   │   ├── <a href="/configs/bin/brightnessctl.sh">brightnessctl.sh</a><br>
-	│   │   ├── <a href="/configs/bin/bt-archnet.sh">bt-archnet.sh</a><br>
-	│   │   ├── <a href="/configs/bin/bt-bat.sh">bt-bat.sh</a><br>
-	│   │   ├── <a href="/configs/bin/change-ip-address-server.sh">change-ip-address-server.sh</a><br>
-	│   │   ├── <a href="/configs/bin/change_theme.py">change_theme.py</a><br>
-	│   │   ├── <a href="/configs/bin/change_wallpaper.sh">change_wallpaper.sh</a><br>
-	│   │   ├── <a href="/configs/bin/check-qtile-version.sh">check-qtile-version.sh</a><br>
-	│   │   ├── <a href="/configs/bin/chkup.sh">chkup.sh</a><br>
-	│   │   ├── <a href="/configs/bin/dot-backup.sh">dot-backup.sh</a><br>
-	│   │   ├── <a href="/configs/bin/dots-dir-tree.sh">dots-dir-tree.sh</a><br>
-	│   │   ├── <a href="/configs/bin/dw-playground.sh">dw-playground.sh</a><br>
-	│   │   ├── <a href="/configs/bin/filesizes.sh">filesizes.sh</a><br>
-	│   │   ├── <a href="/configs/bin/find-hardlink.sh">find-hardlink.sh</a><br>
-	│   │   ├── <a href="/configs/bin/git-status">git-status</a><br>
-	│   │   ├── <a href="/configs/bin/git-update-all">git-update-all</a><br>
-	│   │   ├── <a href="/configs/bin/greek-letters.sh">greek-letters.sh</a><br>
-	│   │   ├── <a href="/configs/bin/hdd-usage.sh">hdd-usage.sh</a><br>
-	│   │   ├── <a href="/configs/bin/hide-show-bar.sh">hide-show-bar.sh</a><br>
-	│   │   ├── <a href="/configs/bin/libinput-gestures-start.sh">libinput-gestures-start.sh</a><br>
-	│   │   ├── <a href="/configs/bin/location.py">location.py</a><br>
-	│   │   ├── <a href="/configs/bin/markdown_table.py">markdown_table.py</a><br>
-	│   │   ├── <a href="/configs/bin/md-preview.py">md-preview.py</a><br>
-	│   │   ├── <a href="/configs/bin/mediactl.sh">mediactl.sh</a><br>
-	│   │   ├── <a href="/configs/bin/memory.sh">memory.sh</a><br>
-	│   │   ├── <a href="/configs/bin/mutevol.sh">mutevol.sh</a><br>
-	│   │   ├── <a href="/configs/bin/netspeed.sh">netspeed.sh</a><br>
-	│   │   ├── <a href="/configs/bin/network-text.sh">network-text.sh</a><br>
-	│   │   ├── <a href="/configs/bin/orar.py">orar.py</a><br>
-	│   │   ├── <a href="/configs/bin/pachist.sh">pachist.sh</a><br>
-	│   │   ├── <a href="/configs/bin/packer.sh">packer.sh</a><br>
-	│   │   ├── <a href="/configs/bin/password-window.py">password-window.py</a><br>
-	│   │   ├── <a href="/configs/bin/pkglist-backup.sh">pkglist-backup.sh</a><br>
-	│   │   ├── <a href="/configs/bin/pkgs_required.sh">pkgs_required.sh</a><br>
-	│   │   ├── <a href="/configs/bin/pkgs_size.sh">pkgs_size.sh</a><br>
-	│   │   ├── <a href="/configs/bin/pop-report.py">pop-report.py</a><br>
-	│   │   ├── <a href="/configs/bin/print_center.sh">print_center.sh</a><br>
-	│   │   ├── <a href="/configs/bin/qt_html.py">qt_html.py</a><br>
-	│   │   ├── <a href="/configs/bin/qtilekeys.py">qtilekeys.py</a><br>
-	│   │   ├── <a href="/configs/bin/read_each_file.sh">read_each_file.sh</a><br>
-	│   │   ├── <a href="/configs/bin/reboot-to-win.sh">reboot-to-win.sh</a><br>
-	│   │   ├── <a href="/configs/bin/rmshit.py">rmshit.py</a><br>
-	│   │   ├── <a href="/configs/bin/rofi-wallpaper">rofi-wallpaper</a><br>
-	│   │   ├── <a href="/configs/bin/run_wall.sh">run_wall.sh</a><br>
-	│   │   ├── <a href="/configs/bin/search_phone.sh">search_phone.sh</a><br>
-	│   │   ├── <a href="/configs/bin/second_display.sh">second_display.sh</a><br>
-	│   │   ├── <a href="/configs/bin/sort_json.py">sort_json.py</a><br>
-	│   │   ├── <a href="/configs/bin/ssd-usage.sh">ssd-usage.sh</a><br>
-	│   │   ├── <a href="/configs/bin/start-spotify.py">start-spotify.py</a><br>
-	│   │   ├── <a href="/configs/bin/suspend-toggle">suspend-toggle</a><br>
-	│   │   ├── <a href="/configs/bin/switch_windows_in_group.py">switch_windows_in_group.py</a><br>
-	│   │   ├── <a href="/configs/bin/systray_profile.py">systray_profile.py</a><br>
-	│   │   ├── <a href="/configs/bin/teriyaki.sh">teriyaki.sh</a><br>
-	│   │   ├── <a href="/configs/bin/transmission-open">transmission-open</a><br>
-	│   │   ├── <a href="/configs/bin/transmission.py">transmission.py</a><br>
-	│   │   ├── <a href="/configs/bin/tsize.sh">tsize.sh</a><br>
-	│   │   ├── <a href="/configs/bin/update-qtile.py">update-qtile.py</a><br>
-	│   │   ├── <a href="/configs/bin/volctl.sh">volctl.sh</a><br>
-	│   │   ├── <a href="/configs/bin/volleyball.py">volleyball.py</a><br>
-	│   │   ├── <a href="/configs/bin/wallpaper.sh">wallpaper.sh</a><br>
-	│   │   ├── <a href="/configs/bin/watcher.py">watcher.py</a><br>
-	│   │   ├── <a href="/configs/bin/workdays.sh">workdays.sh</a><br>
-	│   │   ├── <a href="/configs/bin/wttr.sh">wttr.sh</a><br>
-	│   │   └── <a href="/configs/bin/x64ver.awk">x64ver.awk</a><br>
-	│   ├── <a href="/configs/.config/">.config</a><br>
-	│   │   ├── <a href="/configs/.config/alacritty/">alacritty</a><br>
-	│   │   │   └── <a href="/configs/.config/alacritty/alacritty.yml">alacritty.yml</a><br>
-	│   │   ├── <a href="/configs/.config/conky/">conky</a><br>
-	│   │   │   ├── <a href="/configs/.config/conky/conky_budgie.conf">conky_budgie.conf</a><br>
-	│   │   │   ├── <a href="/configs/.config/conky/conky.conf">conky.conf</a><br>
-	│   │   │   ├── <a href="/configs/.config/conky/conky_qtile.conf">conky_qtile.conf</a><br>
-	│   │   │   ├── <a href="/configs/.config/conky/filesize.lua">filesize.lua</a><br>
-	│   │   │   ├── <a href="/configs/.config/conky/local.conf">local.conf</a><br>
-	│   │   │   ├── <a href="/configs/.config/conky/main.lua">main.lua</a><br>
-	│   │   │   ├── <a href="/configs/.config/conky/start_budgie.sh">start_budgie.sh</a><br>
-	│   │   │   ├── <a href="/configs/.config/conky/start_qtile.sh">start_qtile.sh</a><br>
-	│   │   │   └── <a href="/configs/.config/conky/utils.lua">utils.lua</a><br>
-	│   │   ├── <a href="/configs/.config/dunst/">dunst</a><br>
-	│   │   ├── <a href="/configs/.config/git/">git</a><br>
-	│   │   │   ├── <a href="/configs/.config/git/allowed_signers">allowed_signers</a><br>
-	│   │   │   └── <a href="/configs/.config/git/config">config</a><br>
-	│   │   ├── <a href="/configs/.config/lf/">lf</a><br>
-	│   │   │   ├── <a href="/configs/.config/lf/cleaner">cleaner</a><br>
-	│   │   │   ├── <a href="/configs/.config/lf/lfrc">lfrc</a><br>
-	│   │   │   └── <a href="/configs/.config/lf/scope">scope</a><br>
-	│   │   ├── <a href="/configs/.config/libinput-gestures.conf">libinput-gestures.conf</a><br>
-	│   │   ├── <a href="/configs/.config/md-preview/">md-preview</a><br>
-	│   │   │   └── <a href="/configs/.config/md-preview/markdown.css">markdown.css</a><br>
-	│   │   ├── <a href="/configs/.config/nvim/">nvim</a><br>
-	│   │   │   ├── <a href="/configs/.config/nvim/.gitignore">.gitignore</a><br>
-	│   │   │   ├── <a href="/configs/.config/nvim/init.lua">init.lua</a><br>
-	│   │   │   ├── <a href="/configs/.config/nvim/lazy-lock.json">lazy-lock.json</a><br>
-	│   │   │   ├── <a href="/configs/.config/nvim/lazyvim.json">lazyvim.json</a><br>
-	│   │   │   ├── <a href="/configs/.config/nvim/LICENSE">LICENSE</a><br>
-	│   │   │   ├── <a href="/configs/.config/nvim/lua/">lua</a><br>
-	│   │   │   │   ├── <a href="/configs/.config/nvim/lua/config/">config</a><br>
-	│   │   │   │   │   ├── <a href="/configs/.config/nvim/lua/config/autocmds.lua">autocmds.lua</a><br>
-	│   │   │   │   │   ├── <a href="/configs/.config/nvim/lua/config/keymaps.lua">keymaps.lua</a><br>
-	│   │   │   │   │   ├── <a href="/configs/.config/nvim/lua/config/lazy.lua">lazy.lua</a><br>
-	│   │   │   │   │   └── <a href="/configs/.config/nvim/lua/config/options.lua">options.lua</a><br>
-	│   │   │   │   └── <a href="/configs/.config/nvim/lua/plugins/">plugins</a><br>
-	│   │   │   │   &nbsp;&nbsp;&nbsp; ├── <a href="/configs/.config/nvim/lua/plugins/colorscheme.lua">colorscheme.lua</a><br>
-	│   │   │   │   &nbsp;&nbsp;&nbsp; ├── <a href="/configs/.config/nvim/lua/plugins/core.lua">core.lua</a><br>
-	│   │   │   │   &nbsp;&nbsp;&nbsp; ├── <a href="/configs/.config/nvim/lua/plugins/disabled.lua">disabled.lua</a><br>
-	│   │   │   │   &nbsp;&nbsp;&nbsp; ├── <a href="/configs/.config/nvim/lua/plugins/lualine.lua">lualine.lua</a><br>
-	│   │   │   │   &nbsp;&nbsp;&nbsp; └── <a href="/configs/.config/nvim/lua/plugins/user.lua">user.lua</a><br>
-	│   │   │   ├── <a href="/configs/.config/nvim/.luarc.json">.luarc.json</a><br>
-	│   │   │   ├── <a href="/configs/.config/nvim/.neoconf.json">.neoconf.json</a><br>
-	│   │   │   ├── <a href="/configs/.config/nvim/README.md">README.md</a><br>
-	│   │   │   └── <a href="/configs/.config/nvim/stylua.toml">stylua.toml</a><br>
-	│   │   ├── <a href="/configs/.config/nwg-launchers/">nwg-launchers</a><br>
-	│   │   │   ├── <a href="/configs/.config/nwg-launchers/nwgbar/">nwgbar</a><br>
-	│   │   │   │   ├── <a href="/configs/.config/nwg-launchers/nwgbar/bar.json">bar.json</a><br>
-	│   │   │   │   ├── <a href="/configs/.config/nwg-launchers/nwgbar/style.css">style.css</a><br>
-	│   │   │   │   ├── <a href="/configs/.config/nwg-launchers/nwgbar/system-lock-screen.svg">system-lock-screen.svg</a><br>
-	│   │   │   │   ├── <a href="/configs/.config/nwg-launchers/nwgbar/system-log-out.svg">system-log-out.svg</a><br>
-	│   │   │   │   ├── <a href="/configs/.config/nwg-launchers/nwgbar/system-reboot.svg">system-reboot.svg</a><br>
-	│   │   │   │   ├── <a href="/configs/.config/nwg-launchers/nwgbar/system-shutdown.svg">system-shutdown.svg</a><br>
-	│   │   │   │   └── <a href="/configs/.config/nwg-launchers/nwgbar/system-suspend.svg">system-suspend.svg</a><br>
-	│   │   │   ├── <a href="/configs/.config/nwg-launchers/nwgdmenu/">nwgdmenu</a><br>
-	│   │   │   └── <a href="/configs/.config/nwg-launchers/nwggrid/">nwggrid</a><br>
-	│   │   ├── <a href="/configs/.config/picom.conf">picom.conf</a><br>
-	│   │   ├── <a href="/configs/.config/pythonrc">pythonrc</a><br>
-	│   │   ├── <a href="/configs/.config/qtile/">qtile</a><br>
-	│   │   │   ├── <a href="/configs/.config/qtile/battery-icons/">battery-icons</a><br>
-	│   │   │   │   ├── <a href="/configs/.config/qtile/battery-icons/battery-caution-charging.svg">battery-caution-charging.svg</a><br>
-	│   │   │   │   ├── <a href="/configs/.config/qtile/battery-icons/battery-caution.svg">battery-caution.svg</a><br>
-	│   │   │   │   ├── <a href="/configs/.config/qtile/battery-icons/battery-full-charged.svg">battery-full-charged.svg</a><br>
-	│   │   │   │   ├── <a href="/configs/.config/qtile/battery-icons/battery-full-charging.svg">battery-full-charging.svg</a><br>
-	│   │   │   │   ├── <a href="/configs/.config/qtile/battery-icons/battery-full.svg">battery-full.svg</a><br>
-	│   │   │   │   ├── <a href="/configs/.config/qtile/battery-icons/battery-good-charging.svg">battery-good-charging.svg</a><br>
-	│   │   │   │   ├── <a href="/configs/.config/qtile/battery-icons/battery-good.svg">battery-good.svg</a><br>
-	│   │   │   │   ├── <a href="/configs/.config/qtile/battery-icons/battery-low-charging.svg">battery-low-charging.svg</a><br>
-	│   │   │   │   ├── <a href="/configs/.config/qtile/battery-icons/battery-low.svg">battery-low.svg</a><br>
-	│   │   │   │   └── <a href="/configs/.config/qtile/battery-icons/battery-missing.svg">battery-missing.svg</a><br>
-	│   │   │   ├── <a href="/configs/.config/qtile/config.py">config.py</a><br>
-	│   │   │   ├── <a href="/configs/.config/qtile/extras/">extras</a><br>
-	│   │   │   │   ├── <a href="/configs/.config/qtile/extras/floating_window_snapping.py">floating_window_snapping.py</a><br>
-	│   │   │   │   ├── <a href="/configs/.config/qtile/extras/__init__.py">__init__.py</a><br>
-	│   │   │   │   ├── <a href="/configs/.config/qtile/extras/mixins/">mixins</a><br>
-	│   │   │   │   │   └── <a href="/configs/.config/qtile/extras/mixins/__init__.py">__init__.py</a><br>
-	│   │   │   │   ├── <a href="/configs/.config/qtile/extras/mutablescratch.py">mutablescratch.py</a><br>
-	│   │   │   │   └── <a href="/configs/.config/qtile/extras/widgets/">widgets</a><br>
-	│   │   │   │   &nbsp;&nbsp;&nbsp; ├── <a href="/configs/.config/qtile/extras/widgets/battery_icon.py">battery_icon.py</a><br>
-	│   │   │   │   &nbsp;&nbsp;&nbsp; ├── <a href="/configs/.config/qtile/extras/widgets/battery.py">battery.py</a><br>
-	│   │   │   │   &nbsp;&nbsp;&nbsp; ├── <a href="/configs/.config/qtile/extras/widgets/bt_bat.py">bt_bat.py</a><br>
-	│   │   │   │   &nbsp;&nbsp;&nbsp; ├── <a href="/configs/.config/qtile/extras/widgets/checkupdates.py">checkupdates.py</a><br>
-	│   │   │   │   &nbsp;&nbsp;&nbsp; ├── <a href="/configs/.config/qtile/extras/widgets/cputemp.py">cputemp.py</a><br>
-	│   │   │   │   &nbsp;&nbsp;&nbsp; ├── <a href="/configs/.config/qtile/extras/widgets/__init__.py">__init__.py</a><br>
-	│   │   │   │   &nbsp;&nbsp;&nbsp; ├── <a href="/configs/.config/qtile/extras/widgets/launchbar.py">launchbar.py</a><br>
-	│   │   │   │   &nbsp;&nbsp;&nbsp; ├── <a href="/configs/.config/qtile/extras/widgets/mouseoverclock.py">mouseoverclock.py</a><br>
-	│   │   │   │   &nbsp;&nbsp;&nbsp; ├── <a href="/configs/.config/qtile/extras/widgets/tasklist.py">tasklist.py</a><br>
-	│   │   │   │   &nbsp;&nbsp;&nbsp; ├── <a href="/configs/.config/qtile/extras/widgets/uptime.py">uptime.py</a><br>
-	│   │   │   │   &nbsp;&nbsp;&nbsp; ├── <a href="/configs/.config/qtile/extras/widgets/weather.py">weather.py</a><br>
-	│   │   │   │   &nbsp;&nbsp;&nbsp; └── <a href="/configs/.config/qtile/extras/widgets/widgetbox.py">widgetbox.py</a><br>
-	│   │   │   ├── <a href="/configs/.config/qtile/firefox_themes/">firefox_themes</a><br>
-	│   │   │   │   ├── <a href="/configs/.config/qtile/firefox_themes/firefox_theme.json">firefox_theme.json</a><br>
-	│   │   │   │   ├── <a href="/configs/.config/qtile/firefox_themes/get_firefox_theme.py">get_firefox_theme.py</a><br>
-	│   │   │   │   └── <a href="/configs/.config/qtile/firefox_themes/themes/">themes</a><br>
-	│   │   │   │   &nbsp;&nbsp;&nbsp; ├── <a href="/configs/.config/qtile/firefox_themes/themes/catppuccin.json">catppuccin.json</a><br>
-	│   │   │   │   &nbsp;&nbsp;&nbsp; └── <a href="/configs/.config/qtile/firefox_themes/themes/nord.json">nord.json</a><br>
-	│   │   │   ├── <a href="/configs/.config/qtile/json/">json</a><br>
-	│   │   │   │   ├── <a href="/configs/.config/qtile/json/config.json">config.json</a><br>
-	│   │   │   │   ├── <a href="/configs/.config/qtile/json/keys.json">keys.json</a><br>
-	│   │   │   │   ├── <a href="/configs/.config/qtile/json/matches.json">matches.json</a><br>
-	│   │   │   │   ├── <a href="/configs/.config/qtile/json/settings.json">settings.json</a><br>
-	│   │   │   │   ├── <a href="/configs/.config/qtile/json/themes.json">themes.json</a><br>
-	│   │   │   │   └── <a href="/configs/.config/qtile/json/window_rules.json">window_rules.json</a><br>
-	│   │   │   ├── <a href="/configs/.config/qtile/modules/">modules</a><br>
-	│   │   │   │   ├── <a href="/configs/.config/qtile/modules/decorations.py">decorations.py</a><br>
-	│   │   │   │   ├── <a href="/configs/.config/qtile/modules/functions.py">functions.py</a><br>
-	│   │   │   │   ├── <a href="/configs/.config/qtile/modules/groups.py">groups.py</a><br>
-	│   │   │   │   ├── <a href="/configs/.config/qtile/modules/hooks.py">hooks.py</a><br>
-	│   │   │   │   ├── <a href="/configs/.config/qtile/modules/__init__.py">__init__.py</a><br>
-	│   │   │   │   ├── <a href="/configs/.config/qtile/modules/keys/">keys</a><br>
-	│   │   │   │   │   ├── <a href="/configs/.config/qtile/modules/keys/apps.py">apps.py</a><br>
-	│   │   │   │   │   ├── <a href="/configs/.config/qtile/modules/keys/de.py">de.py</a><br>
-	│   │   │   │   │   ├── <a href="/configs/.config/qtile/modules/keys/__init__.py">__init__.py</a><br>
-	│   │   │   │   │   ├── <a href="/configs/.config/qtile/modules/keys/layout_managing.py">layout_managing.py</a><br>
-	│   │   │   │   │   ├── <a href="/configs/.config/qtile/modules/keys/layouts.py">layouts.py</a><br>
-	│   │   │   │   │   ├── <a href="/configs/.config/qtile/modules/keys/qtile_stuff.py">qtile_stuff.py</a><br>
-	│   │   │   │   │   ├── <a href="/configs/.config/qtile/modules/keys/window_managing.py">window_managing.py</a><br>
-	│   │   │   │   │   └── <a href="/configs/.config/qtile/modules/keys/windows_and_groups.py">windows_and_groups.py</a><br>
-	│   │   │   │   ├── <a href="/configs/.config/qtile/modules/layouts.py">layouts.py</a><br>
-	│   │   │   │   ├── <a href="/configs/.config/qtile/modules/matches.py">matches.py</a><br>
-	│   │   │   │   ├── <a href="/configs/.config/qtile/modules/mouse.py">mouse.py</a><br>
-	│   │   │   │   ├── <a href="/configs/.config/qtile/modules/path.py">path.py</a><br>
-	│   │   │   │   ├── <a href="/configs/.config/qtile/modules/popups/">popups</a><br>
-	│   │   │   │   │   ├── <a href="/configs/.config/qtile/modules/popups/__init__.py">__init__.py</a><br>
-	│   │   │   │   │   ├── <a href="/configs/.config/qtile/modules/popups/kill_window_popup.py">kill_window_popup.py</a><br>
-	│   │   │   │   │   ├── <a href="/configs/.config/qtile/modules/popups/music_popup.py">music_popup.py</a><br>
-	│   │   │   │   │   └── <a href="/configs/.config/qtile/modules/popups/weather.py">weather.py</a><br>
-	│   │   │   │   ├── <a href="/configs/.config/qtile/modules/popups.py">popups.py</a><br>
-	│   │   │   │   ├── <a href="/configs/.config/qtile/modules/screens.py">screens.py</a><br>
-	│   │   │   │   ├── <a href="/configs/.config/qtile/modules/settings.py">settings.py</a><br>
-	│   │   │   │   ├── <a href="/configs/.config/qtile/modules/tabbed.py">tabbed.py</a><br>
-	│   │   │   │   ├── <a href="/configs/.config/qtile/modules/theme.py">theme.py</a><br>
-	│   │   │   │   └── <a href="/configs/.config/qtile/modules/widgets/">widgets</a><br>
-	│   │   │   │   &nbsp;&nbsp;&nbsp; ├── <a href="/configs/.config/qtile/modules/widgets/arch_logo.py">arch_logo.py</a><br>
-	│   │   │   │   &nbsp;&nbsp;&nbsp; ├── <a href="/configs/.config/qtile/modules/widgets/battery_icon.py">battery_icon.py</a><br>
-	│   │   │   │   &nbsp;&nbsp;&nbsp; ├── <a href="/configs/.config/qtile/modules/widgets/battery.py">battery.py</a><br>
-	│   │   │   │   &nbsp;&nbsp;&nbsp; ├── <a href="/configs/.config/qtile/modules/widgets/bt_bat.py">bt_bat.py</a><br>
-	│   │   │   │   &nbsp;&nbsp;&nbsp; ├── <a href="/configs/.config/qtile/modules/widgets/bt.py">bt.py</a><br>
-	│   │   │   │   &nbsp;&nbsp;&nbsp; ├── <a href="/configs/.config/qtile/modules/widgets/check_updates.py">check_updates.py</a><br>
-	│   │   │   │   &nbsp;&nbsp;&nbsp; ├── <a href="/configs/.config/qtile/modules/widgets/chord.py">chord.py</a><br>
-	│   │   │   │   &nbsp;&nbsp;&nbsp; ├── <a href="/configs/.config/qtile/modules/widgets/cpu_temp.py">cpu_temp.py</a><br>
-	│   │   │   │   &nbsp;&nbsp;&nbsp; ├── <a href="/configs/.config/qtile/modules/widgets/current_layout_icon.py">current_layout_icon.py</a><br>
-	│   │   │   │   &nbsp;&nbsp;&nbsp; ├── <a href="/configs/.config/qtile/modules/widgets/data.py">data.py</a><br>
-	│   │   │   │   &nbsp;&nbsp;&nbsp; ├── <a href="/configs/.config/qtile/modules/widgets/github_notif.py">github_notif.py</a><br>
-	│   │   │   │   &nbsp;&nbsp;&nbsp; ├── <a href="/configs/.config/qtile/modules/widgets/group_box.py">group_box.py</a><br>
-	│   │   │   │   &nbsp;&nbsp;&nbsp; ├── <a href="/configs/.config/qtile/modules/widgets/__init__.py">__init__.py</a><br>
-	│   │   │   │   &nbsp;&nbsp;&nbsp; ├── <a href="/configs/.config/qtile/modules/widgets/kbd_layout_icon.py">kbd_layout_icon.py</a><br>
-	│   │   │   │   &nbsp;&nbsp;&nbsp; ├── <a href="/configs/.config/qtile/modules/widgets/kbd_layout.py">kbd_layout.py</a><br>
-	│   │   │   │   &nbsp;&nbsp;&nbsp; ├── <a href="/configs/.config/qtile/modules/widgets/maximize.py">maximize.py</a><br>
-	│   │   │   │   &nbsp;&nbsp;&nbsp; ├── <a href="/configs/.config/qtile/modules/widgets/mouse_over_clock.py">mouse_over_clock.py</a><br>
-	│   │   │   │   &nbsp;&nbsp;&nbsp; ├── <a href="/configs/.config/qtile/modules/widgets/music.py">music.py</a><br>
-	│   │   │   │   &nbsp;&nbsp;&nbsp; ├── <a href="/configs/.config/qtile/modules/widgets/os_logo.py">os_logo.py</a><br>
-	│   │   │   │   &nbsp;&nbsp;&nbsp; ├── <a href="/configs/.config/qtile/modules/widgets/powermenu.py">powermenu.py</a><br>
-	│   │   │   │   &nbsp;&nbsp;&nbsp; ├── <a href="/configs/.config/qtile/modules/widgets/separators.py">separators.py</a><br>
-	│   │   │   │   &nbsp;&nbsp;&nbsp; ├── <a href="/configs/.config/qtile/modules/widgets/systray.py">systray.py</a><br>
-	│   │   │   │   &nbsp;&nbsp;&nbsp; ├── <a href="/configs/.config/qtile/modules/widgets/task_list.py">task_list.py</a><br>
-	│   │   │   │   &nbsp;&nbsp;&nbsp; ├── <a href="/configs/.config/qtile/modules/widgets/touchpad.py">touchpad.py</a><br>
-	│   │   │   │   &nbsp;&nbsp;&nbsp; ├── <a href="/configs/.config/qtile/modules/widgets/uptime.py">uptime.py</a><br>
-	│   │   │   │   &nbsp;&nbsp;&nbsp; ├── <a href="/configs/.config/qtile/modules/widgets/wallpaper.py">wallpaper.py</a><br>
-	│   │   │   │   &nbsp;&nbsp;&nbsp; ├── <a href="/configs/.config/qtile/modules/widgets/weather.py">weather.py</a><br>
-	│   │   │   │   &nbsp;&nbsp;&nbsp; └── <a href="/configs/.config/qtile/modules/widgets/widgetbox.py">widgetbox.py</a><br>
-	│   │   │   ├── <a href="/configs/.config/qtile/pyproject.toml">pyproject.toml</a><br>
-	│   │   │   ├── <a href="/configs/.config/qtile/scripts/">scripts</a><br>
-	│   │   │   │   ├── <a href="/configs/.config/qtile/scripts/autohide.py">autohide.py</a><br>
-	│   │   │   │   ├── <a href="/configs/.config/qtile/scripts/qchanger.py">qchanger.py</a><br>
-	│   │   │   │   ├── <a href="/configs/.config/qtile/scripts/rofi_layout.py">rofi_layout.py</a><br>
-	│   │   │   │   └── <a href="/configs/.config/qtile/scripts/set_spotify_size.py">set_spotify_size.py</a><br>
-	│   │   │   ├── <a href="/configs/.config/qtile/themes/">themes</a><br>
-	│   │   │   │   ├── <a href="/configs/.config/qtile/themes/catppuccin.json">catppuccin.json</a><br>
-	│   │   │   │   └── <a href="/configs/.config/qtile/themes/nord.json">nord.json</a><br>
-	│   │   │   ├── <a href="/configs/.config/qtile/tox.ini">tox.ini</a><br>
-	│   │   │   ├── <a href="/configs/.config/qtile/.vscode/">.vscode</a><br>
-	│   │   │   │   └── <a href="/configs/.config/qtile/.vscode/launch.json">launch.json</a><br>
-	│   │   │   └── <a href="/configs/.config/qtile/xephyr_config.py">xephyr_config.py</a><br>
-	│   │   ├── <a href="/configs/.config/rofi/">rofi</a><br>
-	│   │   │   ├── <a href="/configs/.config/rofi/config.rasi">config.rasi</a><br>
-	│   │   │   ├── <a href="/configs/.config/rofi/layouts.rasi">layouts.rasi</a><br>
-	│   │   │   ├── <a href="/configs/.config/rofi/powermenu.rasi">powermenu.rasi</a><br>
-	│   │   │   ├── <a href="/configs/.config/rofi/powermenu.sh">powermenu.sh</a><br>
-	│   │   │   ├── <a href="/configs/.config/rofi/themes/">themes</a><br>
-	│   │   │   │   └── <a href="/configs/.config/rofi/themes/catppuccin.rasi">catppuccin.rasi</a><br>
-	│   │   │   └── <a href="/configs/.config/rofi/wallpapers.rasi">wallpapers.rasi</a><br>
-	│   │   ├── <a href="/configs/.config/spicetify/">spicetify</a><br>
-	│   │   │   ├── <a href="/configs/.config/spicetify/config-xpui.ini">config-xpui.ini</a><br>
-	│   │   │   ├── <a href="/configs/.config/spicetify/Extensions/">Extensions</a><br>
-	│   │   │   └── <a href="/configs/.config/spicetify/Themes/">Themes</a><br>
-	│   │   ├── <a href="/configs/.config/tmux/">tmux</a><br>
-	│   │   │   └── <a href="/configs/.config/tmux/tmux.conf">tmux.conf</a><br>
-	│   │   ├── <a href="/configs/.config/VSCodium/">VSCodium</a><br>
-	│   │   │   └── <a href="/configs/.config/VSCodium/User/">User</a><br>
-	│   │   │   &nbsp;&nbsp;&nbsp; └── <a href="/configs/.config/VSCodium/User/settings.json">settings.json</a><br>
-	│   │   ├── <a href="/configs/.config/X11/">X11</a><br>
-	│   │   │   ├── <a href="/configs/.config/X11/xinitrc">xinitrc</a><br>
-	│   │   │   ├── <a href="/configs/.config/X11/xprofile">xprofile</a><br>
-	│   │   │   └── <a href="/configs/.config/X11/Xresources">Xresources</a><br>
-	│   │   ├── <a href="/configs/.config/zathura/">zathura</a><br>
-	│   │   └── <a href="/configs/.config/zsh/">zsh</a><br>
-	│   │   &nbsp;&nbsp;&nbsp; ├── <a href="/configs/.config/zsh/abbreviations">abbreviations</a><br>
-	│   │   &nbsp;&nbsp;&nbsp; ├── <a href="/configs/.config/zsh/aliases.zsh">aliases.zsh</a><br>
-	│   │   &nbsp;&nbsp;&nbsp; ├── <a href="/configs/.config/zsh/bookmarks">bookmarks</a><br>
-	│   │   &nbsp;&nbsp;&nbsp; ├── <a href="/configs/.config/zsh/catppuccin_mocha-zsh-syntax-highlighting.zsh">catppuccin_mocha-zsh-syntax-highlighting.zsh</a><br>
-	│   │   &nbsp;&nbsp;&nbsp; ├── <a href="/configs/.config/zsh/command_not_found_handler.zsh">command_not_found_handler.zsh</a><br>
-	│   │   &nbsp;&nbsp;&nbsp; ├── <a href="/configs/.config/zsh/completions.zsh">completions.zsh</a><br>
-	│   │   &nbsp;&nbsp;&nbsp; ├── <a href="/configs/.config/zsh/keys.zsh">keys.zsh</a><br>
-	│   │   &nbsp;&nbsp;&nbsp; ├── <a href="/configs/.config/zsh/misc.zsh">misc.zsh</a><br>
-	│   │   &nbsp;&nbsp;&nbsp; ├── <a href="/configs/.config/zsh/opts.zsh">opts.zsh</a><br>
-	│   │   &nbsp;&nbsp;&nbsp; ├── <a href="/configs/.config/zsh/prompt.zsh">prompt.zsh</a><br>
-	│   │   &nbsp;&nbsp;&nbsp; ├── <a href="/configs/.config/zsh/vars.zsh">vars.zsh</a><br>
-	│   │   &nbsp;&nbsp;&nbsp; ├── <a href="/configs/.config/zsh/.zprofile">.zprofile</a><br>
-	│   │   &nbsp;&nbsp;&nbsp; ├── <a href="/configs/.config/zsh/.zshenv">.zshenv</a><br>
-	│   │   &nbsp;&nbsp;&nbsp; └── <a href="/configs/.config/zsh/.zshrc">.zshrc</a><br>
-	│   ├── <a href="/configs/etc/">etc</a><br>
-	│   │   ├── <a href="/configs/etc/pacman.conf">pacman.conf</a><br>
-	│   │   ├── <a href="/configs/etc/xdg/">xdg</a><br>
-	│   │   │   └── <a href="/configs/etc/xdg/reflector.conf">reflector.conf</a><br>
-	│   │   └── <a href="/configs/etc/zsh/">zsh</a><br>
-	│   │   &nbsp;&nbsp;&nbsp; ├── <a href="/configs/etc/zsh/zprofile">zprofile</a><br>
-	│   │   &nbsp;&nbsp;&nbsp; └── <a href="/configs/etc/zsh/zshenv">zshenv</a><br>
-	│   ├── <a href="/configs/lfub">lfub</a><br>
-	│   ├── <a href="/configs/pkgs">pkgs</a><br>
-	│   └── <a href="/configs/usr/">usr</a><br>
-	│   &nbsp;&nbsp;&nbsp; ├── <a href="/configs/usr/lib/">lib</a><br>
-	│   &nbsp;&nbsp;&nbsp; │   └── <a href="/configs/usr/lib/python3.11/">python3.11</a><br>
-	│   &nbsp;&nbsp;&nbsp; │   &nbsp;&nbsp;&nbsp; └── <a href="/configs/usr/lib/python3.11/site-packages/">site-packages</a><br>
-	│   &nbsp;&nbsp;&nbsp; │   &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; └── <a href="/configs/usr/lib/python3.11/site-packages/custom_logging/">custom_logging</a><br>
-	│   &nbsp;&nbsp;&nbsp; │   &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; ├── <a href="/configs/usr/lib/python3.11/site-packages/custom_logging/__init__.py">__init__.py</a><br>
-	│   &nbsp;&nbsp;&nbsp; │   &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; └── <a href="/configs/usr/lib/python3.11/site-packages/custom_logging/logger.py">logger.py</a><br>
-	│   &nbsp;&nbsp;&nbsp; └── <a href="/configs/usr/share/">share</a><br>
-	│   &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; └── <a href="/configs/usr/share/zsh/">zsh</a><br>
-	│   &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; └── <a href="/configs/usr/share/zsh/plugins/">plugins</a><br>
-	│   &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; └── <a href="/configs/usr/share/zsh/plugins/git/">git</a><br>
-	│   &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; └── <a href="/configs/usr/share/zsh/plugins/git/git.zsh">git.zsh</a><br>
-	├── <a href="/.gitignore">.gitignore</a><br>
-	├── <a href="/LICENSE">LICENSE</a><br>
-	├── <a href="/markdown/">markdown</a><br>
-	│   ├── <a href="/markdown/archinstall.md">archinstall.md</a><br>
-	│   ├── <a href="/markdown/features.md">features.md</a><br>
-	│   ├── <a href="/markdown/keybinds.md">keybinds.md</a><br>
-	│   └── <a href="/markdown/tree.md">tree.md</a><br>
-	├── <a href="/.pre-commit-config.yaml">.pre-commit-config.yaml</a><br>
-	└── <a href="/README.md">README.md</a><br>
+# Repository Structure
 
-57 directories, 260 files
-
-</p>
-</body>
-</html>
+```
+dots/                              # chezmoi source directory
+├── .chezmoi.toml.tmpl             # per-machine config (machine detection, secrets, age)
+├── .chezmoiignore                 # machine-conditional file exclusions
+├── .pre-commit-config.yaml        # code quality hooks (black, isort, ruff, stylua, shellcheck…)
+│
+├── bin/                           # → $HOME/bin (user scripts)
+│   ├── *.py                       # Python utilities (wallpaper, theme, bt-bat, pop-report…)
+│   ├── *.sh                       # Shell utilities (run_wall, filesizes, git-status…)
+│   └── *.tmpl                     # Templated scripts (wallpaper.sh, wallpaper-wl.sh)
+│
+├── dot_config/                    # → $HOME/.config
+│   ├── alacritty/                 # Terminal emulator
+│   ├── conky/                     # System monitor (Lua config)
+│   ├── dunst/                     # Notification daemon
+│   ├── git/                       # Git config (config.tmpl — cloudtop-conditional includeIf)
+│   ├── lazygit/                   # TUI git client
+│   ├── lf/                        # Terminal file manager
+│   ├── md-preview/                # Markdown preview CSS
+│   ├── nvim/                      # Neovim (LazyVim-based)
+│   │   └── lua/plugins/
+│   │       └── lspconfig.lua.tmpl # LSP config (lemminx/Apigee only on cloudtop)
+│   ├── nwg-launchers/             # nwgbar (powermenu), nwgdmenu, nwggrid
+│   ├── picom.conf.tmpl            # Compositor (xrender backend on cloudtop)
+│   ├── qtile/                     # Qtile X11 window manager
+│   │   ├── modules/               # Python modules (keys, groups, layouts, screens, hooks…)
+│   │   ├── extras/widgets/        # Custom widget implementations
+│   │   ├── json/                  # JSON-driven settings (settings, config, rules, matches)
+│   │   └── themes/                # catppuccin.json, nord.json
+│   ├── qtile-wl/                  # Qtile Wayland window manager
+│   │   ├── modules/               # Same structure as qtile/
+│   │   ├── extras/widgets/
+│   │   ├── json/
+│   │   └── themes/
+│   ├── rofi/                      # App launcher themes
+│   ├── spicetify/                 # Spotify client extensions
+│   ├── tmux/                      # Terminal multiplexer
+│   ├── VSCodium/                  # VSCodium settings (JSONC)
+│   ├── X11/
+│   │   └── Xresources.tmpl        # X resources (cursor size: 24 on lenovo, 48 on cloudtop)
+│   ├── zathura/                   # PDF viewer
+│   └── zsh/                       # Zsh config (ZDOTDIR=$XDG_CONFIG_HOME/zsh)
+│       ├── env/                   # Variables, aliases, functions, path
+│       ├── rc/                    # Keys, opts, completions, prompt, hooks
+│       ├── plugins/               # Zsh plugins
+│       └── files/                 # Misc zsh files
+│
+├── system/                        # System-level configs, deployed via run_after_ script
+│   ├── etc/
+│   │   ├── xdg/                   # XDG defaults
+│   │   └── zsh/zshenv             # Sets ZDOTDIR system-wide
+│   └── usr/lib/python3.11/        # Custom Python logging library
+│
+├── markdown/                      # Documentation
+│   ├── features.md
+│   ├── keybinds.md
+│   ├── tree.md                    # This file
+│   └── archinstall.md             # Arch Linux installation guide
+│
+└── pkgs                           # Full list of installed packages
+```
