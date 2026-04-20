@@ -29,9 +29,7 @@ def listen_for_alt_release():
                 decoded_line = line.decode("utf-8").strip()
 
                 if (
-                    any(
-                        word in decoded_line for word in ["KEY_LEFTALT", "KEY_RIGHTALT"]
-                    )
+                    any(word in decoded_line for word in ["KEY_LEFTALT", "KEY_RIGHTALT"])
                     and "released" in decoded_line
                 ):
                     notify_qtile()

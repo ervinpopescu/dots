@@ -1,5 +1,4 @@
 from libqtile import widget
-from libqtile.lazy import lazy
 
 from modules.settings import colors, settings
 

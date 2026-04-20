@@ -4,7 +4,6 @@ import os
 
 from libqtile import hook, qtile
 from libqtile.backend.base.window import Window
-
 from libqtile.ipc import Client
 from libqtile.log_utils import logger
 from libqtile.utils import create_task, get_cache_dir
@@ -65,7 +64,9 @@ def load_focus_history(qtile):
         client = Client(socket_path=SOCKET_PATH, is_json=True)
         create_task(
             client.async_send(message),
-        ).add_done_callback(check_response)  # type: ignore
+        ).add_done_callback(
+            check_response
+        )  # type: ignore
     reloaded = True
 
 
@@ -87,9 +88,12 @@ def alt_release():
 def record_focus(window):
     global focus_history, message, reloaded
 
-    logger.warning("record_focus: %s (group=%s) | history=%s",
-                   window.name, window.group.name if window.group else None,
-                   [(w.name, w.group.name if w.group else None) for w in focus_history])
+    logger.warning(
+        "record_focus: %s (group=%s) | history=%s",
+        window.name,
+        window.group.name if window.group else None,
+        [(w.name, w.group.name if w.group else None) for w in focus_history],
+    )
 
     if not _is_excluded(window):
         if window in focus_history:
@@ -101,9 +105,11 @@ def record_focus(window):
             "message_type": "client_focus",
             "windows": [
                 {
-                    "class": win.get_wm_class()[0]  # type: ignore
-                    if win.get_wm_class() is not None
-                    else "not set",
+                    "class": (
+                        win.get_wm_class()[0]  # type: ignore
+                        if win.get_wm_class() is not None
+                        else "not set"
+                    ),
                     "id": str(win.wid),
                     "name": win.name,
                     "group_name": win.group.name,  # type: ignore
@@ -118,7 +124,9 @@ def record_focus(window):
             client = Client(socket_path=SOCKET_PATH, is_json=True)
             create_task(
                 client.async_send(message),
-            ).add_done_callback(check_response)  # type: ignore
+            ).add_done_callback(
+                check_response
+            )  # type: ignore
 
         reloaded = False
 
@@ -135,25 +143,27 @@ def check_response(response):
 def cycle_windows(qtile):
     global focus_index, last_focused_index, message, focus_history, reloaded
 
-    logger.warning("cycle_windows called | focus_index=%s last_focused=%s history=%s",
-                   focus_index, last_focused_index,
-                   [(w.name, w.group.name if w.group else None) for w in focus_history])
+    logger.warning(
+        "cycle_windows called | focus_index=%s last_focused=%s history=%s",
+        focus_index,
+        last_focused_index,
+        [(w.name, w.group.name if w.group else None) for w in focus_history],
+    )
 
     if not focus_history:
         logger.warning("cycle_windows: empty focus_history, returning")
         return
 
-    focus_history[:] = [
-        win for win in focus_history
-        if not _is_excluded(win)
-    ]
+    focus_history[:] = [win for win in focus_history if not _is_excluded(win)]
 
     if not focus_history:
         logger.warning("cycle_windows: empty after filter, returning")
         return
 
-    logger.warning("cycle_windows: after filter history=%s",
-                   [(w.name, w.group.name if w.group else None) for w in focus_history])
+    logger.warning(
+        "cycle_windows: after filter history=%s",
+        [(w.name, w.group.name if w.group else None) for w in focus_history],
+    )
 
     if focus_index == -1:
         focus_index = len(focus_history) - 1
@@ -173,9 +183,11 @@ def cycle_windows(qtile):
             "focus_index": focus_index,
             "windows": [
                 {
-                    "class": win.get_wm_class()[0]  # type: ignore
-                    if win.get_wm_class() is not None
-                    else "not set",
+                    "class": (
+                        win.get_wm_class()[0]  # type: ignore
+                        if win.get_wm_class() is not None
+                        else "not set"
+                    ),
                     "id": str(win.wid),
                     "name": win.name,
                     "group_name": win.group.name,  # type: ignore
@@ -190,10 +202,15 @@ def cycle_windows(qtile):
             client = Client(socket_path=SOCKET_PATH, is_json=True)
             create_task(
                 client.async_send(message),
-            ).add_done_callback(check_response)  # type: ignore
+            ).add_done_callback(
+                check_response
+            )  # type: ignore
         else:
-            logger.warning("cycle_windows: SKIPPED IPC (socket=%s, excluded=%s)",
-                           os.path.exists(SOCKET_PATH), _is_excluded(next_window))
+            logger.warning(
+                "cycle_windows: SKIPPED IPC (socket=%s, excluded=%s)",
+                os.path.exists(SOCKET_PATH),
+                _is_excluded(next_window),
+            )
 
         last_focused_index = focus_index
         reloaded = False

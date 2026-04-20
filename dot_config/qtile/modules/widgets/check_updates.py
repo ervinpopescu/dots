@@ -3,6 +3,7 @@ from libqtile.lazy import lazy
 from extras.widgets import CheckUpdates
 from modules.settings import settings
 
+
 def check_updates():
     return CheckUpdates(
         font=settings.icon_font,

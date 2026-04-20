@@ -6,9 +6,9 @@ from libqtile.config import EzKey, Group, Key
 from libqtile.lazy import lazy
 
 from extras.mutablescratch import MutableScratch
+from modules.groups.scratchpad import scratchpad
 from modules.keys import keys
 from modules.settings import config_path, settings
-from modules.groups.scratchpad import scratchpad
 
 groups = [
     Group(

@@ -1,8 +1,8 @@
 from libqtile.lazy import lazy
+from qtile_extras import widget
 
 from modules.popups.music_popup import music_popup
-from modules.settings import colors, settings
-from qtile_extras import widget
+from modules.settings import settings
 
 
 def music():

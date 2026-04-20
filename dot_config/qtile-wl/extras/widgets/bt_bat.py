@@ -65,10 +65,9 @@ class BtBattery(BackgroundPoll):
                 if case == -1:
                     self.foreground = colors.get("lightgreen", "#00ff00")
                     data = data.replace(",C:-1", "")
-                
+
                 if self.layout:
                     self.layout.colour = self.foreground
                 return f" {data}"
             except Exception:
                 return f" {data}"
-

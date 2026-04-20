@@ -1,11 +1,11 @@
 import subprocess
 
-from libqtile.log_utils import logger
 from libqtile.lazy import lazy
 from qtile_extras.popup.toolkit import PopupAbsoluteLayout, PopupText
 
 from modules.functions import location
 from modules.settings import settings
+
 
 @lazy.function
 def weather_popup(qtile):

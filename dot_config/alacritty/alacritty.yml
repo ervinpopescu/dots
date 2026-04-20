@@ -1,62 +1,62 @@
 colors:
   bright:
-    black: '#45475A'
-    blue: '#89B4FA'
-    cyan: '#94E2D5'
-    green: '#A6E3A1'
-    magenta: '#F5C2E7'
-    red: '#F38BA8'
-    white: '#BAC2DE'
-    yellow: '#F9E2AF'
+    black: "#45475A"
+    blue: "#89B4FA"
+    cyan: "#94E2D5"
+    green: "#A6E3A1"
+    magenta: "#F5C2E7"
+    red: "#F38BA8"
+    white: "#BAC2DE"
+    yellow: "#F9E2AF"
   cursor:
-    cursor: '#F5E0DC'
-    text: '#1E1E2E'
+    cursor: "#F5E0DC"
+    text: "#1E1E2E"
   dim:
-    black: '#45475A'
-    blue: '#89B4FA'
-    cyan: '#94E2D5'
-    green: '#A6E3A1'
-    magenta: '#F5C2E7'
-    red: '#F38BA8'
-    white: '#BAC2DE'
-    yellow: '#F9E2AF'
+    black: "#45475A"
+    blue: "#89B4FA"
+    cyan: "#94E2D5"
+    green: "#A6E3A1"
+    magenta: "#F5C2E7"
+    red: "#F38BA8"
+    white: "#BAC2DE"
+    yellow: "#F9E2AF"
   hints:
     end:
-      background: '#A6ADC8'
-      foreground: '#1E1E2E'
+      background: "#A6ADC8"
+      foreground: "#1E1E2E"
     start:
-      background: '#F9E2AF'
-      foreground: '#1E1E2E'
+      background: "#F9E2AF"
+      foreground: "#1E1E2E"
   normal:
-    black: '#45475A'
-    blue: '#89B4FA'
-    cyan: '#94E2D5'
-    green: '#A6E3A1'
-    magenta: '#F5C2E7'
-    red: '#F38BA8'
-    white: '#BAC2DE'
-    yellow: '#F9E2AF'
+    black: "#45475A"
+    blue: "#89B4FA"
+    cyan: "#94E2D5"
+    green: "#A6E3A1"
+    magenta: "#F5C2E7"
+    red: "#F38BA8"
+    white: "#BAC2DE"
+    yellow: "#F9E2AF"
   primary:
-    background: '#1E1E2E'
-    bright_foreground: '#CDD6F4'
-    dim_foreground: '#CDD6F4'
-    foreground: '#CDD6F4'
+    background: "#1E1E2E"
+    bright_foreground: "#CDD6F4"
+    dim_foreground: "#CDD6F4"
+    foreground: "#CDD6F4"
   search:
     focused_match:
-      background: '#A6E3A1'
-      foreground: '#1E1E2E'
+      background: "#A6E3A1"
+      foreground: "#1E1E2E"
     footer_bar:
-      background: '#A6ADC8'
-      foreground: '#1E1E2E'
+      background: "#A6ADC8"
+      foreground: "#1E1E2E"
     matches:
-      background: '#A6ADC8'
-      foreground: '#1E1E2E'
+      background: "#A6ADC8"
+      foreground: "#1E1E2E"
   selection:
-    background: '#F5E0DC'
-    text: '#1E1E2E'
+    background: "#F5E0DC"
+    text: "#1E1E2E"
   vi_mode_cursor:
-    cursor: '#B4BEFE'
-    text: '#1E1E2E'
+    cursor: "#B4BEFE"
+    text: "#1E1E2E"
 cursor:
   blinking: Never
   style:
@@ -82,30 +82,30 @@ font:
     y: 0
   size: 12
 key_bindings:
-- action: Paste
-  key: V
-  mods: Control|Shift
-- action: Copy
-  key: C
-  mods: Control|Shift
-- action: ResetFontSize
-  key: Key0
-  mods: Control
-- action: IncreaseFontSize
-  key: Equals
-  mods: Control
-- action: DecreaseFontSize
-  key: Minus
-  mods: Control
-- action: IncreaseFontSize
-  key: NumpadAdd
-  mods: None
-- action: DecreaseFontSize
-  key: NumpadSubtract
-  mods: None
-- action: SpawnNewInstance
-  key: N
-  mods: Control
+  - action: Paste
+    key: V
+    mods: Control|Shift
+  - action: Copy
+    key: C
+    mods: Control|Shift
+  - action: ResetFontSize
+    key: Key0
+    mods: Control
+  - action: IncreaseFontSize
+    key: Equals
+    mods: Control
+  - action: DecreaseFontSize
+    key: Minus
+    mods: Control
+  - action: IncreaseFontSize
+    key: NumpadAdd
+    mods: None
+  - action: DecreaseFontSize
+    key: NumpadSubtract
+    mods: None
+  - action: SpawnNewInstance
+    key: N
+    mods: Control
 mouse:
   hide_when_typing: true
 window:

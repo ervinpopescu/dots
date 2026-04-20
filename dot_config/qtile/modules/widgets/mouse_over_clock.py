@@ -1,8 +1,7 @@
 from libqtile.lazy import lazy
 from qtile_extras import widget
 
-from extras.widgets import MouseOverClock
-from modules.settings import colors, settings
+from modules.settings import settings
 
 
 def mouse_over_clock():

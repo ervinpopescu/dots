@@ -1,6 +1,5 @@
 #!/bin/python
 import argparse
-import contextlib
 import json
 import os
 import pathlib
@@ -54,9 +53,7 @@ def set_qtile(theme):
 
 
 def set_firefox(theme):
-    firefox_theme_file = os.path.join(
-        qtile_path, "firefox_themes", "firefox_theme.json"
-    )
+    firefox_theme_file = os.path.join(qtile_path, "firefox_themes", "firefox_theme.json")
     theme_file = os.path.join(qtile_path, "firefox_themes", "themes", f"{theme}.json")
     shutil.copy(theme_file, firefox_theme_file)
 
@@ -107,9 +104,7 @@ def set_gtk(theme):
 
 
 def set_rofi(theme):
-    settings_file = os.path.join(
-        os.path.expanduser("~"), ".config", "rofi", "config.rasi"
-    )
+    settings_file = os.path.join(os.path.expanduser("~"), ".config", "rofi", "config.rasi")
     with open(settings_file, "r") as f:
         settings = f.readlines()
 

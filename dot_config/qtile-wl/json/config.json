@@ -1,13 +1,13 @@
 {
-    "auto_fullscreen": true,
-    "auto_minimize": true,
-    "bring_front_click": "floating_only",
-    "cursor_warp": true,
-    "floats_kept_above": true,
-    "follow_mouse_focus": true,
-    "theme": "catppuccin",
-    "wmname": "LG3D",
-    "wl_xcursor_theme": "Bibata-Modern-Ice",
-    "wl_xcursor_size": 30,
-    "reconfigure_screens": true
+  "auto_fullscreen": true,
+  "auto_minimize": true,
+  "bring_front_click": "floating_only",
+  "cursor_warp": true,
+  "floats_kept_above": true,
+  "follow_mouse_focus": true,
+  "theme": "catppuccin",
+  "wmname": "LG3D",
+  "wl_xcursor_theme": "Bibata-Modern-Ice",
+  "wl_xcursor_size": 30,
+  "reconfigure_screens": true
 }

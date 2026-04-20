@@ -1,7 +1,6 @@
 ## Features
 
 1. apps [config](/configs/.config)
-
    - **_global_**
      - [catppuccin](https://github.com/catppuccin) colorscheme
    - **_alacritty_** (mostly default, fonts and cursor changed)

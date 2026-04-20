@@ -1,12 +1,8 @@
 {
   "bar_height": 36,
   "cmds": {
-    "blueman": [
-      "blueman-manager"
-    ],
-    "emoji": [
-      "rofi -modes emoji -show emoji"
-    ],
+    "blueman": ["blueman-manager"],
+    "emoji": ["rofi -modes emoji -show emoji"],
     "htop": [
       "alacritty",
       "--class",
@@ -26,13 +22,7 @@
       "alacritty",
       "-show-icons"
     ],
-    "nwgbar": [
-      "nwgbar",
-      "-b",
-      "1d1d2d",
-      "-o",
-      "0.4"
-    ],
+    "nwgbar": ["nwgbar", "-b", "1d1d2d", "-o", "0.4"],
     "terminal": "alacritty",
     "dropdown_term": "alacritty --class=dropdown_term",
     "transmission": [
@@ -59,13 +49,9 @@
       "-e",
       "sh -x -c \"env CARGO_TARGET_DIR=./target yay -Syyu --noconfirm --overwrite '*'\""
     ],
-    "wallpaper": [
-      "rofi-wallpaper"
-    ],
+    "wallpaper": ["rofi-wallpaper"],
     "browser": "firefox-developer-edition",
-    "lock": [
-      "swaylock"
-    ]
+    "lock": ["swaylock"]
   },
   "dropdown_opacity": 0.95,
   "font_size": 20,

@@ -1,14 +1,14 @@
-import os
 import asyncio
+import os
 
 import json5
 from libqtile import hook, qtile
-from libqtile.utils import create_task
-from libqtile.log_utils import logger
 from libqtile.backend.base import Window
+from libqtile.utils import create_task
 
 from modules.matches import matches
 from modules.settings import config_path, settings
+
 
 @hook.subscribe.client_new
 @hook.subscribe.client_managed
@@ -47,9 +47,11 @@ def resize_and_move_client(client: Window):
 
             if "set_size_floating" in win:
                 if key == "blueman-manager":
+
                     async def sleep_and_set_size(win):
                         asyncio.sleep(3)
                         client.set_size_floating(w=win["w"], h=win["h"])
+
                     create_task(sleep_and_set_size(win))
 
             if "toggle_floating" in win:

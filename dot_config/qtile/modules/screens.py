@@ -7,6 +7,7 @@ from modules.widgets import widgets_1, widgets_2, widgets_3
 bh = settings.bar_height
 ms = settings.margin_size
 
+
 def statusbar(widgets, margin, size):
     return bar.Bar(
         widgets,
@@ -23,7 +24,7 @@ screens = [
             size=bh,
             margin=[0, ms, ms, ms],
         ),
-        x11_drag_polling_rate=60
+        x11_drag_polling_rate=60,
     ),
     Screen(
         bottom=statusbar(
@@ -31,7 +32,7 @@ screens = [
             size=bh,
             margin=[0, ms, ms, ms],
         ),
-        x11_drag_polling_rate=60
+        x11_drag_polling_rate=60,
     ),
     Screen(
         bottom=statusbar(
@@ -39,6 +40,6 @@ screens = [
             size=bh,
             margin=[0, ms, ms, ms],
         ),
-        x11_drag_polling_rate=60
+        x11_drag_polling_rate=60,
     ),
 ]

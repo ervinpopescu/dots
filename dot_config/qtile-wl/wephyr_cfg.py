@@ -1,8 +1,6 @@
-import os
-
 from libqtile import hook, qtile
 from libqtile.bar import Bar
-from libqtile.config import IdleTimer, Key, Screen
+from libqtile.config import Key, Screen
 from libqtile.lazy import lazy
 from qtile_extras import widget
 
@@ -25,9 +23,7 @@ screens = [
             widgets=[
                 widget.Spacer(),
                 Systray(
-                    mouse_callbacks={
-                        "Button1": lazy.bar["top"].widget["systray"].show_menu()
-                    },
+                    mouse_callbacks={"Button1": lazy.bar["top"].widget["systray"].show_menu()},
                 ),
                 widget.Spacer(),
             ],
