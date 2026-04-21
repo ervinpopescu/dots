@@ -23,8 +23,6 @@ def make_widget_box_1():
         widgets=[
             small_spacer(length=ms),
             small_spacer(length=ms),
-            # kbd_layout(),
-            # kbd_layout_icon(),
         ],
     )
 
@@ -45,8 +43,3 @@ def make_widget_box_2():
             small_spacer(length=ms),
         ],
     )
-
-
-# Module-level instances kept for backward compatibility
-widget_box_1 = make_widget_box_1()
-widget_box_2 = make_widget_box_2()

@@ -17,9 +17,24 @@ def statusbar(widgets, margin, size):
     )
 
 
-def _screen(widgets, size, margin):
+def _primary_screen(widgets):
     return Screen(
-        bottom=statusbar(widgets=widgets, size=size, margin=margin),
+        bottom=statusbar(
+            widgets=widgets,
+            size=bh,
+            margin=[0, ms, ms, ms],
+        ),
+        x11_drag_polling_rate=60,
+    )
+
+
+def _secondary_screen(widgets):
+    return Screen(
+        bottom=statusbar(
+            widgets=widgets,
+            size=bh,
+            margin=[0, ms, ms, ms],
+        ),
         x11_drag_polling_rate=60,
     )
 
@@ -27,22 +42,20 @@ def _screen(widgets, size, margin):
 def generate_screens(outputs: list[Output]) -> list[Screen]:
     """Return one Screen per connected output.
 
-    Screen ordering follows physical position (left to right by x-coordinate).
-    Screen 0 gets the full primary bar (with Systray); the rest get secondary
-    bars without Systray, since X11 only allows one Systray per session.
+    Outputs are sorted left-to-right by x-coordinate; the leftmost display
+    becomes screen 0 (primary bar with Systray). Remaining outputs receive
+    secondary bars without Systray, since X11 only allows one per session.
     """
     w1, w2, w3 = build_widget_lists()
-
-    # Sort outputs by horizontal position so screen numbering is stable
-    sorted_outputs = sorted(outputs, key=lambda o: o.rect.x)
     secondary_widgets = [w2, w3]
-
     result: list[Screen] = []
-    for i, _o in enumerate(sorted_outputs):
-        if i == 0:
-            result.append(_screen(w1, bh, [0, ms, ms, ms]))
-        else:
-            sec = secondary_widgets[min(i - 1, len(secondary_widgets) - 1)]
-            result.append(_screen(sec, bh, [0, ms, ms, ms]))
 
-    return result if result else [_screen(w1, bh, [0, ms, ms, ms])]
+    for i, _o in enumerate(sorted(outputs, key=lambda o: o.rect.x)):
+        if i == 0:
+            result.append(_primary_screen(w1))
+        else:
+            result.append(
+                _secondary_screen(secondary_widgets[min(i - 1, len(secondary_widgets) - 1)])
+            )
+
+    return result if result else [_primary_screen(w1)]
