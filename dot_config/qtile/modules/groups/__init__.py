@@ -10,15 +10,17 @@ from modules.groups.scratchpad import scratchpad
 from modules.keys import keys
 from modules.settings import config_path, settings
 
+_groups_by_name = {g.name: g for g in settings.groups}
+
 groups = [
     Group(
-        name=settings.groups[i].name,
-        layout=settings.groups[i].layout,
-        label=settings.groups[i].label,
-        screen_affinity=settings.groups[i].screen_affinity,
+        name=g.name,
+        layout=g.layout,
+        label=g.label,
+        screen_affinity=g.screen_affinity,
         layout_opts=None,
     )
-    for i in range(len(settings.groups))
+    for g in settings.groups
 ]
 groups.append(scratchpad)
 
@@ -28,23 +30,16 @@ def go_to_group(name: str):
         if len(qtile.screens) == 1:
             qtile.groups_map[name].toscreen(toggle=True)
             return
-
-        if name in ["social", "settings", "media"]:
-            qtile.focus_screen(0)
-            qtile.groups_map[name].toscreen()
-        elif name in ["www", "etc"]:
-            qtile.focus_screen(1)
-            qtile.groups_map[name].toscreen()
-        elif name in ["coding"]:
-            qtile.focus_screen(2)
-            qtile.groups_map[name].toscreen()
+        screen = _groups_by_name[name].screen_affinity
+        qtile.focus_screen(screen)
+        qtile.groups_map[name].toscreen()
 
     return _inner
 
 
 keys_to_be_inserted = []
-for i, group in enumerate(settings.groups, 1):
-    name = group.name
+for i, g in enumerate(settings.groups, 1):
+    name = g.name
     keys_to_be_inserted.extend(
         [
             Key(

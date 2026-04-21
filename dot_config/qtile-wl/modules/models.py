@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 from pydantic import BaseModel
 
@@ -24,6 +24,7 @@ class Keymaps(BaseModel):
 
 
 class Group(BaseModel):
+    name: str
     label: str
     layout: str
     screen_affinity: int
@@ -41,7 +42,7 @@ class Settings(BaseModel):
     dropdown_opacity: float
     font_size: int
     keymaps: Keymaps
-    groups: Dict[str, Group]
+    groups: List[Group]
     icon_font: str
     icon_fontsize: int
     margin_size: int

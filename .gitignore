@@ -6,3 +6,4 @@ dot_config/qtile/json/keys.json
 dot_config/qtile/json/settings.json
 dot_config/qtile/modules/keys/apps.py
 dot_config/qtile/modules/widgets/weather.py
+dot_config/qtile-wl/json/settings.json

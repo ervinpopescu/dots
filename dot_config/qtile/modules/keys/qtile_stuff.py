@@ -41,7 +41,7 @@ qtile_keys = [
     Key(
         [settings.keymaps.mod],
         "l",
-        lazy.spawn("betterlockscreen -l dimblur --span"),
+        lazy.spawn(settings.cmds.lock),
         desc="Lock screen",
     ),
     Key(

@@ -14,7 +14,7 @@ from modules.settings import settings
 from modules.widget_names import GROUPBOX
 
 ms = settings.margin_size
-group_layouts = [group.layout for group in settings.groups.values()]
+group_layouts = [g.layout for g in settings.groups]
 MARGIN_SIZE_DELTA = ms
 
 

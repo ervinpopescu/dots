@@ -1,6 +1,6 @@
 import os
 
-import jsonpickle  # type: ignore
+import jsonpickle  # type: ignore  # noqa: S301 - existing dep for keys.json serialization
 from libqtile import hook
 from libqtile.config import EzKey, Group, Key
 from libqtile.lazy import lazy
@@ -10,6 +10,8 @@ from modules.groups.scratchpad import scratchpad
 from modules.keys import keys
 from modules.settings import config_path, settings
 
+_groups_by_name = {g.name: g for g in settings.groups}
+
 
 def go_to_group(name: str):
     def _inner(qtile):
@@ -17,7 +19,7 @@ def go_to_group(name: str):
             qtile.groups_map[name].toscreen(toggle=True)
             return
         else:
-            screen = settings.groups[name].screen_affinity
+            screen = _groups_by_name[name].screen_affinity
             qtile.focus_screen(screen)
             qtile.groups_map[name].toscreen()
 
@@ -26,13 +28,13 @@ def go_to_group(name: str):
 
 groups = []
 keys_to_be_inserted = []
-for i, name in enumerate(settings.groups.keys(), 1):
+for i, g in enumerate(settings.groups, 1):
     groups.append(
         Group(
-            name=name,
-            layout=settings.groups[name].layout,
-            label=settings.groups[name].label,
-            screen_affinity=settings.groups[name].screen_affinity,
+            name=g.name,
+            layout=g.layout,
+            label=g.label,
+            screen_affinity=g.screen_affinity,
             layout_opts=None,
         )
     )
@@ -41,14 +43,14 @@ for i, name in enumerate(settings.groups.keys(), 1):
             Key(
                 [settings.keymaps.mod],
                 str(i),
-                lazy.function(go_to_group(name)),
-                desc=f"Go to group `{name}`",
+                lazy.function(go_to_group(g.name)),
+                desc=f"Go to group `{g.name}`",
             ),
             Key(
                 [settings.keymaps.mod, "shift"],
                 str(i),
-                lazy.window.togroup(name),
-                desc=f"Move window to group `{name}`",
+                lazy.window.togroup(g.name),
+                desc=f"Move window to group `{g.name}`",
             ),
         ]
     )

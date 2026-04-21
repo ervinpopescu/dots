@@ -77,7 +77,9 @@ def build_widget_lists():
     primary screen (full-size bar, includes Systray) and widgets_2/3 are
     for secondary screens (no Systray — X11 only allows one per session).
     """
-    sm_spacer = small_spacer(length=MARGIN_SIZE)
+
+    def sm_spacer():
+        return small_spacer(length=MARGIN_SIZE)
 
     # --- Primary screen widgets ---
     widgets_1: list[_Widget] = [
@@ -159,18 +161,18 @@ def build_widget_lists():
                 widgets_1.insert(i, stretch_spacer())
                 i += 2
             case "current_layout_icon":
-                widgets_1.insert(i + 1, sm_spacer)
+                widgets_1.insert(i + 1, sm_spacer())
                 i += 2
             case "groupbox":
-                widgets_1.insert(i + 1, sm_spacer)
+                widgets_1.insert(i + 1, sm_spacer())
                 i += 2
             case "os_logo":
-                widgets_1.insert(i + 1, sm_spacer)
+                widgets_1.insert(i + 1, sm_spacer())
                 i += 2
             case "powermenu":
                 break
             case _:
-                widgets_1.insert(i, sm_spacer)
+                widgets_1.insert(i, sm_spacer())
                 i += 2
 
     # --- Spacers for secondary bars ---
@@ -183,18 +185,18 @@ def build_widget_lists():
                     widget_list.insert(i, stretch_spacer())
                     i += 2
                 case "current_layout_icon":
-                    widget_list.insert(i + 1, sm_spacer)
+                    widget_list.insert(i + 1, sm_spacer())
                     i += 2
                 case "groupbox":
-                    widget_list.insert(i + 1, sm_spacer)
+                    widget_list.insert(i + 1, sm_spacer())
                     i += 2
                 case "os_logo":
-                    widget_list.insert(i + 1, sm_spacer)
+                    widget_list.insert(i + 1, sm_spacer())
                     i += 2
                 case "powermenu":
                     break
                 case _:
-                    widget_list.insert(i, sm_spacer)
+                    widget_list.insert(i, sm_spacer())
                     i += 2
 
     _insert_secondary_spacers(widgets_2)
