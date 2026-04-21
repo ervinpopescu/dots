@@ -2,9 +2,11 @@ import json
 import os
 
 from libqtile.backend.wayland.inputs import InputConfig
+
 from modules import (
     apps_hooks,
     floating_layout,
+    generate_screens,
     groups,
     idle_inhibitors,
     idle_timers,
@@ -13,7 +15,6 @@ from modules import (
     misc_hooks,
     mouse,
     qalttab_hooks,
-    screens,
     window_rules_hooks,
 )
 from modules.settings import config_path, widget_defaults
@@ -30,7 +31,7 @@ assert floating_layout
 assert keys
 assert mouse
 assert groups
-assert screens
+assert generate_screens
 
 with open(os.path.join(config_path, "json", "config.json")) as f:
     config = json.load(f)
