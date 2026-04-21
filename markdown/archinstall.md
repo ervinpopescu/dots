@@ -26,7 +26,7 @@ create partition with `fdisk` : 500M for boot 20G for root the rest for home (ch
 
 ## Post-Install
 
-#### logged in as root
+### logged in as root
 
 - edit /etc/pacman.conf
   - `testing,core,extra,community-testing,community`
