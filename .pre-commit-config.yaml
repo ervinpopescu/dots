@@ -51,6 +51,16 @@ repos:
         types_or: [json, markdown, css, javascript, yaml]
         exclude: (\.tmpl$|VSCodium/|focus_history\.json)
 
+  # Markdown linting (system install: markdownlint-cli2 from AUR)
+  - repo: local
+    hooks:
+      - id: markdownlint-cli2
+        name: markdownlint-cli2
+        language: system
+        entry: markdownlint-cli2 --config .markdownlint.yaml
+        types: [markdown]
+        exclude: (markdown/|docs/)
+
   # Shell scripts
   - repo: https://github.com/shellcheck-py/shellcheck-py
     rev: v0.10.0.1

@@ -37,7 +37,7 @@ isort .
 
 ### Configuration flow
 
-```
+```text
 config.py
   └── modules/__init__.py  (re-exports all submodules)
        ├── settings.py      (loads json/settings.json + json/config.json, theme)
