@@ -28,9 +28,7 @@ return {
         },
         xml = { "xmlformatter" },
         rust = { "rustfmt" },
-        {{- if and (not .is_cloudtop) (lookPath "matfmt") }}
-        octave = { "matlab_formatter" },
-        {{- end }}
+        octave = { "mh_style" },
         json = { "jq" },
       },
       -- The options you set here will be merged with the builtin formatters.
