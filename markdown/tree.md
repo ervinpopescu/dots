@@ -1,6 +1,6 @@
 # Repository Structure
 
-```
+```text
 dots/                              # chezmoi source directory
 ├── .chezmoi.toml.tmpl             # per-machine config (machine detection, secrets, age)
 ├── .chezmoiignore                 # machine-conditional file exclusions

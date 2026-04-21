@@ -7,3 +7,5 @@ MD013: false # line-length — prettier handles wrapping
 MD033: false # no-inline-html — used in README
 MD041: false # first-line-heading — not all docs start with a heading
 MD024: false # no-duplicate-heading — sibling sections may share names
+MD055: true # table-pipe-style — enforce consistent pipe style
+MD056: true # table-column-count — all rows must have the same column count
