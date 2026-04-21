@@ -4,11 +4,11 @@ import os
 from modules import (
     extension_defaults,
     floating_layout,
+    generate_screens,
     groups,
     keys,
     layouts,
     mouse,
-    screens,
     widget_defaults,
 )
 from modules.hooks import apps as apps_hooks
@@ -21,7 +21,7 @@ assert groups
 assert keys
 assert layouts
 assert mouse
-assert screens
+assert generate_screens
 assert widget_defaults
 assert extension_defaults
 

@@ -3,7 +3,7 @@ from modules.groups import groups
 from modules.keys import keys
 from modules.layouts import floating_layout, layouts
 from modules.mouse import mouse
-from modules.screens import screens
+from modules.screens import generate_screens
 from modules.settings import extension_defaults, widget_defaults
 from modules.theme import colors
 
@@ -16,6 +16,6 @@ __all__ = [
     "keys",
     "layouts",
     "mouse",
-    "screens",
+    "generate_screens",
     "widget_defaults",
 ]
