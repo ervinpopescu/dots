@@ -1,7 +1,7 @@
 import json
 import os
 
-from modules import (
+from modules import (  # noqa: F401
     extension_defaults,
     floating_layout,
     generate_screens,
@@ -21,7 +21,6 @@ assert groups
 assert keys
 assert layouts
 assert mouse
-assert generate_screens
 assert widget_defaults
 assert extension_defaults
 

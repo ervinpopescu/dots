@@ -144,9 +144,7 @@
     }
   ],
   "icon_font": "Font Awesome 6 Free Solid",
-  {{- if .is_cloudtop }}
-  "icon_fontsize": 20,
-  {{- end }}
+  "icon_fontsize": {{ if .is_cloudtop }}20{{ else }}30{{ end }},
   "margin_size": {{ if .is_cloudtop }}10{{ else }}20{{ end }},
   "text_font": "CaskaydiaCove Nerd Font Mono Bold",
   "widget_defaults": {

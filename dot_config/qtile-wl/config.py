@@ -3,7 +3,7 @@ import os
 
 from libqtile.backend.wayland.inputs import InputConfig
 
-from modules import (
+from modules import (  # noqa: F401
     apps_hooks,
     floating_layout,
     generate_screens,
@@ -31,7 +31,6 @@ assert floating_layout
 assert keys
 assert mouse
 assert groups
-assert generate_screens
 
 with open(os.path.join(config_path, "json", "config.json")) as f:
     config = json.load(f)
