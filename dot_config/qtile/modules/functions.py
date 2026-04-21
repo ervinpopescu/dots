@@ -10,12 +10,13 @@ import psutil  # type: ignore
 from libqtile.core.manager import Qtile
 from libqtile.layout.floating import Floating
 from libqtile.lazy import lazy
+
 from modules.settings import settings
 
 # from libqtile.log_utils import logger
 
 ms = settings.margin_size
-def_group_layouts = [group.layout for group in settings.groups]
+def_group_layouts = [g.layout for g in settings.groups]
 
 
 @lazy.function

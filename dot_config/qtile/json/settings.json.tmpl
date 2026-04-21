@@ -1,31 +1,4 @@
 {
-  "apps": [
-    [
-      "nemo",
-      "nemo",
-      "nemo"
-    ],
-    [
-      "Alacritty",
-      "alacritty",
-      "alacritty"
-    ],
-    [
-      "vscodium",
-      "vscodium",
-      "vscodium"
-    ],
-    [
-      "firefox",
-      "firefox",
-      "firefox"
-    ],
-    [
-      "virtualbox",
-      "virtualbox",
-      "virtualbox"
-    ]
-  ],
   "bar_height": {{ if .is_cloudtop }}30{{ else }}56{{ end }},
   "cmds": {
     "blueman": [
@@ -47,10 +20,16 @@
       "-e",
       "htop"
     ],
+    "lock": [
+      "betterlockscreen",
+      "-l",
+      "dimblur",
+      "--span"
+    ],
     "menu": [
       "rofi",
       "-modes",
-      "drun",
+      "drun,run",
       "-show",
       "drun",
       "-terminal",
@@ -86,8 +65,9 @@
       "font.size={{ if .is_cloudtop }}13{{ else }}8{{ end }}",
       "--class",
       "qtile_yay_update",
+      "--hold",
       "-e",
-      "sh -c 'env CARGO_TARGET_DIR=./target yay -Syyu --noconfirm'"
+      "sh -x -c \"env CARGO_TARGET_DIR=./target yay -Syyu --noconfirm --overwrite '*'\""
     ],
     "wallpaper": [
       "rofi-wallpaper"
@@ -95,11 +75,6 @@
     "browser": "firefox-developer-edition"
   },
   "dropdown_opacity": {{ if .is_cloudtop }}0.95{{ else }}0.8{{ end }},
-  "extension_defaults": {
-    "font": "Font Awesome 6 Free Solid",
-    "fontsize": {{ if .is_cloudtop }}20{{ else }}30{{ end }},
-    "padding": 6
-  },
   "font_size": {{ if .is_cloudtop }}20{{ else }}30{{ end }},
   "keymaps": {
     "mod": "mod4",
@@ -108,37 +83,37 @@
   "groups": [
     {
       "name": "coding",
-      "label": "",
+      "label": "",
       "layout": "{{ if .is_cloudtop }}max{{ else }}monadwide{{ end }}",
       "screen_affinity": {{ if .is_cloudtop }}0{{ else }}2{{ end }}
     },
     {
       "name": "www",
-      "label": "",
+      "label": "",
       "layout": "max",
       "screen_affinity": 1
     },
     {
       "name": "social",
-      "label": "",
+      "label": "",
       "layout": "max",
       "screen_affinity": {{ if .is_cloudtop }}1{{ else }}0{{ end }}
     },
     {
       "name": "settings",
-      "label": "",
+      "label": "",
       "layout": "max",
       "screen_affinity": {{ if .is_cloudtop }}2{{ else }}0{{ end }}
     },
     {
       "name": "etc",
-      "label": "",
+      "label": "",
       "layout": "{{ if .is_cloudtop }}max{{ else }}bsp{{ end }}",
       "screen_affinity": {{ if .is_cloudtop }}2{{ else }}1{{ end }}
     },
     {
       "name": "media",
-      "label": "",
+      "label": "",
       "layout": "{{ if .is_cloudtop }}max{{ else }}monadthreecol{{ end }}",
       "screen_affinity": {{ if .is_cloudtop }}2{{ else }}0{{ end }}
     }
@@ -146,7 +121,9 @@
   "icon_font": "Font Awesome 6 Free Solid",
   "icon_fontsize": {{ if .is_cloudtop }}20{{ else }}30{{ end }},
   "margin_size": {{ if .is_cloudtop }}10{{ else }}20{{ end }},
+  "openweather_api_key": "{{ .openweather_api_key }}",
   "text_font": "CaskaydiaCove Nerd Font Mono Bold",
+  "theme": "catppuccin",
   "widget_defaults": {
     "font": "Font Awesome 6 Free Solid",
     "fontsize": {{ if .is_cloudtop }}20{{ else }}30{{ end }},

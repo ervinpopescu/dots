@@ -1,8 +1,8 @@
 {
-  "bar_height": 36,
+  "bar_height": {{ if .is_cloudtop }}30{{ else }}36{{ end }},
   "cmds": {
     "blueman": ["blueman-manager"],
-    "emoji": ["rofi -modes emoji -show emoji"],
+    "emoji": ["rofi", "-modes", "emoji", "-show", "emoji"],
     "htop": [
       "alacritty",
       "--class",
@@ -12,6 +12,7 @@
       "-e",
       "htop"
     ],
+    "lock": ["swaylock"],
     "menu": [
       "rofi",
       "-modes",
@@ -50,55 +51,61 @@
       "sh -x -c \"env CARGO_TARGET_DIR=./target yay -Syyu --noconfirm --overwrite '*'\""
     ],
     "wallpaper": ["rofi-wallpaper"],
-    "browser": "firefox-developer-edition",
-    "lock": ["swaylock"]
+    "browser": "firefox-developer-edition"
   },
-  "dropdown_opacity": 0.95,
-  "font_size": 20,
+  "dropdown_opacity": {{ if .is_cloudtop }}0.95{{ else }}0.95{{ end }},
+  "font_size": {{ if .is_cloudtop }}20{{ else }}20{{ end }},
   "keymaps": {
     "mod": "mod4",
     "alt": "mod1"
   },
-  "groups": {
-    "www": {
-      "label": "",
+  "groups": [
+    {
+      "name": "www",
+      "label": "",
       "layout": "max",
       "screen_affinity": 1
     },
-    "coding": {
-      "label": "",
+    {
+      "name": "coding",
+      "label": "",
       "layout": "max",
-      "screen_affinity": 2
+      "screen_affinity": {{ if .is_cloudtop }}0{{ else }}2{{ end }}
     },
-    "media": {
-      "label": "",
+    {
+      "name": "media",
+      "label": "",
       "layout": "max",
       "screen_affinity": 0
     },
-    "settings": {
-      "label": "",
+    {
+      "name": "settings",
+      "label": "",
       "layout": "max",
-      "screen_affinity": 0
+      "screen_affinity": {{ if .is_cloudtop }}2{{ else }}0{{ end }}
     },
-    "etc": {
-      "label": "",
+    {
+      "name": "etc",
+      "label": "",
       "layout": "max",
-      "screen_affinity": 2
+      "screen_affinity": {{ if .is_cloudtop }}2{{ else }}2{{ end }}
     },
-    "social": {
-      "label": "",
+    {
+      "name": "social",
+      "label": "",
       "layout": "max",
-      "screen_affinity": 2
+      "screen_affinity": {{ if .is_cloudtop }}1{{ else }}2{{ end }}
     }
-  },
+  ],
   "icon_font": "Font Awesome 6 Free Solid",
-  "icon_fontsize": 20,
-  "margin_size": 10,
+  "icon_fontsize": {{ if .is_cloudtop }}20{{ else }}20{{ end }},
+  "margin_size": {{ if .is_cloudtop }}10{{ else }}10{{ end }},
+  "openweather_api_key": "{{ .openweather_api_key }}",
   "text_font": "CaskaydiaCove Nerd Font Mono Bold",
   "theme": "catppuccin",
   "widget_defaults": {
     "font": "Font Awesome 6 Free Solid",
-    "fontsize": 20,
+    "fontsize": {{ if .is_cloudtop }}20{{ else }}20{{ end }},
     "padding": 6
   }
 }

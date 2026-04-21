@@ -69,10 +69,11 @@ def generate_screens(outputs: list[Output]) -> list[Screen]:
     if any(o.serial == SERIAL_HDMI for o in outputs):
         result.append(_secondary_screen(w3))
 
-    # Unknown outputs: append a secondary bar (e.g. projector, new monitor)
+    # Unknown outputs: build fresh widgets per screen (projector, new monitor)
     for o in outputs:
         if o.port != PORT_INTERNAL and o.serial not in (SERIAL_DP, SERIAL_HDMI):
-            result.append(_secondary_screen(w2))
+            _, w_extra, _ = build_widget_lists()
+            result.append(_secondary_screen(w_extra))
 
     # Guard: always return at least one screen
     if not result:

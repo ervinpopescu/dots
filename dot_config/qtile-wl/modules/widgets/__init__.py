@@ -87,7 +87,10 @@ def build_widget_lists():
     primary screen (full-size bar) and widgets_2/3 are for secondary screens
     (smaller bar with reduced font sizes).
     """
-    sm_spacer = small_spacer(name="sm_sp", length=MARGIN_SIZE)
+
+    def sm_spacer():
+        return small_spacer(name="sm_sp", length=MARGIN_SIZE)
+
     battery_inner_spacer = small_spacer(name="bat_in_sp", length=0)
     battery_inner_spacer.decorations = GROUP_DECORATION["decorations"]  # type: ignore
 
@@ -201,7 +204,7 @@ def build_widget_lists():
         w = widgets_1[i]
         match w.name:
             case "battery":
-                widgets_1.insert(i, sm_spacer)
+                widgets_1.insert(i, sm_spacer())
                 i += 2
             case "battery_icon":
                 i += 1
@@ -213,7 +216,7 @@ def build_widget_lists():
             case "powermenu":
                 break
             case _:
-                widgets_1.insert(i, sm_spacer)
+                widgets_1.insert(i, sm_spacer())
                 i += 2
 
     # --- Spacers for secondary bars ---
@@ -225,7 +228,7 @@ def build_widget_lists():
             w = widget_list[i]
             match w.name:
                 case "battery":
-                    widget_list.insert(i, sm_spacer)
+                    widget_list.insert(i, sm_spacer())
                     if bat_inner_sp:
                         widget_list.insert(i + 2, copy.deepcopy(bat_inner_sp))
                     i += 4
@@ -238,7 +241,7 @@ def build_widget_lists():
                 case "powermenu":
                     break
                 case _:
-                    widget_list.insert(i, sm_spacer)
+                    widget_list.insert(i, sm_spacer())
                     i += 2
 
     _insert_secondary_spacers(widgets_2)

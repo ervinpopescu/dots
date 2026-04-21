@@ -1,16 +1,13 @@
-from typing import List
+from typing import List, Optional
 
-from pydantic import BaseModel, Field
-
-
-class GtkThemeSettings(BaseModel):
-    theme_name: str = Field(..., alias="Net/ThemeName")
+from pydantic import BaseModel
 
 
 class Commands(BaseModel):
     blueman: List[str]
     emoji: List[str]
     htop: List[str]
+    lock: List[str]
     menu: List[str]
     nwgbar: List[str]
     terminal: str
@@ -31,7 +28,6 @@ class Group(BaseModel):
     label: str
     layout: str
     screen_affinity: int
-    # names: List[str]
 
 
 class WidgetDefaults(BaseModel):
@@ -41,11 +37,9 @@ class WidgetDefaults(BaseModel):
 
 
 class Settings(BaseModel):
-    apps: List[List[str]]
     bar_height: int
     cmds: Commands
     dropdown_opacity: float
-    extension_defaults: WidgetDefaults
     font_size: int
     keymaps: Keymaps
     groups: List[Group]
@@ -53,4 +47,6 @@ class Settings(BaseModel):
     icon_fontsize: int
     margin_size: int
     text_font: str
+    openweather_api_key: Optional[str] = None
+    theme: str
     widget_defaults: WidgetDefaults

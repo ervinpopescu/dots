@@ -2,52 +2,31 @@ import json
 import math
 import os
 import pathlib
-from os import path
 
 from libqtile import qtile
 from libqtile.utils import rgb
 
 from modules.models import Settings
 
-# from qtile_extras.layout.decorations.borders import RoundedCorners
 
-
-def load_theme():
-    theme = "catppuccin"
-
-    config = path.join(config_path, "json", "config.json")
-    if path.isfile(config):
-        with open(config) as f:
-            theme = json.load(f)["theme"]
-    else:
-        with open(config, "w") as f:
-            f.write(f'{{"theme": "{theme}"}}\n')
-
-    theme_file = path.join(config_path, "themes", f"{theme}.json")
-    if not path.isfile(theme_file):
+def load_theme(config_path):
+    theme = settings.theme
+    theme_file = os.path.join(config_path, "themes", f"{theme}.json")
+    if not os.path.isfile(theme_file):
         raise FileNotFoundError(f'"{theme_file}" does not exist')
-
-    with open(path.join(theme_file)) as f:
+    with open(theme_file) as f:
         return json.load(f)
 
 
-# notify2.init("qtile config")
-# qtile: Qtile
 try:
     qtile_info = qtile.qtile_info()  # type: ignore
-except AttributeError:
-    qtile_info = {}
-
-if len(qtile_info) != 0:
     config_path = str(pathlib.Path(qtile_info["config_path"]).parent.resolve())
-else:
+except AttributeError:
     config_path = str(pathlib.Path(__file__).parent.parent.resolve())
 
-colors = load_theme()
-
 with open(os.path.join(config_path, "json", "settings.json")) as f:
-    settings_dict = json.load(f)
-    settings = Settings(**settings_dict)
+    settings = Settings(**json.load(f))
+colors = load_theme(config_path)
 
 bar_bg = "2e344000"
 decor_bg = colors["bg0"]
@@ -90,9 +69,5 @@ layout_defaults = dict(
     border_normal=colors["bg0"],
     border_focus=colors["purple"],
 )
-widget_defaults = {
-    "font": "Font Awesome 6 Free Solid",
-    "fontsize": settings.font_size,
-    "padding": 6,
-}
+widget_defaults = settings.widget_defaults.model_dump()
 extension_defaults = widget_defaults.copy()
