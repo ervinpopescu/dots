@@ -59,7 +59,6 @@ repos:
         language: system
         entry: markdownlint-cli2 --config .markdownlint.yaml
         types: [markdown]
-        exclude: (docs/)
 
   # Shell scripts
   - repo: https://github.com/shellcheck-py/shellcheck-py
