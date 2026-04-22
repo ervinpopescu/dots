@@ -1,0 +1,27 @@
+return {
+  {
+    "mason-org/mason.nvim",
+    opts = {
+      ui = { border = "rounded" },
+      ensure_installed = {
+        -- LSP servers
+        "lua-language-server",
+        "pyright",
+        "ruff",
+        "ty",
+        -- Formatters / linters
+        "stylua",
+        "shfmt",
+        "taplo",
+        "miss_hit", -- mh_style for octave/matlab
+        {{- if .is_cloudtop }}
+        -- Cloudtop: XML LSP for Apigee workflows
+        "lemminx",
+        {{- else }}
+        -- Lenovo: MATLAB LSP
+        "matlab-language-server",
+        {{- end }}
+      },
+    },
+  },
+}
