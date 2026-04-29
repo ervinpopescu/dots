@@ -38,6 +38,8 @@ index, key = r.select(
 )
 
 if key == 0:
-    ret = subprocess.call(f"run_wall.sh {wallpapers_paths[index]} all".split())
+    wl = os.environ.get("WAYLAND_DISPLAY")
+    cmd = "run_wall_wl.sh" if wl else "run_wall.sh"
+    ret = subprocess.call(f"{cmd} {wallpapers_paths[index]} all".split())
     if ret != 0:
         notify2.Notification(f"failed to set {wallpapers[index]}").show()
