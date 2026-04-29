@@ -4,6 +4,7 @@
 gnome-keyring-daemon --start &
 /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1 &
 battery-notification.py &
+dunst &
 kanshi &
 # /usr/lib/kdeconnectd &
 
