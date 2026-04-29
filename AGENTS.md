@@ -1,6 +1,4 @@
-# CLAUDE.md
-
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+# dots
 
 ## What This Is
 
@@ -35,7 +33,7 @@ Entrypoint chain: `.zshenv` → sources `env/*.zsh` (vars, aliases, functions, b
 
 ### Qtile Wayland (`dot_config/qtile-wl/`)
 
-See `dot_config/qtile-wl/CLAUDE.md` for detailed architecture. Entry point: `config.py`. Modular Python config with JSON-driven settings in `json/`. Formatting: Black (line-length 98) + isort (profile "black").
+See `dot_config/qtile-wl/AGENTS.md` for detailed architecture. Entry point: `config.py`. Modular Python config with JSON-driven settings in `json/`. Formatting: Black (line-length 98) + isort (profile "black").
 
 ### Tmux (`dot_config/tmux/`)
 

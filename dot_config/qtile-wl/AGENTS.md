@@ -1,6 +1,4 @@
-# CLAUDE.md
-
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+# Qtile Wayland Config
 
 ## What This Is
 
@@ -65,7 +63,7 @@ User-facing configuration lives in `json/` — edit these instead of Python when
 | `json/matches.json`      | App class → workspace group mapping                                  |
 | `json/themes.json`       | Available theme names                                                |
 
-`json/config.json` is loaded via `exec()` in `config.py`, so every key becomes a top-level Qtile variable.
+`json/config.json` is loaded by `config.py` at startup, so every key becomes a top-level Qtile variable.
 
 ### Themes
 
@@ -104,5 +102,5 @@ Split across `keys/`:
 - `psutil` — system stats widgets
 - `notify2` — desktop notifications
 - `json5` — JSON5 parsing for flexible config files
-- `jsonpickle` — group state serialization
+- `jsonpickle` — group state serialization (group state persistence across restarts)
 - `rofi` — launcher menus
