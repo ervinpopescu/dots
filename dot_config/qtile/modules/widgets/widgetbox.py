@@ -18,8 +18,8 @@ def make_widget_box_1():
         foreground=colors["darkblue"],
         padding=10,
         start_opened=True,
-        text_closed="",
-        text_open="",
+        text_closed="",
+        text_open="",
         widgets=[
             small_spacer(length=ms),
             small_spacer(length=ms),
@@ -35,8 +35,8 @@ def make_widget_box_2():
         foreground=colors["darkblue"],
         padding=10,
         start_opened=False,
-        text_closed="",
-        text_open="",
+        text_closed="",
+        text_open="",
         widgets=[
             weather(),
             uptime(),
