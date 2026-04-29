@@ -1,10 +1,8 @@
-# CLAUDE.md
-
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+# Neovim Config
 
 ## Overview
 
-This is a personal Neovim configuration built on [LazyVim](https://lazyvim.github.io/) (a Neovim distribution using lazy.nvim as its plugin manager). All configuration is written in Lua.
+Personal Neovim configuration built on [LazyVim](https://lazyvim.github.io/) (a Neovim distribution using lazy.nvim as its plugin manager). All configuration is written in Lua.
 
 ## Formatting
 
@@ -38,5 +36,5 @@ Lua files are formatted with **StyLua**: 2-space indentation, spaces (not tabs),
 - **Auto-save is active** with 1s debounce; the `u` → `2u` remap in rust/python compensates for auto-save creating extra undo states
 - **Python LSP**: Pyright (type checking off, diagnostics ignored) + Ruff (formatting/linting only, hover disabled)
 - **lspconfig.lua uses opts-only pattern** — no custom `config` function, lets LazyVim handle the config lifecycle
-- **Local plugin**: `vim-matlab` loaded from `~/src/mine/projects/nvim/plugins/vim-matlab`
+- **Local plugin**: `vim-matlab` loaded from `~/src/mine/system_and_config/editors/nvim/plugins/vim-matlab`
 - Custom plugins load eagerly by default (`lazy = false` in lazy.nvim defaults)
