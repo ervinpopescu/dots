@@ -4,7 +4,7 @@
 gnome-keyring-daemon --start &
 /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1 &
 battery-notification.py &
-dunst &
+kanshi &
 # /usr/lib/kdeconnectd &
 
 ## wallpaper
@@ -12,7 +12,6 @@ run_wall_wl.sh rand all &
 
 ## various apps
 # $HOME/.config/conky/start_qtile.sh -n &
-yes | rmshit.py &
 # firefox &
 # alacritty &
 

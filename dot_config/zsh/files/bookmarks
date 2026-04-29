@@ -7,5 +7,9 @@ scg src/cloned/github
 scgm src/cloned/github/misc
 scr src/cloned/repos
 sm src/mine
-smd src/mine/dots
-smq src/mine/qtile
+smd src/mine/system_and_config/dots
+smq src/mine/system_and_config/wm/qtile
+sms src/mine/system_and_config
+smw src/mine/web_projects
+smp src/mine/software_development
+smm src/mine/miscellaneous

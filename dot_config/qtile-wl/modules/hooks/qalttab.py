@@ -88,7 +88,7 @@ def alt_release():
 def record_focus(window):
     global focus_history, message, reloaded
 
-    logger.warning(
+    logger.debug(
         "record_focus: %s (group=%s) | history=%s",
         window.name,
         window.group.name if window.group else None,
@@ -143,7 +143,7 @@ def check_response(response):
 def cycle_windows(qtile):
     global focus_index, last_focused_index, message, focus_history, reloaded
 
-    logger.warning(
+    logger.debug(
         "cycle_windows called | focus_index=%s last_focused=%s history=%s",
         focus_index,
         last_focused_index,
@@ -151,16 +151,16 @@ def cycle_windows(qtile):
     )
 
     if not focus_history:
-        logger.warning("cycle_windows: empty focus_history, returning")
+        logger.debug("cycle_windows: empty focus_history, returning")
         return
 
     focus_history[:] = [win for win in focus_history if not _is_excluded(win)]
 
     if not focus_history:
-        logger.warning("cycle_windows: empty after filter, returning")
+        logger.debug("cycle_windows: empty after filter, returning")
         return
 
-    logger.warning(
+    logger.debug(
         "cycle_windows: after filter history=%s",
         [(w.name, w.group.name if w.group else None) for w in focus_history],
     )
@@ -175,7 +175,7 @@ def cycle_windows(qtile):
 
     next_window = focus_history[focus_index]
 
-    logger.warning("cycle_windows: selected %s (index=%s)", next_window.name, focus_index)
+    logger.debug("cycle_windows: selected %s (index=%s)", next_window.name, focus_index)
 
     if not reloaded:
         message = {
@@ -198,7 +198,7 @@ def cycle_windows(qtile):
         }
 
         if os.path.exists(SOCKET_PATH) and not _is_excluded(next_window):
-            logger.warning("cycle_windows: sending IPC message")
+            logger.debug("cycle_windows: sending IPC message")
             client = Client(socket_path=SOCKET_PATH, is_json=True)
             create_task(
                 client.async_send(message),
@@ -206,7 +206,7 @@ def cycle_windows(qtile):
                 check_response
             )  # type: ignore
         else:
-            logger.warning(
+            logger.debug(
                 "cycle_windows: SKIPPED IPC (socket=%s, excluded=%s)",
                 os.path.exists(SOCKET_PATH),
                 _is_excluded(next_window),
