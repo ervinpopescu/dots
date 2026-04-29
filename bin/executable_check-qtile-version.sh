@@ -2,7 +2,7 @@
 
 local_running="$(qtile cmd-obj -o cmd -f qtile_info | zsh -c 'qtile_to_json' | jq -r '.version' | sed 's/.*git\.//')"
 local_installed="$(qtile --version | sed -r 's/.*git\.//')"
-git="$(git -C $HOME/src/mine/qtile rev-parse --short master)"
+git="$(git -C $HOME/src/mine/system_and_config/wm/qtile rev-parse --short master)"
 if [[ "$git" != "$local_installed" ]]; then
 	echo Please upgrade qtile
 	exit 0
