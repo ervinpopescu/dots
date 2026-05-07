@@ -1,6 +1,10 @@
 #!/bin/bash
 
+{{ if .is_hp -}}
+interface="wlo1"
+{{- else -}}
 interface="$(route | awk '{print $NF}' | tail -1)"
+{{- end }}
 
 awk '{ if (l1) {\
         printf("↓%.2fMB/s ↑%.2fMB/s" \
@@ -8,4 +12,7 @@ awk '{ if (l1) {\
     } else {\
         l1=$2; l2=$10;\
     }\
-}' <(grep "$interface" /proc/net/dev) <(sleep 1; grep "$interface" /proc/net/dev)
+}' <(grep "$interface" /proc/net/dev) <(
+  sleep 1
+  grep "$interface" /proc/net/dev
+)
