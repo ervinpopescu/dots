@@ -51,6 +51,7 @@ function birthday_notification() {
     "$(birthday -W 0 -f ~/.local/share/birthdays)"
 }
 
+{{- if not .is_hp }}
 function server-ssh() {
   ssh -ti ~/.ssh/id_ed25519 ervin@aslan.home.ro "$@"
 }
@@ -85,6 +86,7 @@ function server_status() {
   echo "------------------------------------------------"
   printf "fail2ban stats:\n%s" "$(server_fail2ban_stats | tr '\n' '\0' | xargs -0 printf "  %s\n")"
 }
+{{- end }}
 
 function git_last_commits() {
   for branch in $(git branch -r | grep -v HEAD); do
