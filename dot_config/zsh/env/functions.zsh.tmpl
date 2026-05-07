@@ -53,7 +53,7 @@ function birthday_notification() {
 
 {{- if not .is_hp }}
 function server-ssh() {
-  ssh -ti ~/.ssh/id_ed25519 ervin@aslan.home.ro "$@"
+  ssh archnet "$@"
 }
 
 function server_services() {
