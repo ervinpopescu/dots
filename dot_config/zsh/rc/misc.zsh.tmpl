@@ -64,4 +64,8 @@ export LESS_TERMCAP_us=$'\E[1;32m'  # begin underline
 export LESS_TERMCAP_ue=$'\E[0m'     # reset underline
 
 [[ "$(tmux display-message -p '#S')" == "archnet" ]] && ssh ervin@archen.home.ro -p 8922
+
+function pcol() {
+  paste "$@" | sed -e 's/\t/ \t/g' | column -t -s$'\t'
+}
 {{ end -}}
