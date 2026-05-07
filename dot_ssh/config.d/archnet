@@ -1,6 +1,6 @@
 Host archnet
     HostName aslan.home.ro
     User ervin
-    Port 5922
+    Port 8922
     IdentityFile ~/.ssh/archnet
     IdentitiesOnly yes
