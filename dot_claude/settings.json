@@ -1,0 +1,54 @@
+{
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  },
+  "includeCoAuthoredBy": false,
+  "statusLine": {
+    "type": "command",
+    "command": "bash /home/ervin/.claude/statusline.sh"
+  },
+  "enabledPlugins": {
+    "rust-analyzer-lsp@claude-plugins-official": true,
+    "superpowers@claude-plugins-official": true,
+    "github@claude-plugins-official": true,
+    "security-guidance@claude-plugins-official": true,
+    "code-simplifier@claude-plugins-official": true,
+    "feature-dev@claude-plugins-official": true,
+    "agent-orchestration@claude-code-workflows": true,
+    "agent-teams@claude-code-workflows": true,
+    "cicd-automation@claude-code-workflows": true,
+    "code-documentation@claude-code-workflows": true,
+    "context-management@claude-code-workflows": true,
+    "developer-essentials@claude-code-workflows": true,
+    "error-debugging@claude-code-workflows": true,
+    "error-diagnostics@claude-code-workflows": true,
+    "git-pr-workflows@claude-code-workflows": true,
+    "kubernetes-operations@claude-code-workflows": true,
+    "python-development@claude-code-workflows": true,
+    "shell-scripting@claude-code-workflows": true,
+    "systems-programming@claude-code-workflows": true,
+    "unit-testing@claude-code-workflows": true,
+    "code-review@claude-plugins-official": true,
+    "commit-commands@claude-plugins-official": true,
+    "claude-md-management@claude-plugins-official": true,
+    "skill-creator@claude-plugins-official": true,
+    "greptile@claude-plugins-official": true,
+    "pyright-lsp@claude-plugins-official": true,
+    "lua-lsp@claude-plugins-official": true
+  },
+  "extraKnownMarketplaces": {
+    "claude-code-workflows": {
+      "source": {
+        "source": "github",
+        "repo": "wshobson/agents"
+      }
+    }
+  },
+  "voice": {
+    "enabled": false,
+    "mode": "hold"
+  },
+  "autoDreamEnabled": false,
+  "voiceEnabled": false,
+  "agentPushNotifEnabled": true
+}
