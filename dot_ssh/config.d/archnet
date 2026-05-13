@@ -1,6 +1,9 @@
 Host archnet
-    HostName aslan.home.ro
-    User ervin
-    Port 8922
-    IdentityFile ~/.ssh/archnet
-    IdentitiesOnly yes
+  Hostname aslan.home.ro
+  IdentityFile ~/.ssh/archnet
+  Port 8922
+  User ervin
+
+# Override if you are on the local network
+Match host archnet exec "ip route | grep -q '192.168.1.0/24'"
+    HostName 192.168.1.128
