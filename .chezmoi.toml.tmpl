@@ -6,8 +6,10 @@
 {{-   $machine = "cloudtop" -}}
 {{- else if eq $hostname "hp" -}}
 {{-   $machine = "hp" -}}
+{{- else if eq $hostname "hetzner" -}}
+{{-   $machine = "hetzner" -}}
 {{- else -}}
-{{-   $machine = promptStringOnce . "machine" "Machine profile (lenovo/cloudtop/macbook/hp)" -}}
+{{-   $machine = promptStringOnce . "machine" "Machine profile (lenovo/cloudtop/macbook/hp/hetzner)" -}}
 {{- end -}}
 
 sourceDir = "{{ .chezmoi.sourceDir }}"
@@ -20,6 +22,7 @@ encryption = "age"
   is_cloudtop = {{ eq $machine "cloudtop" }}
   is_macbook = {{ eq $machine "macbook" }}
   is_hp = {{ eq $machine "hp" }}
+  is_hetzner = {{ eq $machine "hetzner" }}
   is_linux = {{ ne $machine "macbook" }}
   has_wayland = {{ eq $machine "lenovo" }}
   has_battery = {{ or (eq $machine "lenovo") (eq $machine "macbook") (eq $machine "hp") }}
