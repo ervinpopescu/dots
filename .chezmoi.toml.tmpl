@@ -23,6 +23,7 @@ encryption = "age"
   is_macbook = {{ eq $machine "macbook" }}
   is_hp = {{ eq $machine "hp" }}
   is_hetzner = {{ eq $machine "hetzner" }}
+  is_server = {{ eq $machine "hetzner" }}
   is_linux = {{ ne $machine "macbook" }}
   has_wayland = {{ eq $machine "lenovo" }}
   has_battery = {{ or (eq $machine "lenovo") (eq $machine "macbook") (eq $machine "hp") }}

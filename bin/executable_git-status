@@ -30,7 +30,7 @@ do
 	if [ -d "$f/.git" ]
 	then
 		mod=0
-		cd $f
+		cd $f || exit
 
 		# Check for modified files
 		if [ "$(git status | grep modified -c)" -ne 0 ]

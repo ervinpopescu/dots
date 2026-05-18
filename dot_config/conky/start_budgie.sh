@@ -1,7 +1,7 @@
 #!/bin/sh
 # vim: ft=sh:ts=4:sw=4:et:ai:cin
 
-cd "$(dirname "$0")"
+cd "$(dirname "$0")" || exit
 killall conky 2>/dev/null
 font/install
 if [ "$1" = "-n" ]; then
