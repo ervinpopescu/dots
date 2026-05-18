@@ -1,0 +1,12 @@
+{{ if .is_hetzner -}}
+#!/bin/bash
+set -e
+
+sudo pacman -S --needed --noconfirm \
+  fzf \
+  git-delta \
+  git-lfs \
+  python-json5
+
+pip install --break-system-packages markdowntable
+{{ end -}}
