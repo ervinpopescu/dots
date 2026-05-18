@@ -1,6 +1,7 @@
 README.md
 CLAUDE.md
 LICENSE
+ruff.toml
 docs/**
 system/**
 markdown/**
@@ -15,7 +16,7 @@ pkgs
 bin/battery-notification.py
 {{ end }}
 
-{{ if or .is_macbook .is_hetzner }}
+{{ if or .is_macbook .is_server }}
 .config/alacritty/**
 .config/Code/**
 .config/Code - OSS/**
@@ -32,35 +33,46 @@ bin/battery-notification.py
 .config/VSCodium/**
 .config/X11/**
 .config/zathura/**
+bin/alacritty-nemo
 bin/autostart.sh
 bin/autostart-wl.sh
 bin/battery-notification.py
+bin/birthday-notification.sh
+bin/bookmarks.py
+bin/bookmarkthis.py
 bin/brightnessctl.sh
+bin/bt-archnet.sh
 bin/bt-bat.py
+bin/change_theme.py
+bin/check-qtile-version.sh
 bin/generate_primary_wallpaper.py
 bin/hide-show-bar.sh
 bin/libinput-gestures-start.sh
+bin/location.py
 bin/lock_and_sleep.sh
+bin/md-preview.py
 bin/mediactl.sh
 bin/mutevol.sh
+bin/netspeed.sh
+bin/orar.py
+bin/password-window.py
 bin/pkg_remove_fzf.sh
+bin/qt_html.py
 bin/qtilekeys.py
 bin/reboot-to-win.sh
+bin/rofi-wallpaper
 bin/run_wall.sh
 bin/run_wall_wl.sh
 bin/second_display.sh
+bin/start-spotify.py
 bin/suspend-toggle
+bin/switch_windows_in_group.py
 bin/systray_profile.py
 bin/tail-qtile-log.sh
 bin/update-qtile.py
 bin/volctl.sh
+bin/volleyball.py
 bin/wallpaper.sh
 bin/wallpaper-wl.sh
-bin/md-preview.py
-bin/orar.py
 bin/watcher.py
-{{ end }}
-
-{{ if not .is_hetzner }}
-bin/dw-playground.sh
 {{ end }}
