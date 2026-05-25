@@ -49,6 +49,7 @@
     "mode": "hold"
   },
   "autoDreamEnabled": false,
+  "agentPushNotifEnabled": true,
   "voiceEnabled": false,
-  "agentPushNotifEnabled": true
+  "inputNeededNotifEnabled": true
 }
