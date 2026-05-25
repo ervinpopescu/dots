@@ -1,3 +1,5 @@
 {
-  "diagnostics.globals": ["Util"]
+  "diagnostics.globals": [
+    "Util"
+  ]
 }

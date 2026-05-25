@@ -1,150 +1,150 @@
 [
   {
-    "wm_class": "arandr",
     "name": "arandr",
     "rules": {
       "center": true,
+      "h": 1000,
       "set_size_floating": true,
-      "w": 2160,
-      "h": 1000
-    }
+      "w": 2160
+    },
+    "wm_class": "arandr"
   },
   {
-    "wm_class": "devtools",
     "name": "devtools",
     "rules": {
       "center": true,
+      "h": 1000,
       "set_size_floating": true,
-      "w": 1440,
-      "h": 1000
-    }
+      "w": 1440
+    },
+    "wm_class": "devtools"
   },
   {
-    "wm_class": "gsimplecal",
     "name": "gsimplecal",
     "rules": {
       "center": true,
+      "h": 408,
       "set_position_floating": true,
-      "w": 482,
-      "h": 408
-    }
+      "w": 482
+    },
+    "wm_class": "gsimplecal"
   },
   {
-    "wm_class": "nemo-terminal",
     "name": "nemo-terminal",
     "rules": {
       "center": true,
+      "h": 1000,
       "set_size_floating": true,
-      "w": 1440,
-      "h": 1000
-    }
+      "w": 1440
+    },
+    "wm_class": "nemo-terminal"
   },
   {
-    "wm_class": "normcap",
     "name": "normcap",
     "rules": {
       "toggle_fullscreen": true
-    }
+    },
+    "wm_class": "normcap"
   },
   {
-    "wm_class": "orar.py",
     "rules": {
       "center": true,
+      "h": 1036,
       "set_size_floating": true,
-      "w": 1302,
-      "h": 1036
-    }
+      "w": 1302
+    },
+    "wm_class": "orar.py"
   },
   {
-    "wm_class": "toolbox",
     "name": "toolbox",
     "rules": {
       "center": true,
+      "h": 1000,
       "set_size_floating": true,
-      "w": 1440,
-      "h": 1000
-    }
+      "w": 1440
+    },
+    "wm_class": "toolbox"
   },
   {
-    "wm_class": "transmission-qt",
     "name": "Torrent Properties",
     "rules": {
       "center": true,
+      "h": 1000,
       "set_size_floating": true,
-      "w": 1440,
-      "h": 1000
-    }
+      "w": 1440
+    },
+    "wm_class": "transmission-qt"
   },
   {
-    "wm_class": "file_progress",
     "name": "file_progress",
     "rules": {
       "keep_above": true
-    }
+    },
+    "wm_class": "file_progress"
   },
   {
-    "wm_class": "feh_thumbnail",
     "name": "feh_thumbnail",
     "rules": {
-      "set_size_floating": true,
-      "w": 400,
       "h": 300,
-      "keep_above": true
-    }
+      "keep_above": true,
+      "set_size_floating": true,
+      "w": 400
+    },
+    "wm_class": "feh_thumbnail"
   },
   {
-    "wm_class": "discord",
     "name": "discord",
     "rules": {
-      "move": true,
-      "group": 2
-    }
+      "group": 2,
+      "move": true
+    },
+    "wm_class": "discord"
   },
   {
-    "wm_class": "nm-tray",
     "name": "nm-tray",
     "rules": {
       "center": true,
-      "set_size_floating": true,
-      "w": 300,
       "h": 600,
-      "keep_above": true
-    }
+      "keep_above": true,
+      "set_size_floating": true,
+      "w": 300
+    },
+    "wm_class": "nm-tray"
   },
   {
-    "wm_class": "woomer",
     "name": "woomer",
     "rules": {
-      "toggle_fullscreen": true,
-      "keep_above": true
-    }
+      "keep_above": true,
+      "toggle_fullscreen": true
+    },
+    "wm_class": "woomer"
   },
   {
-    "wm_class": "flameshot",
     "name": "flameshot",
     "rules": {
-      "toggle_fullscreen": true,
-      "keep_above": true
-    }
+      "keep_above": true,
+      "toggle_fullscreen": true
+    },
+    "wm_class": "flameshot"
   },
   {
-    "wm_class": null,
     "name": "qalttab",
     "rules": {
       "center": true,
-      "set_size_floating": true,
+      "h": 1000,
       "keep_above": true,
-      "w": 400,
-      "h": 1000
-    }
+      "set_size_floating": true,
+      "w": 400
+    },
+    "wm_class": null
   },
   {
-    "wm_class": null,
     "name": "nwgbar",
     "rules": {
       "center": true,
       "keep_above": true,
       "toggle_fullscreen": true
-    }
+    },
+    "wm_class": null
   }
 ]

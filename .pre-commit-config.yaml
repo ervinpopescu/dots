@@ -35,6 +35,16 @@ repos:
       - id: stylua
         args: [--config-path=dot_config/nvim/stylua.toml]
 
+  # JSON — sort keys for stable diffs
+  - repo: local
+    hooks:
+      - id: jq-sort-keys
+        name: jq sort keys
+        language: system
+        entry: bash -c 'for f in "$@"; do jq -S . "$f" > "$f.tmp" && mv "$f.tmp" "$f"; done' --
+        types: [json]
+        exclude: (\.tmpl$|VSCodium/)
+
   # JSON / Markdown / CSS / JS / YAML — prettier (system install)
   - repo: local
     hooks:
