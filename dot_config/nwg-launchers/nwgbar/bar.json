@@ -1,32 +1,32 @@
 [
   {
-    "name": "Lock screen",
     "exec": "betterlockscreen -l dimblur",
-    "icon": "/home/ervin/.config/nwg-launchers/nwgbar/system-lock-screen.svg"
+    "icon": "/home/ervin/.config/nwg-launchers/nwgbar/system-lock-screen.svg",
+    "name": "Lock screen"
   },
   {
-    "name": "Sleep",
     "exec": "systemctl -i suspend",
-    "icon": "/home/ervin/.config/nwg-launchers/nwgbar/system-suspend.svg"
+    "icon": "/home/ervin/.config/nwg-launchers/nwgbar/system-suspend.svg",
+    "name": "Sleep"
   },
   {
-    "name": "Logout",
     "exec": "loginctl terminate-session self",
-    "icon": "/home/ervin/.config/nwg-launchers/nwgbar/system-log-out.svg"
+    "icon": "/home/ervin/.config/nwg-launchers/nwgbar/system-log-out.svg",
+    "name": "Logout"
   },
   {
-    "name": "Reboot",
     "exec": "systemctl -i reboot",
-    "icon": "/home/ervin/.config/nwg-launchers/nwgbar/system-reboot.svg"
+    "icon": "/home/ervin/.config/nwg-launchers/nwgbar/system-reboot.svg",
+    "name": "Reboot"
   },
   {
-    "name": "Reboot to Windows",
     "exec": "/home/ervin/bin/reboot-to-win.sh",
-    "icon": "/home/ervin/.config/nwg-launchers/nwgbar/microsoft.svg"
+    "icon": "/home/ervin/.config/nwg-launchers/nwgbar/microsoft.svg",
+    "name": "Reboot to Windows"
   },
   {
-    "name": "Shutdown",
     "exec": "systemctl -i poweroff",
-    "icon": "/home/ervin/.config/nwg-launchers/nwgbar/system-shutdown.svg"
+    "icon": "/home/ervin/.config/nwg-launchers/nwgbar/system-shutdown.svg",
+    "name": "Shutdown"
   }
 ]

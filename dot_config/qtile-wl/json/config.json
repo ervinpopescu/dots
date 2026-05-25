@@ -5,9 +5,9 @@
   "cursor_warp": true,
   "floats_kept_above": true,
   "follow_mouse_focus": true,
+  "reconfigure_screens": true,
   "theme": "catppuccin",
-  "wmname": "LG3D",
-  "wl_xcursor_theme": "Bibata-Modern-Ice",
   "wl_xcursor_size": 30,
-  "reconfigure_screens": true
+  "wl_xcursor_theme": "Bibata-Modern-Ice",
+  "wmname": "LG3D"
 }
