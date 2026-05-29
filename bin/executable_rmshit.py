@@ -3,19 +3,19 @@
 import glob
 import os
 import shutil
+import sys
+import argparse
+from pathlib import Path
 
-globs = [
-    # "~/Matlab*",
+# Paths to clean (expanduser is handled later)
+GLOBS = [
+    "~/Matlab*",
     "~/java.*",
     "~/.local/share/gegl-*",
 ]
 
-shittyglobs = []
-
-for g in globs:
-    shittyglobs.extend(glob.glob(os.path.expanduser(g)))
-
-shittyfiles = [
+# Explicit files/dirs to remove
+FILES = [
     "~/.ACEStream",
     "~/.FRD/links.txt",
     "~/.FRD/log/app.log",
@@ -84,43 +84,69 @@ shittyfiles = [
     "~/nvvp_workspace/",
     "~/octave-workspace",
     "~/unison.log",
-    *shittyglobs,
 ]
 
 
+def get_files_to_remove():
+    """Collect all files to remove based on GLOBS and FILES lists."""
+    found_files = []
+    
+    # Process globs
+    for g in GLOBS:
+        expanded = os.path.expanduser(g)
+        found_files.extend(glob.glob(expanded))
+        
+    # Process explicit list
+    for f in FILES:
+        expanded = os.path.expanduser(f)
+        if os.path.lexists(expanded):
+            found_files.append(expanded)
+            
+    return sorted(list(set(found_files))) # Remove duplicates
+
+
 def yesno(question, default="y"):
-    """Asks the user for YES or NO, always case insensitive.
-    Returns True for YES and False for NO.
-    """
+    """Asks the user for YES or NO."""
     prompt = f"{question} (Y/n) "
-
     ans = input(prompt).strip().lower() or default
-
     return ans == "y"
 
 
-def rmshit():
-    found = []
-    for f in shittyfiles:
-        absf = os.path.expanduser(f)
-        if os.path.exists(absf):
-            found.append(absf)
-            print(f"    {f}")
+def main():
+    parser = argparse.ArgumentParser(description="Remove unwanted 'shitty' files from home directory.")
+    parser.add_argument("-y", "--yes", action="store_true", help="Skip confirmation prompt")
+    parser.add_argument("--dry-run", action="store_true", help="Show what would be deleted without deleting")
+    args = parser.parse_args()
+
+    found = get_files_to_remove()
 
     if not found:
         print("No shitty files found :)")
         return
 
-    if yesno("Remove all?", default="y"):
+    print("Found the following files/directories:")
+    for f in found:
+        print(f"    {f}")
+
+    if args.dry_run:
+        print("\nDry run complete. No files removed.")
+        return
+
+    if args.yes or yesno("\nRemove all?", default="y"):
+        count = 0
         for f in found:
-            if os.path.isfile(f):
-                os.remove(f)
-            else:
-                shutil.rmtree(f)
-        print("All cleaned")
+            try:
+                if os.path.isfile(f) or os.path.islink(f):
+                    os.remove(f)
+                elif os.path.isdir(f):
+                    shutil.rmtree(f)
+                count += 1
+            except Exception as e:
+                print(f"Error removing {f}: {e}", file=sys.stderr)
+        print(f"All cleaned ({count} items removed).")
     else:
-        print("No file removed")
+        print("No files removed.")
 
 
 if __name__ == "__main__":
-    rmshit()
+    main()

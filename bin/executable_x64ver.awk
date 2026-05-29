@@ -1,7 +1,14 @@
 #!/usr/bin/awk -f
 
 BEGIN {
-    while (!/flags/) if (getline < "/proc/cpuinfo" != 1) exit 1
+    cpuinfo = "/proc/cpuinfo"
+    # Check if cpuinfo exists (Linux only)
+    if (system("test -f " cpuinfo) != 0) {
+        print "Error: /proc/cpuinfo not found. This script is Linux-specific."
+        exit 1
+    }
+
+    while (!/flags/) if (getline < cpuinfo != 1) exit 1
     if (/lm/&&/cmov/&&/cx8/&&/fpu/&&/fxsr/&&/mmx/&&/syscall/&&/sse2/) level = 1
     if (level == 1 && /cx16/&&/lahf/&&/popcnt/&&/sse4_1/&&/sse4_2/&&/ssse3/) level = 2
     if (level == 2 && /avx/&&/avx2/&&/bmi1/&&/bmi2/&&/f16c/&&/fma/&&/abm/&&/movbe/&&/xsave/) level = 3

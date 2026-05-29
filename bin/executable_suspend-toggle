@@ -1,5 +1,10 @@
 #!/bin/bash
 
+if ! command -v systemctl >/dev/null 2>&1; then
+    echo "Error: systemctl not found."
+    exit 1
+fi
+
 targets="sleep.target suspend.target hibernate.target hybrid-sleep.target"
 status="$(systemctl status $targets | grep Loaded | tr -d " " | awk -F':' '{print $2}' | sed 's/(.*//' | uniq)"
 if [[ "$status" == "loaded" ]]; then

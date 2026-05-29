@@ -1,74 +1,61 @@
 #!/bin/bash
 
-dir="$1"
+# Define colors
+RED='\033[0;31m'
+PURPLE='\033[0;35m'
+NC='\033[0m' # No Color
 
-# No directory has been provided, use current
-if [ -z "$dir" ]
-then
-    dir="`pwd`"
+target_dir="${1:-$(pwd)}"
+
+# Ensure target_dir exists
+if [ ! -d "$target_dir" ]; then
+    echo "Directory $target_dir does not exist."
+    exit 1
 fi
 
-# Make sure directory ends with "/"
-if [[ $dir != */ ]]
-then
-	dir="$dir/*"
-else
-	dir="$dir*"
-fi
+# Loop through subdirectories
+for repo in "$target_dir"/*; do
+    [ -d "$repo" ] || continue
 
-# Loop all sub-directories
-for f in $dir
-do
-	# Only interested in directories
-	[ -d "${f}" ] || continue
+    echo -e "${PURPLE}${repo}${NC}"
 
-	echo -en "\033[0;35m"
-	echo "${f}"
-	echo -en "\033[0m"
+    if [ -d "$repo/.git" ]; then
+        (
+            cd "$repo" || exit
 
-	# Check if directory is a git repository
-	if [ -d "$f/.git" ]
-	then
-		mod=0
-		cd $f || exit
+            is_dirty=0
+            
+            # Check for modified/added/deleted files (staged or unstaged)
+            if [ -n "$(git status --porcelain)" ]; then
+                echo -e "${RED}Dirty (Modified/Untracked)${NC}"
+                is_dirty=1
+            fi
 
-		# Check for modified files
-		if [ "$(git status | grep modified -c)" -ne 0 ]
-		then
-			mod=1
-			echo -en "\033[0;31m"
-			echo "Modified files"
-			echo -en "\033[0m"
-		fi
+            # Check for unpushed commits
+            # Check if upstream is configured
+            if git rev-parse --abbrev-ref @{u} >/dev/null 2>&1; then
+                ahead=$(git rev-list --count @{u}..HEAD)
+                behind=$(git rev-list --count HEAD..@{u})
 
-		# Check for untracked files
-		if [ "$(git status | grep Untracked -c)" -ne 0 ]
-		then
-			mod=1
-			echo -en "\033[0;31m"
-			echo "Untracked files"
-			echo -en "\033[0m"
-		fi
+                if [ "$ahead" -gt 0 ]; then
+                    echo -e "${RED}Ahead by $ahead commit(s)${NC}"
+                    is_dirty=1
+                fi
+                if [ "$behind" -gt 0 ]; then
+                    echo -e "${RED}Behind by $behind commit(s)${NC}"
+                    is_dirty=1
+                fi
+            else
+                 # echo -e "${RED}No upstream configured${NC}" # Optional: Warn about no upstream
+                 :
+            fi
 
-		# Check for unpushed changes
-		if [ "$(git status | grep 'Your branch is ahead' -c)" -ne 0 ]
-		then
-				mod=1
-				echo -en "\033[0;31m"
-				echo "Unpushed commit"
-				echo -en "\033[0m"
-		fi
-
-		# Check if everything is peachy keen
-		if [ $mod -eq 0 ]
-		then
-			echo "Nothing to commit"
-		fi
-
-		cd ../
-	else
-		echo "Not a git repository"
-	fi
-
-	echo
+            if [ "$is_dirty" -eq 0 ]; then
+                echo "Nothing to commit"
+            fi
+        )
+    else
+        echo "Not a git repository"
+    fi
+    echo
 done

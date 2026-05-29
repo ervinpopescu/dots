@@ -1,31 +1,50 @@
-#!/bin/python
+#!/usr/bin/env python3
 
-import os
+import sys
 import time
+from pathlib import Path
 
-from libqtile.command.client import InteractiveCommandClient
-from watchdog.events import FileSystemEventHandler
-from watchdog.observers import Observer
+try:
+    from libqtile.command.client import InteractiveCommandClient
+    from watchdog.events import FileSystemEventHandler
+    from watchdog.observers import Observer
+except ImportError as e:
+    print(f"Error: Missing dependency ({e})", file=sys.stderr)
+    sys.exit(1)
 
-c = InteractiveCommandClient()
+# Initialize Client safely
+try:
+    c = InteractiveCommandClient()
+except Exception:
+    print("Warning: Could not connect to Qtile client.", file=sys.stderr)
+    c = None
 
 
-class Watcher(Observer):
-    DIRECTORY_TO_WATCH = os.path.expanduser("~") + "/.config/qtile/"
+class Watcher:
+    DIRECTORY_TO_WATCH = Path.home() / ".config" / "qtile"
 
     def __init__(self):
         self.observer = Observer()
 
     def run(self):
+        if not self.DIRECTORY_TO_WATCH.exists():
+            print(f"Error: Directory {self.DIRECTORY_TO_WATCH} does not exist.", file=sys.stderr)
+            return
+
         event_handler = Handler()
-        self.observer.schedule(event_handler, self.DIRECTORY_TO_WATCH, recursive=True)
+        self.observer.schedule(event_handler, str(self.DIRECTORY_TO_WATCH), recursive=True)
         self.observer.start()
+        print(f"Watching {self.DIRECTORY_TO_WATCH}...")
+        
         try:
             while True:
                 time.sleep(1)
-        except Exception:
+        except KeyboardInterrupt:
             self.observer.stop()
-            print("RuntimeError")
+            print("\nStopping watcher...")
+        except Exception as e:
+            self.observer.stop()
+            print(f"Error: {e}")
 
         self.observer.join()
 
@@ -33,20 +52,22 @@ class Watcher(Observer):
 class Handler(FileSystemEventHandler):
     @staticmethod
     def on_any_event(event):
-        null_ls_condition = event.src_path.split("/")[-1].startswith(".null-ls")
-        cpython_condition = "cpython" in event.src_path.split("/")[-1]
         if event.is_directory:
             return None
 
-        elif event.event_type == "created" and not null_ls_condition and not cpython_condition:
-            # Take any action here when a file is first created.
-            print(f"Received created event - {event.src_path}.")
-            c.reload_config()
+        filename = Path(event.src_path).name
 
-        elif event.event_type == "modified" and not null_ls_condition and not cpython_condition:
-            # Taken any action here when a file is modified.
-            print(f"Received modified event - {event.src_path}.")
-            c.reload_config()
+        # Ignore temporary/cache files
+        if filename.startswith(".null-ls") or "cpython" in filename or filename.endswith("~"):
+            return None
+
+        if event.event_type in ["created", "modified"]:
+            print(f"Reloading config due to {event.event_type} event on {filename}")
+            if c:
+                try:
+                    c.reload_config()
+                except Exception as e:
+                    print(f"Failed to reload config: {e}")
 
 
 if __name__ == "__main__":

@@ -1,45 +1,80 @@
-#!/bin/python
+#!/usr/bin/env python3
 
-import os
 import subprocess
+import os
+import sys
+import shutil
+from pathlib import Path
 
-import notify2
-from rofi import Rofi
+# Optional dependencies
+try:
+    from rofi import Rofi
+except ImportError:
+    print("Error: 'rofi' python module not found.", file=sys.stderr)
+    sys.exit(1)
 
-notify2.init("rofi-wallpaper")
+try:
+    import notify2
+    HAS_NOTIFY = True
+except ImportError:
+    HAS_NOTIFY = False
 
-directory = os.path.join(
-    subprocess.check_output("xdg-user-dir PICTURES".split()).decode().strip(),
-    "wallpapers",
-    "rand",
-)
-wallpapers = os.listdir(directory)
-wallpapers.sort()
-wallpapers = [x for x in wallpapers if not x.startswith(".git")]
-# wallpapers = random.choices(wallpapers, k=len(wallpapers))
-wallpapers_paths = [os.path.join(directory, i) for i in wallpapers]
-r = Rofi(
-    lines=len(wallpapers),
-    rofi_args=[
-        "-i",
-        "-config",
-        os.path.join(
-            os.path.expanduser("~"),
-            ".config",
-            "rofi",
-            "wallpapers.rasi",
-        ),
-        "show-icons",
-    ],
-)
-index, key = r.select(
-    prompt="Select wallpaper",
-    options=wallpapers,
-)
 
-if key == 0:
-    wl = os.environ.get("WAYLAND_DISPLAY")
-    cmd = "run_wall_wl.sh" if wl else "run_wall.sh"
-    ret = subprocess.call(f"{cmd} {wallpapers_paths[index]} all".split())
-    if ret != 0:
-        notify2.Notification(f"failed to set {wallpapers[index]}").show()
+def main():
+    if HAS_NOTIFY:
+        try:
+            notify2.init("rofi-wallpaper")
+        except Exception:
+            pass # Ignore if notification daemon is not available
+
+    # Get XDG Pictures dir
+    try:
+        xdg_out = subprocess.check_output(["xdg-user-dir", "PICTURES"]).decode().strip()
+        pictures_dir = Path(xdg_out)
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        pictures_dir = Path.home() / "Pictures"
+
+    directory = pictures_dir / "wallpapers" / "rand"
+    
+    if not directory.exists():
+        print(f"Error: Wallpaper directory {directory} not found.", file=sys.stderr)
+        sys.exit(1)
+
+    # Get list of wallpapers
+    wallpapers = [f.name for f in directory.iterdir() 
+                 if f.is_file() and not f.name.startswith(".git")]
+    wallpapers.sort()
+
+    if not wallpapers:
+        print("No wallpapers found.", file=sys.stderr)
+        sys.exit(1)
+
+    # Rofi configuration
+    rofi_config = Path.home() / ".config" / "rofi" / "wallpapers.rasi"
+    rofi_args = ["-i", "show-icons"]
+    if rofi_config.exists():
+        rofi_args.extend(["-config", str(rofi_config)])
+
+    r = Rofi(lines=min(len(wallpapers), 15), rofi_args=rofi_args)
+    
+    index, key = r.select(prompt="Select wallpaper", options=wallpapers)
+
+    if key == 0 and index != -1:
+        selected_wallpaper = directory / wallpapers[index]
+        
+        # Call run_wall.sh
+        run_wall_cmd = ["run_wall.sh", str(selected_wallpaper), "all"]
+        if shutil.which("run_wall.sh") is None:
+             # Try absolute path if not in PATH
+             run_wall_cmd[0] = str(Path.home() / "bin" / "run_wall.sh")
+
+        try:
+            ret = subprocess.run(run_wall_cmd, check=False).returncode
+            if ret != 0 and HAS_NOTIFY:
+                notify2.Notification(f"Failed to set {wallpapers[index]}").show()
+        except FileNotFoundError:
+            print("Error: run_wall.sh not found.", file=sys.stderr)
+
+
+if __name__ == "__main__":
+    main()
