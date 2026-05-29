@@ -1,18 +1,47 @@
 #!/bin/bash
 
-{{ if .is_hp -}}
-interface="wlo1"
-{{- else -}}
-interface="$(route | awk '{print $NF}' | tail -1)"
-{{- end }}
+# Function to get bytes on Linux
+get_bytes_linux() {
+    local iface="$1"
+    grep "$iface" /proc/net/dev | awk '{print $2, $10}'
+}
 
-awk '{ if (l1) {\
-        printf("↓%.2fMB/s ↑%.2fMB/s" \
-               , ($2 - l1) / 1024 / 1024, ($10 - l2) / 1024 / 1024)
-    } else {\
-        l1=$2; l2=$10;\
-    }\
-}' <(grep "$interface" /proc/net/dev) <(
-  sleep 1
-  grep "$interface" /proc/net/dev
-)
+# Function to get bytes on macOS
+get_bytes_macos() {
+    local iface="$1"
+    netstat -ib | grep -w "$iface" | awk '{print $7, $10}' | head -n1
+}
+
+os=$(uname -s)
+
+if [ "$os" = "Linux" ]; then
+    # Detect default interface
+    interface=$(ip route | awk '/default/ {print $5}' | head -n1)
+    if [ -z "$interface" ]; then interface="eth0"; fi
+    
+    read -r rx1 tx1 <<< "$(get_bytes_linux "$interface")"
+    sleep 1
+    read -r rx2 tx2 <<< "$(get_bytes_linux "$interface")"
+
+elif [ "$os" = "Darwin" ]; then
+    # Detect default interface on macOS
+    interface=$(route get 8.8.8.8 | grep interface | awk '{print $2}')
+    if [ -z "$interface" ]; then interface="en0"; fi
+    
+    read -r rx1 tx1 <<< "$(get_bytes_macos "$interface")"
+    sleep 1
+    read -r rx2 tx2 <<< "$(get_bytes_macos "$interface")"
+else
+    echo "Unsupported OS"
+    exit 1
+fi
+
+# Calculate speed in MB/s
+# rx and tx are in bytes
+rx_speed=$(( (rx2 - rx1) / 1024 / 1024 ))
+tx_speed=$(( (tx2 - tx1) / 1024 / 1024 ))
+
+# For finer precision (floating point), use awk
+awk -v r1="$rx1" -v r2="$rx2" -v t1="$tx1" -v t2="$tx2" 'BEGIN {
+    printf "↓%.2fMB/s ↑%.2fMB/s", (r2-r1)/1048576, (t2-t1)/1048576
+}'

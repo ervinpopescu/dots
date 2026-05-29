@@ -1,94 +1,69 @@
-#!/bin/env python3
+#!/usr/bin/env python3
 import argparse
 import os
 import sys
 import threading
+from pathlib import Path
 
-import inotify.adapters
-import inotify.constants
-from PyQt5 import QtCore
-from PyQt5.QtGui import *
-from PyQt5.QtWidgets import *
+try:
+    from PyQt5 import QtCore
+    from PyQt5.QtGui import QColor
+    from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel
+except ImportError:
+    print("Error: PyQt5 not found. Please install it with 'pip install PyQt5' or via your package manager.", file=sys.stderr)
+    sys.exit(1)
+
+try:
+    import inotify.adapters
+    import inotify.constants
+    HAS_INOTIFY = True
+except ImportError:
+    HAS_INOTIFY = False
 
 
 def parseArgs():
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "-m",
-        "--message",
-        type=str,
-        required=True,
-        help="Message to display in a pop-up",
-    )
-    parser.add_argument(
-        "-t",
-        "--topic",
-        type=str,
-        default=None,
-        help="Topic of the message. "
-        "New messages with the same topic "
-        "will override the message in an already open window if available",
-    )
-    parser.add_argument(
-        "-d",
-        "--duration",
-        type=int,
-        default=450,
-        help="Popup window duration in milliseconds (Default: 450)",
-    )
-    parser.add_argument(
-        "-o",
-        "--override-style",
-        nargs="+",
-        default=[],
-        help="Override or add style options. "
-        "Can take multiple arguments. Example: "
-        'pop_report -m message -o "background-color: #ff555555" "font-family: CascadiaCode"',
-    )
+    parser = argparse.ArgumentParser(description="Display a pop-up report message.")
+    parser.add_argument("-m", "--message", type=str, required=True, help="Message to display")
+    parser.add_argument("-t", "--topic", type=str, default=None, help="Topic of the message")
+    parser.add_argument("-d", "--duration", type=int, default=450, help="Duration in milliseconds")
+    parser.add_argument("-o", "--override-style", nargs="+", default=[], help="Override CSS styles")
     return parser.parse_args()
 
 
 def messageUpdate(topicPath, label):
+    if not HAS_INOTIFY:
+        return
+        
     subscribe = inotify.adapters.Inotify()
-    subscribe.add_watch(topicPath, inotify.constants.IN_CLOSE_WRITE)
+    subscribe.add_watch(str(topicPath), inotify.constants.IN_CLOSE_WRITE)
 
     for event in subscribe.event_gen(yield_nones=False):
         if event[1] == ["IN_CLOSE_WRITE"]:
-            with open(topicPath, "r") as topicFile:
-                label.setText(topicFile.read())
+            if topicPath.exists():
+                label.setText(topicPath.read_text())
         else:
             break
 
 
 class MainWindow(QMainWindow):
-    # Auto-closing window
     def __init__(self, parent=None):
-        # Define window stuff
-        super(MainWindow, self).__init__(parent)
-        self.setWindowFlags(QtCore.Qt.X11BypassWindowManagerHint)
+        super().__init__(parent)
+        self.setWindowFlags(QtCore.Qt.X11BypassWindowManagerHint | QtCore.Qt.WindowStaysOnTopHint | QtCore.Qt.FramelessWindowHint)
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground, True)
 
     def showEvent(self, event):
         self.centerWin()
 
     def centerWin(self):
-        # Center window once it shows itself
-        screenWidth = QApplication.primaryScreen().size().width()
-        screenHeight = QApplication.primaryScreen().size().height()
-        popupHeight = self.geometry().height()
-        popupWidth = self.geometry().width()
-        popupXpos = int((screenWidth - popupWidth) / 2)
-        popupYpos = int((screenHeight - popupHeight) / 2)
-        self.move(popupXpos, popupYpos)
-
-    def closeEvent(self, event):
-        # Delete object
-        self.deleteLater()
-
+        screen = QApplication.primaryScreen().size()
+        popup_size = self.geometry()
+        x = (screen.width() - popup_size.width()) // 2
+        y = (screen.height() - popup_size.height()) // 2
+        self.move(x, y)
 
 class TimedPopup(QLabel):
     def __init__(self, duration, topicPath, mainwin, parent=None):
-        super(TimedPopup, self).__init__(parent=parent)
+        super().__init__(parent=parent)
         self.timer = QtCore.QTimer()
         self.topicPath = topicPath
         self.duration = duration
@@ -100,73 +75,66 @@ class TimedPopup(QLabel):
         self.timer.start()
 
     def paintEvent(self, event):
-        print("Reported message")
         self.startTimer()
         self.mainwin.centerWin()
-        QLabel.paintEvent(self, event)
+        super().paintEvent(event)
 
     def closeEvent(self, event):
-        # Delete topic file
-        if self.topicPath is not None and os.path.isfile(self.topicPath):
-            os.remove(self.topicPath)
-        # Delete object
+        if self.topicPath and self.topicPath.exists():
+            try:
+                self.topicPath.unlink()
+            except OSError:
+                pass
         self.mainwin.close()
         self.deleteLater()
 
 
 def main():
-    # Path to stylesheet file
-    configPath = os.path.expanduser("~/.config/pop_report/")
-    userConfig = f"{configPath}style.qss"
+    configPath = Path.home() / ".config" / "pop_report"
+    userConfig = configPath / "style.qss"
 
-    # Parse command line arguments and declare variables
     args = parseArgs()
     message = args.message
     duration = args.duration
     styleO = args.override_style
-    extraStyle = "".join(option + ";\n" for option in styleO)
+    extraStyle = "".join(f"{option};\n" for option in styleO)
+    
     topicPath = None
-
-    # Check if there's a window already for current topic
-    topic = args.topic
-    if topic:
-        topicPath = os.path.expanduser(str(f"/tmp/report_{topic}"))
-        print(topicPath)
-        if os.path.isfile(topicPath):
-            print("Topic already has a window, will rewrite contents")
-            with open(topicPath, "w") as topicFile:
-                topicFile.write(message)
+    if args.topic:
+        topicPath = Path(f"/tmp/report_{args.topic}")
+        if topicPath.exists():
+            topicPath.write_text(message)
             sys.exit()
-        with open(topicPath, "w") as topicFile:
-            topicFile.write(message)
+        topicPath.write_text(message)
 
     app = QApplication(sys.argv)
     window = MainWindow()
     popup = TimedPopup(duration, topicPath, window)
     popup.setAlignment(QtCore.Qt.AlignCenter)
-    popup.setText(str(message))
+    popup.setText(message)
     window.setCentralWidget(popup)
 
-    if not os.path.isdir(configPath):
-        os.makedirs(configPath)
-    if not os.path.isfile(userConfig):
-        # Set the style for the label
-        defaultStyle = "border: 5px solid #ffffffff;\nbackground-color: #dd000000;\ncolor: #ffffffff;\nfont-family: Monospace;\nfont-size: 70px;\npadding: 20px;\n"
-        with open(userConfig, "w") as userStyleSheet:
-            userStyleSheet.write(defaultStyle)
-    with open(userConfig, "r") as userStyleSheet:
-        popup.setStyleSheet(userStyleSheet.read() + extraStyle)
+    configPath.mkdir(parents=True, exist_ok=True)
+    if not userConfig.exists():
+        defaultStyle = (
+            "border: 5px solid #ffffffff;\n"
+            "background-color: #dd000000;\n"
+            "color: #ffffffff;\n"
+            "font-family: Monospace;\n"
+            "font-size: 70px;\n"
+            "padding: 20px;\n"
+        )
+        userConfig.write_text(defaultStyle)
+    
+    popup.setStyleSheet(userConfig.read_text() + extraStyle)
     popup.ensurePolished()
 
-    # Start watch if topic is set
-    if topic:
-        waitEdit = threading.Thread(target=messageUpdate, args=(topicPath, popup))
+    if args.topic and HAS_INOTIFY:
+        waitEdit = threading.Thread(target=messageUpdate, args=(topicPath, popup), daemon=True)
         waitEdit.start()
 
-    # Make the window show itself
     window.show()
-    # Run the app
-    app.exec()
+    sys.exit(app.exec_())
 
 
 if __name__ == "__main__":

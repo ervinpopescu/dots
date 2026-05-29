@@ -1,2 +1,8 @@
 #!/bin/sh
-alacritty --class='nemo-terminal'
+
+if command -v alacritty >/dev/null 2>&1; then
+    alacritty --class='nemo-terminal'
+else
+    echo "Error: alacritty not found." >&2
+    exit 1
+fi
