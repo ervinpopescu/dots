@@ -1,47 +1,37 @@
-#!/bin/bash
+#!/usr/bin/env python3
 
-# start=$(date +%s%N)
-# export PS4='+[$(((`date +%s%N`-$start)/1000000))ms][${BASH_SOURCE}:${LINENO}]: ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
-# set -x
+import datetime
+import calendar
+import sys
 
-nr_days_in_month=$(cal | awk 'FNR>2{d+=NF}END{print d}')
-current_day=$(date +%d)
-remaining=$(awk -v n="$nr_days_in_month" -v c="$current_day" 'BEGIN {print n-c}')
+def get_workdays(mode="month"):
+    today = datetime.date.today()
+    
+    if mode == "today":
+        # Calculate remaining days in month
+        _, last_day = calendar.monthrange(today.year, today.month)
+        start_date = today + datetime.timedelta(days=1)
+        end_date = datetime.date(today.year, today.month, last_day)
+    else:
+        # Full month (skipping past days in month logic? Original script did:
+        # dates starting from 1st of month.
+        start_date = datetime.date(today.year, today.month, 1)
+        _, last_day = calendar.monthrange(today.year, today.month)
+        end_date = datetime.date(today.year, today.month, last_day)
 
-case "$1" in
-  "today")
+    current = start_date
+    while current <= end_date:
+        # Monday=0, Sunday=6
+        if current.weekday() < 5: # Mon-Fri
+            print(current.strftime("%d.%m.%Y"))
+        current += datetime.timedelta(days=1)
 
-    dates=$({ for d in $(seq 1 "$remaining")
-      do
-        date +%Y-%m-%d -d "$(date +%Y-%m-%d) +$d days"
-      done
-    } | sort)
+def main():
+    mode = "month"
+    if len(sys.argv) > 1:
+        mode = sys.argv[1]
+    
+    get_workdays(mode)
 
-    for d in $dates
-    do
-      case $(date -d "$d" "+%a") in
-        Mon|Tue|Wed|Thu|Fri)
-          printf "%s\n" "$(date +%d.%m.%Y -d "$d")";;
-        *)
-          continue;;
-      esac
-    done;;
-  "")
-    dates=$({ for d in $(seq 1 "$nr_days_in_month")
-        do
-          date +%Y-%m-%d -d "$(date +%Y-%m-01) +$d days"
-        done
-      } | sort)
-
-      printf '%s\n' "$dates"
-
-      for d in $dates
-      do
-        case $(date -d "$d" "+%a") in
-          Mon|Tue|Wed|Thu|Fri)
-            printf "%s\n" "$(date +%d.%m.%Y -d "$d")";;
-          *)
-            continue;;
-        esac
-      done;;
-esac
+if __name__ == "__main__":
+    main()

@@ -1,9 +1,7 @@
 #!/bin/bash
 
-mapfile -t pids < <(pgrep wallpaper.sh | sort -r)
-n_pids=${#pids[@]}
-for i in $(seq 0 $((n_pids - 1))); do
-        kill -9 "${pids[$i]}"
-done
+# Kill any existing wallpaper.sh instances
+pkill -f "wallpaper.sh" || true
 
+# Start new instance
 wallpaper.sh "$@" &

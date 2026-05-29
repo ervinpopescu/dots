@@ -1,15 +1,37 @@
 #!/bin/bash
 
 set -e
-current=$(git branch | grep '\*' | awk '{print $2}')
-mapfile -t all_branches < <(git branch | sed 's/\*//' | awk '{print $1}')
-for b in "${all_branches[@]}"; do
-	echo Checkin\' out branch $b...
-	git checkout $b
-	echo Fetchin\' branch $b...
-	git fetch
-	echo Pullin\' branch $b...
-	git pull
-	echo
+
+# Check if working directory is dirty
+if [ -n "$(git status --porcelain)" ]; then
+    echo "Error: Working directory is dirty. Please commit or stash changes before running this script."
+    exit 1
+fi
+
+# Get current branch name
+current_branch=$(git branch --show-current)
+
+# Ensure we switch back to the original branch even if something fails
+trap 'echo "--------------------------------------------------"; echo "Returning to original branch: $current_branch"; git checkout "$current_branch"' EXIT
+
+# Get all local branches
+# Use process substitution and read into array to handle names with spaces (though rare for branches)
+mapfile -t branches < <(git branch --format='%(refname:short)')
+
+for branch in "${branches[@]}"; do
+    echo "--------------------------------------------------"
+    echo "Processing branch: $branch"
+    git checkout "$branch"
+    
+    echo "Fetching..."
+    git fetch
+    
+    # Check if we have an upstream to pull from
+    if git rev-parse --abbrev-ref @{u} >/dev/null 2>&1; then
+        echo "Pulling..."
+        git pull
+    else
+        echo "No upstream configured, skipping pull."
+    fi
+    echo
 done
-git checkout $current
