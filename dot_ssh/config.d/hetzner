@@ -1,13 +1,13 @@
 Host hetzner
     HostName aslan.archnet.lol
-    User root
+    User ervin
     IdentityFile ~/.ssh/hetzner
     IdentitiesOnly yes
     StrictHostKeyChecking accept-new
 
 Host hetzner-rescue
     HostName aslan.archnet.lol
-    User root
+    User ervin
     IdentityFile ~/.ssh/hetzner
     IdentitiesOnly yes
     StrictHostKeyChecking no
