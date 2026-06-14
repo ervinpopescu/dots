@@ -83,7 +83,8 @@ def capture_pane_text(pane_id, history_lines=100):
 
 def extract_reset_times(text):
     """Finds all reset strings and extracts the (time, timezone)."""
-    pattern = r"resets[\s\u00A0]+(\d{1,2}(?::\d{2})?\s*(?:am|pm)?)\s*\(([^)]+)\)"
+    # Matches: HH:MM, HH:MM:SS, with optional am/pm and optional "Month Day, " prefix
+    pattern = r"resets[\s\u00A0]+((?:[a-zA-Z]+\s+\d{1,2},?\s+)?\d{1,2}(?::\d{2}(?::\d{2})?)?\s*(?:am|pm)?)\s*\(([^)]+)\)"
     matches = re.findall(pattern, text, re.IGNORECASE)
     # deduplicate while preserving order
     seen = set()
@@ -117,36 +118,74 @@ def sleep_with_progress(total_seconds, label):
 
 def calculate_target_datetime(time_str, tz_str):
     """Calculates the absolute future datetime for the target timezone."""
-    try:
-        tz = zoneinfo.ZoneInfo(tz_str)
-    except zoneinfo.ZoneInfoNotFoundError:
-        print(f"Warning: Timezone '{tz_str}' not found. Defaulting to local time.")
-        tz = None  # Falls back to local system time
+    tz = None
+    if tz_str and tz_str.lower() != "local":
+        try:
+            tz = zoneinfo.ZoneInfo(tz_str)
+        except zoneinfo.ZoneInfoNotFoundError:
+            print(f"Warning: Timezone '{tz_str}' not found. Defaulting to local time.")
 
     now = datetime.now(tz)
-    time_str = time_str.lower()
+    time_str = time_str.lower().strip()
 
-    if ":" not in time_str:
-        time_str = time_str.replace("am", ":00am").replace("pm", ":00pm")
+    # Check for duration (e.g., 10m, 1h)
+    duration_match = re.match(r"^(\d+)([mh])$", time_str)
+    if duration_match:
+        val, unit = duration_match.groups()
+        delta = timedelta(minutes=int(val)) if unit == "m" else timedelta(hours=int(val))
+        return now + delta
 
-    # Parse the time string (handles both AM/PM and 24hr formats)
-    if "am" in time_str or "pm" in time_str:
-        target_time = datetime.strptime(time_str, "%I:%M%p").time()
-    else:
-        target_time = datetime.strptime(time_str, "%H:%M").time()
+    # Normalize time: "2am" -> "2:00am", but DON'T match "30pm" in "9:30pm"
+    # Negative lookbehind (?<!:) ensures we only match if not preceded by a colon.
+    time_str = re.sub(r"(?<!:)\b(\d+)(am|pm)", r"\1:00\2", time_str)
 
-    # Combine today's date with the target time
-    target_dt = datetime.combine(now.date(), target_time, tzinfo=tz)
+    # formats to try
+    formats = [
+        "%b %d, %I:%M:%S%p",
+        "%b %d, %I:%M%p",
+        "%B %d, %I:%M:%S%p",
+        "%B %d, %I:%M%p",
+        "%b %d %I:%M:%S%p",
+        "%b %d %I:%M%p",
+        "%B %d %I:%M:%S%p",
+        "%B %d %I:%M%p",
+        "%I:%M:%S%p",
+        "%I:%M%p",
+        "%H:%M:%S",
+        "%H:%M",
+    ]
 
-    # If the time has already passed today, the reset is tomorrow
-    if target_dt <= now:
-        target_dt += timedelta(days=1)
+    target_dt = None
+    for fmt in formats:
+        try:
+            if "%b" in fmt or "%B" in fmt:
+                # To avoid DeprecationWarning (Python 3.15+), prepend year to format and string
+                parsed = datetime.strptime(f"{now.year} {time_str}", f"%Y {fmt}")
+                target_dt = parsed.replace(tzinfo=tz)
+                # If target_dt is in the past (e.g. it's Jan and target is Dec from last year?)
+                if target_dt < now - timedelta(days=30):
+                    target_dt = target_dt.replace(year=now.year + 1)
+            else:
+                # Only time provided
+                parsed = datetime.strptime(time_str, fmt)
+                target_dt = datetime.combine(now.date(), parsed.time(), tzinfo=tz)
+                if target_dt <= now:
+                    target_dt += timedelta(days=1)
+            break
+        except ValueError:
+            continue
+
+    if not target_dt:
+        raise ValueError(f"Could not parse time string: {time_str}")
 
     return target_dt
 
 
 if __name__ == "__main__":
     try:
+        # Optional manual override/fallback via argument
+        manual_arg = sys.argv[1] if len(sys.argv) > 1 else None
+
         panes = get_all_panes()
 
         # 1. Select panes
@@ -161,12 +200,21 @@ if __name__ == "__main__":
 
         # 3. Extract matching times
         matches = extract_reset_times(log_text)
+
+        if not matches:
+            if manual_arg:
+                matches = [(manual_arg, "Local")]
+            else:
+                print("No reset times found in the pane's recent history.")
+                manual = input(
+                    "Enter manual reset time (e.g. 15:30, 2pm) or timeout (e.g. 10m): "
+                ).strip()
+                if not manual:
+                    print("Exiting.")
+                    sys.exit(0)
+                matches = [(manual, "Local")]
+
         settings_needed = len(matches)
-
-        if settings_needed == 0:
-            print("No reset times found in the pane's recent history. Exiting.")
-            sys.exit(0)
-
         print(f"---> Found {settings_needed} reset triggers.")
 
         # 4. Gather commands and calculate delays dynamically

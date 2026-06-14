@@ -51,9 +51,9 @@ function birthday_notification() {
     "$(birthday -W 0 -f ~/.local/share/birthdays)"
 }
 
-{{- if not .is_hp }}
+{{- if not .is_server }}
 function server-ssh() {
-  ssh archnet "$@"
+  ssh hetzner "$@"
 }
 
 function server_services() {
