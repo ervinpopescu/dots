@@ -43,8 +43,9 @@
   },
   "includeCoAuthoredBy": false,
   "inputNeededNotifEnabled": true,
+  "skipAutoPermissionPrompt": true,
   "statusLine": {
-    "command": "bash /home/ervin/.claude/statusline.sh",
+    "command": "bash {{ .chezmoi.homeDir }}/.claude/statusline.sh",
     "type": "command"
   },
   "voice": {

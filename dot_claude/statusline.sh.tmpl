@@ -5,9 +5,27 @@ input=$(cat)
 # --- Model ---
 model=$(echo "$input" | jq -r '.model.display_name // "unknown"')
 
+# --- Effort level (only present when the model supports reasoning effort) ---
+effort=$(echo "$input" | jq -r '.effort.level // empty')
+
 # --- Rate limits ---
 five_pct=$(echo "$input" | jq -r '.rate_limits.five_hour.used_percentage // empty')
 week_pct=$(echo "$input" | jq -r '.rate_limits.seven_day.used_percentage // empty')
+reset_at=$(echo "$input" | jq -r '.rate_limits.five_hour.resets_at // empty')
+
+# Convert resetAt (ISO 8601 or Unix epoch) to "HH:MM (TZ)" local time
+reset_time=""
+if [ -n "$reset_at" ]; then
+  if echo "$reset_at" | grep -qE '^[0-9]+(\.[0-9]+)?$'; then
+    reset_epoch=$(printf "%.0f" "$reset_at")
+    reset_time=$(date -r "$reset_epoch" "+%H:%M (%Z)" 2>/dev/null)
+  else
+    # Strip sub-seconds and Z suffix, then parse as UTC
+    reset_clean=$(echo "$reset_at" | sed 's/\.[0-9]*Z$/Z/' | sed 's/Z$//')
+    reset_epoch=$(date -j -u -f "%Y-%m-%dT%H:%M:%S" "$reset_clean" "+%s" 2>/dev/null)
+    [ -n "$reset_epoch" ] && reset_time=$(date -r "$reset_epoch" "+%H:%M (%Z)" 2>/dev/null)
+  fi
+fi
 
 # --- Context window ---
 used_pct=$(echo "$input" | jq -r '.context_window.used_percentage // empty')
@@ -16,7 +34,11 @@ used_pct=$(echo "$input" | jq -r '.context_window.used_percentage // empty')
 transcript=$(echo "$input" | jq -r '.transcript_path // empty')
 session_time=""
 if [ -n "$transcript" ] && [ -f "$transcript" ]; then
+{{ if not .is_linux -}}
+  start_epoch=$(stat -f %m "$transcript" 2>/dev/null)
+{{- else -}}
   start_epoch=$(stat -c %Y "$transcript" 2>/dev/null)
+{{- end }}
   if [ -n "$start_epoch" ]; then
     now_epoch=$(date +%s)
     elapsed=$(( now_epoch - start_epoch ))
@@ -53,8 +75,8 @@ if git -C "$cwd" rev-parse --is-inside-work-tree --no-optional-locks &>/dev/null
   insertions=0
   deletions=0
   if [ -n "$shortstat" ]; then
-    ins_match=$(echo "$shortstat" | grep -oP '\d+(?= insertion)')
-    del_match=$(echo "$shortstat" | grep -oP '\d+(?= deletion)')
+    ins_match=$(echo "$shortstat" | grep -oE '[0-9]+ insertion' | grep -oE '[0-9]+')
+    del_match=$(echo "$shortstat" | grep -oE '[0-9]+ deletion' | grep -oE '[0-9]+')
     [ -n "$ins_match" ] && insertions=$ins_match
     [ -n "$del_match" ] && deletions=$del_match
   fi
@@ -95,8 +117,12 @@ short_path=$(fish_path "$cwd")
 # Build output parts
 parts=()
 
-# Model
-parts+=("$(printf "${BOLD}${CYAN}%s${RESET}" "$model")")
+# Model (with optional effort level appended as a dimmed suffix)
+if [ -n "$effort" ]; then
+  parts+=("$(printf "${BOLD}${CYAN}%s${RESET}${DIM}[%s]${RESET}" "$model" "$effort")")
+else
+  parts+=("$(printf "${BOLD}${CYAN}%s${RESET}" "$model")")
+fi
 
 # 5h usage
 if [ -n "$five_pct" ]; then
@@ -109,6 +135,11 @@ if [ -n "$five_pct" ]; then
     color="$GREEN"
   fi
   parts+=("$(printf "5h:${color}%s%%${RESET}" "$pct_int")")
+fi
+
+# 5h reset time
+if [ -n "$reset_time" ]; then
+  parts+=("$(printf "${DIM}resets %s${RESET}" "$reset_time")")
 fi
 
 # 7d usage
