@@ -1,14 +1,32 @@
-# source /usr/share/zsh/plugins/zsh-defer/zsh-defer.plugin.zsh
 # plugins
 {{ if eq .machine "cloudtop" -}}
-[ -f /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh ] && source /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh
-[ -f /usr/share/z/z.sh ] && source /usr/share/z/z.sh
+export ZPLUG_HOME="$HOME/.local/share/zplug"
+{{ else if .is_macbook -}}
+export ZPLUG_HOME=/opt/homebrew/opt/zplug
+{{ else -}}
+export ZPLUG_HOME=/usr/share/zsh/scripts/zplug
+{{ end -}}
+source "$ZPLUG_HOME/init.zsh"
+
+zplug "zsh-users/zsh-history-substring-search"
+zplug "woefe/git-prompt.zsh", use:"{git-prompt.zsh,examples/multiline.zsh}"
+zplug "zdharma-continuum/fast-syntax-highlighting"
+zplug "zsh-users/zsh-autosuggestions"
+zplug "agkozak/zsh-z"
+
+if ! zplug check --verbose; then
+    printf "Install? [y/N]: "
+    if read -q; then
+        echo; zplug install
+    fi
+fi
+zplug load
+
+{{ if eq .machine "cloudtop" -}}
 export NVM_DIR="$HOME/.local/share/nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
-{{ else -}}
-source /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.plugin.zsh
-source /usr/share/zsh/plugins/zsh-z/zsh-z.plugin.zsh
+{{ else if not .is_macbook -}}
 source /usr/share/nvm/init-nvm.sh
 {{ end -}}
 
@@ -17,7 +35,9 @@ source "$ZDOTDIR/rc/keys.zsh"
 source "$ZDOTDIR/rc/opts.zsh"
 source "$ZDOTDIR/rc/completions.zsh"
 source "$ZDOTDIR/rc/prompt.zsh"
+{{ if .is_arch -}}
 source "$ZDOTDIR/rc/command_not_found_handler.zsh"
+{{ end -}}
 source "$ZDOTDIR/rc/misc.zsh"
 {{ if ne .machine "cloudtop" -}}
 source "$ZDOTDIR/rc/hooks.zsh"
@@ -26,4 +46,8 @@ source "$ZDOTDIR/rc/hooks.zsh"
 # zsh-abbr is special, needs to be at the end
 ABBR_TMPDIR=/tmp/zsh-abbr-user/
 ABBR_USER_ABBREVIATIONS_FILE="$ZDOTDIR"/files/abbreviations
+{{ if .is_macbook -}}
+source /opt/homebrew/share/zsh-abbr/zsh-abbr.zsh
+{{ else -}}
 source /usr/share/zsh/plugins/zsh-abbr/zsh-abbr.zsh
+{{ end -}}

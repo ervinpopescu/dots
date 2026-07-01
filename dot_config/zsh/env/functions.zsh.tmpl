@@ -19,7 +19,7 @@ function mkcd() {
 }
 
 function clear_terminal() {
-  /bin/clear
+  {{ if eq .chezmoi.os "darwin" -}}/usr/bin/clear{{- else -}}/bin/clear{{- end }}
   tmux list-sessions &>/dev/null
   ret=$?
   if [ $ret -eq 0 ]; then

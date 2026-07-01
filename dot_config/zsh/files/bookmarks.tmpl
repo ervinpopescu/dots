@@ -1,6 +1,13 @@
 b bin/
 c .config
 cq .config/qtile
+{{ if .is_macbook -}}
+p Desktop/Programming
+pc Desktop/Programming/cloned
+pm Desktop/Programming/mine
+pmd Desktop/Programming/mine/dots
+pmq Desktop/Programming/mine/qtile
+{{ else -}}
 cqw .config/qtile-wl
 sc src/cloned
 scg src/cloned/github
@@ -8,8 +15,9 @@ scgm src/cloned/github/misc
 scr src/cloned/repos
 sm src/mine
 smd src/mine/system_and_config/dots
+smm src/mine/miscellaneous
 smq src/mine/system_and_config/wm/qtile
+smp src/mine/software_development
 sms src/mine/system_and_config
 smw src/mine/web_projects
-smp src/mine/software_development
-smm src/mine/miscellaneous
+{{ end -}}
