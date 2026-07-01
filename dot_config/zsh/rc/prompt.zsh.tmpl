@@ -106,8 +106,8 @@ precmd() {
 {{ else -}}
 # shellcheck disable=all
 
-source $ZDOTDIR/plugins/git-prompt.zsh/git-prompt.plugin.zsh
-source $ZDOTDIR/plugins/git-prompt.zsh/examples/multiline.zsh
+[ -f $ZDOTDIR/plugins/git-prompt.zsh/git-prompt.plugin.zsh ] && source $ZDOTDIR/plugins/git-prompt.zsh/git-prompt.plugin.zsh
+[ -f $ZDOTDIR/plugins/git-prompt.zsh/examples/multiline.zsh ] && source $ZDOTDIR/plugins/git-prompt.zsh/examples/multiline.zsh
 
 # set variable identifying the chroot you work in (used in the prompt below)
 if [ -z "${debian_chroot:-}" ] && [ -r /etc/debian_chroot ]; then

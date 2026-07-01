@@ -5,6 +5,10 @@ abbr "gl1"="git log -1"
 abbr "gsf"="git fetch upstream; git checkout master; git merge upstream/master; git push -f"
 abbr "gst"="git status"
 abbr "lg"="lazygit"
+{{ if .is_macbook -}}
+abbr "u"="brew update && brew upgrade"
+{{ else -}}
 abbr "p"="sudo pacman"
 abbr "SS"="sudo systemctl"
 abbr "u"="env CARGO_TARGET_DIR=./target yay -Syyu --noconfirm --overwrite '*'"
+{{ end -}}

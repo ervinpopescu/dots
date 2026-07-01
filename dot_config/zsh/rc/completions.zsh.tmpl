@@ -36,8 +36,14 @@ source /usr/share/google-cloud-sdk/completion.zsh.inc
 {{ else -}}
 # shellcheck disable=all
 
+{{ if eq .chezmoi.os "darwin" -}}
+if type brew &>/dev/null; then
+  FPATH=$HOME/.local/share/zsh/completions:$(brew --prefix)/share/zsh-abbr:$(brew --prefix)/share/zsh-completions:$FPATH
+fi
+{{- else -}}
 fpath=(~/.local/share/zsh/completions $fpath)
 
+{{- end }}
 autoload -Uz compinit
 compinit -d ~/.cache/zcompdump
 zstyle ':completion:*:*:*:*:*' menu select
@@ -65,8 +71,15 @@ function _pip_completion {
 compctl -K _pip_completion pip
 # pip zsh completion end
 
+{{ if eq .chezmoi.os "darwin" -}}
+# eval "$(register-python-argcomplete pipx)"
+compdef _eza ls
+
+source /opt/homebrew/share/google-cloud-sdk/completion.zsh.inc
+{{- else -}}
 eval "$(register-python-argcomplete pipx)"
 
 export FPATH="$HOME/src/cloned/github/misc/eza/completions/zsh:$FPATH"
 compdef _eza ls
+{{- end }}
 {{ end -}}

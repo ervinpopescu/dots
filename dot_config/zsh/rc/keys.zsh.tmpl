@@ -57,14 +57,22 @@ lfcd () {
 # configure key keybindings
 bindkey -e                                        # emacs key bindings
 bindkey ' ' magic-space                           # do history expansion on space
+{{ if eq .chezmoi.os "darwin" -}}
+bindkey '^[[3~' backward-delete-word              # delete
+bindkey '^[[4~' forward-word                      # fn + ->
+bindkey '^[[1~' backward-word                     # fn + <-
+{{- else -}}
 bindkey '^[[3;5~' kill-word                       # ctrl + Supr
 bindkey '^[[3~' delete-char                       # delete
 bindkey '^[[1;5C' forward-word                    # ctrl + ->
 bindkey '^[[1;5D' backward-word                   # ctrl + <-
+{{- end }}
 bindkey '^[[5~' beginning-of-buffer-or-history    # page up
 bindkey '^[[6~' end-of-buffer-or-history          # page down
+{{- if ne .chezmoi.os "darwin" }}
 bindkey '^[[H' beginning-of-line                  # home
 bindkey '^[[F' end-of-line                        # end
+{{- end }}
 bindkey '^[[Z' undo                               # shift + tab undo last action
 bindkey -s '^o' 'lfcd\n'                          # open lf in current directory
 bindkey -s '^L' 'clear\n'                         # clear terminal

@@ -16,6 +16,10 @@ pkgs
 bin/battery-notification.py
 {{ end }}
 
+{{ if not .is_linux }}
+.config/lf/**
+{{ end }}
+
 {{ if or .is_macbook .is_server }}
 .config/alacritty/**
 .config/Code/**
