@@ -12,3 +12,9 @@ Host hetzner-rescue
     IdentitiesOnly yes
     StrictHostKeyChecking no
     UserKnownHostsFile /dev/null
+
+Host aslan.tail6677f3.ts.net
+    User ervin
+    IdentityFile ~/.ssh/hetzner
+    IdentitiesOnly yes
+    StrictHostKeyChecking accept-new

@@ -1,0 +1,7 @@
+Host github.com
+  Hostname ssh.github.com
+  Port 443
+{{- if eq .chezmoi.os "darwin" }}
+  AddKeysToAgent yes
+  UseKeychain yes
+{{- end }}
