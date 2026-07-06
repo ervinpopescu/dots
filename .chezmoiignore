@@ -1,7 +1,10 @@
 README.md
 CLAUDE.md
+AGENTS.md
 LICENSE
 ruff.toml
+tmp
+configs
 docs/**
 system/**
 markdown/**

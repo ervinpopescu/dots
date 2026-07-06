@@ -52,3 +52,22 @@ Files ending in `.tmpl` are Go templates rendered by chezmoi. Template variables
 - XDG Base Directory compliance throughout — most tools are configured to respect `$XDG_CONFIG_HOME`, `$XDG_DATA_HOME`, `$XDG_CACHE_HOME`
 - Git commits are GPG-signed (SSH key) per `dot_config/git/config`
 - Catppuccin Mocha is the color scheme used across tools (zsh syntax highlighting, Qtile themes, FZF)
+
+## Known Issues / TODOs
+
+- `.is_arch` is referenced in `dot_config/zsh/dot_zshrc.tmpl` and
+  `dot_config/zsh/rc/command_not_found_handler.zsh.tmpl` but is never
+  defined in `.chezmoi.toml.tmpl`'s `[data]` block. Go templates treat a
+  missing map key as falsy, so `{{ if .is_arch }}` is always false on
+  every machine — including lenovo/cloudtop, which are Arch and should
+  get the pacman-based `command_not_found_handler`. Likely needs
+  `is_arch = {{ or (eq $machine "lenovo") (eq $machine "cloudtop") }}`
+  (or similar) added to `.chezmoi.toml.tmpl`.
+
+- `dot_claude/settings.json.tmpl` drifts frequently: Claude Code rewrites
+  `~/.claude/settings.json` in its own non-alphabetical key order whenever
+  it modifies the file (e.g. changing model, toggling settings). The
+  chezmoi source has alphabetically-sorted keys (enforced by pre-commit
+  hook), so every Claude Code write causes a fresh diff. Consider either
+  excluding this file from chezmoi management or accepting periodic
+  `chezmoi apply` re-syncs.
