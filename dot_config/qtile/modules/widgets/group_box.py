@@ -1,4 +1,4 @@
-from qtile_extras import widget
+from libqtile import widget
 
 from modules.settings import colors, settings
 
@@ -8,7 +8,7 @@ def group_box():
         active=colors["darkblue"],
         disable_drag=True,
         font=settings.icon_font,
-        fontsize=settings.font_size,
+        fontsize=settings.font_size - 5,
         hide_unused=True,
         inactive=colors["bg3"],
         margin_x=14,

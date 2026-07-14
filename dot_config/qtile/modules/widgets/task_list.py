@@ -24,7 +24,7 @@ def task_list():
         margin_y=margin_y,
         font=settings.text_font,
         fontsize=settings.font_size - 3,
-        stretch=True,
+        stretch=False,
         parse_text=parse_text,
         txt_floating="🗗 ",
         txt_maximized="🗖 ",

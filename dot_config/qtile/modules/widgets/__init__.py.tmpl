@@ -86,6 +86,9 @@ def build_widget_lists():
         os_logo(),
         group_box(),
         current_layout_icon(),
+{{- if .is_cloudtop }}
+        task_list(),
+{{- else }}
         widget.TaskList(
             border=colors["darkblue"],
             highlight_method="block",
@@ -100,6 +103,7 @@ def build_widget_lists():
             txt_minimized="",
             font="CaskaydiaCove Nerd Font Mono Bold",
         ),
+{{- end }}
         systray(),
         github_notif(),
         mouse_over_clock(),
@@ -108,17 +112,27 @@ def build_widget_lists():
     ]
 
     for w in widgets_1:
+{{- if .is_cloudtop }}
         if w.name in ["image", "powermenu"]:
             if hasattr(w, "decorations"):
                 w.decorations = END_CAP_DECOR["decorations"]
         elif not isinstance(
             w, (Battery, widget.BatteryIcon, widget.Spacer, widget.Systray, widget.TaskList)
         ):
+{{- else }}
+        if not isinstance(
+            w, (Battery, widget.BatteryIcon, widget.Spacer, widget.Systray, widget.TaskList)
+        ):
+{{- end }}
             if hasattr(w, "decorations"):
                 w.decorations = SINGLE_DECORATION["decorations"]
         if isinstance(
             w,
+{{- if .is_cloudtop }}
+            (Battery, BtBattery, widget.BatteryIcon, widget.KeyboardLayout),
+{{- else }}
             (Battery, BtBattery, widget.BatteryIcon, widget.KeyboardLayout, widget.TextBox),
+{{- end }}
         ):
             if hasattr(w, "decorations"):
                 w.decorations = GROUP_DECORATION["decorations"]
@@ -169,9 +183,15 @@ def build_widget_lists():
             case "groupbox":
                 widgets_1.insert(i + 1, sm_spacer())
                 i += 2
+{{- if .is_cloudtop }}
+            case "image":
+                widgets_1.insert(i + 1, sm_spacer())
+                i += 2
+{{- else }}
             case "os_logo":
                 widgets_1.insert(i + 1, sm_spacer())
                 i += 2
+{{- end }}
             case "powermenu":
                 break
             case _:
@@ -193,9 +213,15 @@ def build_widget_lists():
                 case "groupbox":
                     widget_list.insert(i + 1, sm_spacer())
                     i += 2
+{{- if .is_cloudtop }}
+                case "image":
+                    widget_list.insert(i + 1, sm_spacer())
+                    i += 2
+{{- else }}
                 case "os_logo":
                     widget_list.insert(i + 1, sm_spacer())
                     i += 2
+{{- end }}
                 case "powermenu":
                     break
                 case _:
