@@ -259,6 +259,7 @@ class TaskList(widget.TaskList, ExtendedPopupMixin):
         widget.TaskList.__init__(self, **config)
         if not stretch:
             import libqtile.bar
+
             self.length_type = libqtile.bar.CALCULATED
         self.add_defaults(TaskList.defaults)
         ExtendedPopupMixin.__init__(self, **config)

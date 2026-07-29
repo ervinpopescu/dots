@@ -1,21 +1,23 @@
 #!/usr/bin/env python3
 import argparse
-import os
 import sys
 import threading
 from pathlib import Path
 
 try:
     from PyQt5 import QtCore
-    from PyQt5.QtGui import QColor
-    from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel
+    from PyQt5.QtWidgets import QApplication, QLabel, QMainWindow
 except ImportError:
-    print("Error: PyQt5 not found. Please install it with 'pip install PyQt5' or via your package manager.", file=sys.stderr)
+    print(
+        "Error: PyQt5 not found. Please install it with 'pip install PyQt5' or via your package manager.",
+        file=sys.stderr,
+    )
     sys.exit(1)
 
 try:
     import inotify.adapters
     import inotify.constants
+
     HAS_INOTIFY = True
 except ImportError:
     HAS_INOTIFY = False
@@ -25,15 +27,19 @@ def parseArgs():
     parser = argparse.ArgumentParser(description="Display a pop-up report message.")
     parser.add_argument("-m", "--message", type=str, required=True, help="Message to display")
     parser.add_argument("-t", "--topic", type=str, default=None, help="Topic of the message")
-    parser.add_argument("-d", "--duration", type=int, default=450, help="Duration in milliseconds")
-    parser.add_argument("-o", "--override-style", nargs="+", default=[], help="Override CSS styles")
+    parser.add_argument(
+        "-d", "--duration", type=int, default=450, help="Duration in milliseconds"
+    )
+    parser.add_argument(
+        "-o", "--override-style", nargs="+", default=[], help="Override CSS styles"
+    )
     return parser.parse_args()
 
 
 def messageUpdate(topicPath, label):
     if not HAS_INOTIFY:
         return
-        
+
     subscribe = inotify.adapters.Inotify()
     subscribe.add_watch(str(topicPath), inotify.constants.IN_CLOSE_WRITE)
 
@@ -48,7 +54,11 @@ def messageUpdate(topicPath, label):
 class MainWindow(QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowFlags(QtCore.Qt.X11BypassWindowManagerHint | QtCore.Qt.WindowStaysOnTopHint | QtCore.Qt.FramelessWindowHint)
+        self.setWindowFlags(
+            QtCore.Qt.X11BypassWindowManagerHint
+            | QtCore.Qt.WindowStaysOnTopHint
+            | QtCore.Qt.FramelessWindowHint
+        )
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground, True)
 
     def showEvent(self, event):
@@ -60,6 +70,7 @@ class MainWindow(QMainWindow):
         x = (screen.width() - popup_size.width()) // 2
         y = (screen.height() - popup_size.height()) // 2
         self.move(x, y)
+
 
 class TimedPopup(QLabel):
     def __init__(self, duration, topicPath, mainwin, parent=None):
@@ -98,7 +109,7 @@ def main():
     duration = args.duration
     styleO = args.override_style
     extraStyle = "".join(f"{option};\n" for option in styleO)
-    
+
     topicPath = None
     if args.topic:
         topicPath = Path(f"/tmp/report_{args.topic}")
@@ -125,7 +136,7 @@ def main():
             "padding: 20px;\n"
         )
         userConfig.write_text(defaultStyle)
-    
+
     popup.setStyleSheet(userConfig.read_text() + extraStyle)
     popup.ensurePolished()
 

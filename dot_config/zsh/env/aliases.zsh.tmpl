@@ -41,6 +41,9 @@ alias v="vscodium"
 alias vim="nvim"
 alias qtile_to_json="python3 -c 'import sys, json, ast; print(json.dumps(ast.literal_eval(sys.stdin.read()), indent=2))'"
 alias wget='wget --hsts-file="$XDG_CACHE_HOME/wget-hsts"'
+{{ if eq .machine "cloudtop" -}}
+alias wt='cd $(command wt)'
+{{ end -}}
 alias xbindkeys='xbindkeys -f $XDG_CONFIG_HOME/xbindkeys/config'
 
 # git
@@ -61,7 +64,11 @@ alias bat-mode-rc="ideapad-perf -b rc"
 alias b="cd $HOME/bin/"
 alias c="cd $HOME/.config"
 alias cq="cd $HOME/.config/qtile"
+{{ if eq .machine "cloudtop" -}}
+alias d="cd $HOME/prjs/mine/dots"
+{{ else if .is_arch -}}
 alias d="cd $HOME/src/mine/system_and_config/dots"
+{{ end -}}
 
 # ls
 alias ls='eza --color=always --icons -H'

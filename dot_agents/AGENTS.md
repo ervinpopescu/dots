@@ -30,10 +30,11 @@ sufficient. **Do not write your accomplishments into this file.**
   use.
 
 ### Useful Rust frameworks for testing
+
 - **`quickcheck`**: Property-based testing for when you have an
   obviously-correct comparison you can test against.
 - **`insta`**: Snapshot testing for regression prevention. Use `cargo
-  insta test` as a stand-in for `cargo test` to run the snapshot tests.
+insta test` as a stand-in for `cargo test` to run the snapshot tests.
 
 ### Writing compile_fail Tests
 
@@ -95,6 +96,7 @@ Apply literate programming principles to make code self-documenting and maintain
 1. **Explain the Why, Not Just the What**: Focus on business logic, design decisions, and reasoning rather than describing what the code obviously does.
 
 2. **Top-Down Narrative Flow**: Structure code to read like a story with clear sections that build logically:
+
    ```rust
    // ==============================================================================
    // Plugin Configuration Extraction
@@ -105,6 +107,7 @@ Apply literate programming principles to make code self-documenting and maintain
    ```
 
 3. **Inline Context**: Place explanatory comments immediately before relevant code blocks, explaining the purpose and any important considerations:
+
    ```python
    # Convert timestamps to UTC for consistent comparison across time zones.
    # This prevents edge cases where local time changes affect rebuild detection.
@@ -125,12 +128,14 @@ Apply literate programming principles to make code self-documenting and maintain
 #### When to Apply
 
 Use literate programming for:
+
 - Complex algorithms with multiple phases or decision points
 - Code implementing business logic rather than simple plumbing
 - Code where the "why" is not immediately obvious from the "what"
 - Integration points between systems where context matters
 
 Avoid over-documenting:
+
 - Simple utility functions where intent is clear from the signature
 - Trivial getters/setters or obvious wrapper code
 - Code that's primarily syntactic sugar over well-known patterns
@@ -217,6 +222,7 @@ permission prompts in sub-agents.
 The XY problem occurs when someone asks about their attempted solution (Y) instead of their actual underlying problem (X).
 
 ### The Pattern
+
 1. User wants to accomplish goal X
 2. User thinks Y is the best approach to solve X
 3. User asks specifically about Y, not X
@@ -224,6 +230,7 @@ The XY problem occurs when someone asks about their attempted solution (Y) inste
 5. Time is wasted on suboptimal solutions
 
 ### Warning Signs to Watch For
+
 - Focus on a specific technical method without explaining why
 - Resistance to providing broader context when asked
 - Rejecting alternative approaches outright
@@ -231,18 +238,21 @@ The XY problem occurs when someone asks about their attempted solution (Y) inste
 - "How do I get the last 3 characters of a filename?" (when they want file extension)
 
 ### How to Avoid It (As Helper)
+
 - **Ask probing questions**: "What are you trying to accomplish overall?"
 - **Request context**: "Can you explain the bigger picture?"
 - **Challenge assumptions**: "Why do you think this approach will work?"
 - **Offer alternatives**: "Have you considered...?"
 
 ### Red Flags in User Requests
+
 - Very specific technical questions without motivation
 - Unusual or roundabout approaches to common problems
 - Dismissal of "why do you want to do that?" questions
 - Focus on implementation details before problem definition
 
 ### Key Principle
+
 Always try to understand the fundamental problem (X) before helping with the proposed solution (Y). The user's approach may not be optimal or may indicate they're solving the wrong problem entirely.
 
 ---

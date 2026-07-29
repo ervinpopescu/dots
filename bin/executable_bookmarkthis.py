@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import os
 import sys
 import subprocess
 import shutil
@@ -14,7 +13,7 @@ def dunstify(title, string):
     if shutil.which("dunstify"):
         subprocess.run(
             ["dunstify", "-a", "bookmark", "-u", "normal", "-r", "42523", title, string],
-            stderr=subprocess.DEVNULL
+            stderr=subprocess.DEVNULL,
         )
     else:
         print(f"{title}: {string}")

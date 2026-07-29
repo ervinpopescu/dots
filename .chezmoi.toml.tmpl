@@ -25,11 +25,13 @@ encryption = "age"
   is_hetzner = {{ eq $machine "hetzner" }}
   is_server = {{ eq $machine "hetzner" }}
   is_linux = {{ ne $machine "macbook" }}
+  is_arch = {{ or (eq $machine "lenovo") (eq $machine "cloudtop") (eq $machine "hp") }}
   has_wayland = {{ eq $machine "lenovo" }}
   has_battery = {{ or (eq $machine "lenovo") (eq $machine "macbook") (eq $machine "hp") }}
   openweather_api_key = "{{ promptStringOnce . "openweather_api_key" "OpenWeather API key" }}"
   opensubtitles_api_key = "{{ promptStringOnce . "opensubtitles_api_key" "OpenSubtitles API key" }}"
   tstruct_token = "{{ promptStringOnce . "tstruct_token" "Tstruct token" }}"
+  gemini_api_key = "{{ promptStringOnce . "gemini_api_key" "Gemini API key" }}"
 {{- if eq $machine "cloudtop" }}
   fact_table = "{{ promptStringOnce . "fact_table" "BigQuery Fact Table (project:dataset.table)" }}"
 {{- else }}

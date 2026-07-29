@@ -11,10 +11,10 @@ set_wallpaper_macos() {
 set_wall_and_lockscreen() {
     local img="$1"
     local mode="$2"
-    
+
     if [ "$OS" = "Darwin" ]; then
         set_wallpaper_macos "$img"
-        # macOS doesn't have a separate lockscreen image setter easily exposed via CLI 
+        # macOS doesn't have a separate lockscreen image setter easily exposed via CLI
         # that matches 'betterlockscreen' functionality without external tools.
     else
         # Linux / X11 logic
@@ -27,7 +27,7 @@ set_wall_and_lockscreen() {
         else
             echo "No displays specified" && exit 1
         fi
-        
+
         if command -v betterlockscreen >/dev/null; then
             betterlockscreen -u "$img" --fx dimblur
         fi
@@ -37,26 +37,22 @@ set_wall_and_lockscreen() {
 
 folder="${XDG_PICTURES_DIR:-$HOME/Pictures}/wallpapers/rand"
 if [ "$OS" = "Darwin" ]; then
-    folder="$HOME/Pictures/wallpapers/rand"
+  folder="$HOME/Pictures/wallpapers/rand"
 fi
 
 wallpaper_folder_data="${XDG_DATA_HOME:-$HOME/.local/share}/wallpaper"
 mkdir -p "$wallpaper_folder_data"
-cache_until_now="$wallpaper_folder_data/tillnow"
 
 case "$1" in
-"rand")
-	while true; do
-        if [ -d "$folder" ]; then
-		    all=$(find "$folder" -maxdepth 1 \( ! -name .gitattributes \) -type f)
-            if [ -n "$all" ]; then
-                n_all="$(wc -l <<<"$all")"
-                shuffled="$(shuf -n "$n_all" <<<"$all")"
-                
-                # Simple random selection without the complex "cache_until_now" for now 
-                # unless we want to strictly port it. I'll stick to simple random for robustness.
-                wallpaper="$(shuf -n 1 <<<"$all")"
-                
+  "rand")
+    while true; do
+      if [ -d "$folder" ]; then
+        all=$(find "$folder" -maxdepth 1 \( ! -name .gitattributes \) -type f)
+        if [ -n "$all" ]; then
+          # Simple random selection without the complex "cache_until_now" for now
+          # unless we want to strictly port it. I'll stick to simple random for robustness.
+          wallpaper="$(shuf -n 1 <<<"$all")"
+
                 set_wall_and_lockscreen "$wallpaper" "$2"
             fi
         fi

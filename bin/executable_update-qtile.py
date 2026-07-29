@@ -4,11 +4,8 @@ import argparse
 import os
 import shutil
 import subprocess
-import sys
 import re
-from importlib.metadata import version
 from logging import getLogger
-from typing import TYPE_CHECKING
 import git
 
 # Mock logger/InteractiveCommandClient if not present
@@ -18,10 +15,13 @@ try:
 except ImportError:
     # Minimal fallback
     import logging
+
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
-    init_log = lambda l, **k: None
-    
+
+    def init_log(l, **k):
+        pass
+
     class InteractiveCommandClient:
         def restart(self):
             print("Restarting qtile...")
@@ -34,7 +34,9 @@ else:
 class UpdateQtile:
     def __init__(self) -> None:
         self.qtile = InteractiveCommandClient()
-        self.repo_path = os.path.join(os.getenv("XDG_CACHE_HOME", os.path.expanduser("~/.cache")), "yay", "qtile-git")
+        self.repo_path = os.path.join(
+            os.getenv("XDG_CACHE_HOME", os.path.expanduser("~/.cache")), "yay", "qtile-git"
+        )
         self.initial_cwd = os.getcwd()
         self.args = None
 
@@ -74,7 +76,7 @@ class UpdateQtile:
             source = f"https://github.com/{self.args.fork}/qtile"
         else:
             source = "https://github.com/qtile/qtile"
-            
+
         if self.args.branch is not None:
             logger.info("selected `%s` - branch `%s`", source, self.args.branch)
             return f"{source}#branch={self.args.branch}"
@@ -100,12 +102,12 @@ class UpdateQtile:
         logger.info("cloning AUR repo to %s", self.repo_path)
         aur_url = "https://aur.archlinux.org/qtile-git.git"
         git.Repo.clone_from(url=aur_url, to_path=self.repo_path)
-        
+
         logger.info("modifying PKGBUILD")
         pkgbuild_path = os.path.join(self.repo_path, "PKGBUILD")
         with open(pkgbuild_path, "r") as f:
             lines = f.readlines()
-            
+
         new_lines = []
         for index, line in enumerate(lines):
             new_lines.append(line)
@@ -117,15 +119,15 @@ class UpdateQtile:
                 new_lines.append('  export CFLAGS="$CFLAGS -I/usr/include/wlroots0.16"\n')
                 new_lines.append('  export LDFLAGS="$LDFLAGS -L/usr/lib/wlroots0.16"\n')
             if re.match(r".*cd qtile", line):
-                 # Inject git remote add right after cd qtile if needed, 
-                 # or simplistically after the next line
-                 pass
+                # Inject git remote add right after cd qtile if needed,
+                # or simplistically after the next line
+                pass
 
         # Since simple line-by-line injection is tricky with index lookaheads in a loop
         # that is modifying the list or appending, simpler is to rewrite the file completely
         # or accept the original logic was a bit fragile.
         # Keeping original logic structure but ensuring file is written.
-        
+
         with open(pkgbuild_path, "w") as f:
             f.writelines(new_lines)
 
@@ -133,10 +135,10 @@ class UpdateQtile:
         logger.info("installing with `makepkg`")
         # Use Popen to pipe 'yes' to makepkg
         # Warning: running makepkg -i usually requires sudo password for pacman
-        
+
         log_path = os.path.join(self.repo_path, "install.log")
         with open(log_path, "w") as log_file:
-             # makepkg -ris: r=remove deps, i=install, s=syncdeps
+            # makepkg -ris: r=remove deps, i=install, s=syncdeps
             try:
                 # We pipe 'y' to confirm installation
                 ps = subprocess.Popen(["yes"], stdout=subprocess.PIPE)
@@ -145,7 +147,7 @@ class UpdateQtile:
                     stdin=ps.stdout,
                     stdout=log_file,
                     stderr=subprocess.STDOUT,
-                    check=True
+                    check=True,
                 )
                 ps.wait()
             except subprocess.CalledProcessError:
@@ -161,7 +163,7 @@ class UpdateQtile:
 def main():
     if not os.path.exists(os.path.expanduser("~/.cache")):
         os.makedirs(os.path.expanduser("~/.cache"))
-        
+
     os.chdir(os.getenv("HOME"))
     up = UpdateQtile()
     up.remove_dir()

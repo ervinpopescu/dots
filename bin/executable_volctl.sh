@@ -17,7 +17,7 @@ if command -v pamixer >/dev/null 2>&1; then
         pamixer --allow-boost -i "$step" >/dev/null
     fi
     volume="$(pamixer --get-volume-human)"
-    
+
 elif command -v osascript >/dev/null 2>&1; then
     # macOS
     current_vol=$(osascript -e 'output volume of (get volume settings)')
@@ -26,11 +26,11 @@ elif command -v osascript >/dev/null 2>&1; then
     else
         new_vol=$((current_vol + step))
     fi
-    
+
     # Clamp between 0 and 100
     if [ "$new_vol" -gt 100 ]; then new_vol=100; fi
     if [ "$new_vol" -lt 0 ]; then new_vol=0; fi
-    
+
     osascript -e "set volume output volume $new_vol"
     volume="${new_vol}%"
 else
@@ -40,7 +40,7 @@ fi
 
 # Notification (Optional)
 if command -v dunstify >/dev/null 2>&1; then
-    # Only show notification if icon exists, otherwise fallback to generic or no icon? 
+    # Only show notification if icon exists, otherwise fallback to generic or no icon?
     # Actually dunstify works without icon, but let's check.
     icon_arg=""
     if [ -f "$icon" ]; then

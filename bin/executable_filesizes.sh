@@ -7,7 +7,7 @@ if [ ! -d "$path" ]; then
     exit 1
 fi
 
-# Use -d 1 (with space) for BSD/macOS compatibility. 
+# Use -d 1 (with space) for BSD/macOS compatibility.
 # Linux (GNU du) also supports -d, though --max-depth is standard.
 # sort -h is standard in modern sort (GNU and BSD).
 

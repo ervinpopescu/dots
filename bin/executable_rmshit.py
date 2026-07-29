@@ -5,7 +5,6 @@ import os
 import shutil
 import sys
 import argparse
-from pathlib import Path
 
 # Paths to clean (expanduser is handled later)
 GLOBS = [
@@ -90,19 +89,19 @@ FILES = [
 def get_files_to_remove():
     """Collect all files to remove based on GLOBS and FILES lists."""
     found_files = []
-    
+
     # Process globs
     for g in GLOBS:
         expanded = os.path.expanduser(g)
         found_files.extend(glob.glob(expanded))
-        
+
     # Process explicit list
     for f in FILES:
         expanded = os.path.expanduser(f)
         if os.path.lexists(expanded):
             found_files.append(expanded)
-            
-    return sorted(list(set(found_files))) # Remove duplicates
+
+    return sorted(list(set(found_files)))  # Remove duplicates
 
 
 def yesno(question, default="y"):
@@ -113,9 +112,13 @@ def yesno(question, default="y"):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Remove unwanted 'shitty' files from home directory.")
+    parser = argparse.ArgumentParser(
+        description="Remove unwanted 'shitty' files from home directory."
+    )
     parser.add_argument("-y", "--yes", action="store_true", help="Skip confirmation prompt")
-    parser.add_argument("--dry-run", action="store_true", help="Show what would be deleted without deleting")
+    parser.add_argument(
+        "--dry-run", action="store_true", help="Show what would be deleted without deleting"
+    )
     args = parser.parse_args()
 
     found = get_files_to_remove()

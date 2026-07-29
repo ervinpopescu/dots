@@ -25,7 +25,7 @@ def find_power_paths():
             # Use the first battery found
             if bat_path is None:
                 bat_path = p / "capacity"
-    
+
     return ac_path, bat_path
 
 
@@ -33,11 +33,15 @@ def dunstify(notification, urgency="normal", msg_id=NOTIFICATION_ID):
     """Send a notification using dunstify."""
     cmd = [
         "dunstify",
-        "-a", "batteryNotification",
-        "-I", "/usr/share/icons/Papirus/24x24/panel/battery-low.svg",
-        "-u", urgency,
-        "-r", msg_id,
-        notification
+        "-a",
+        "batteryNotification",
+        "-I",
+        "/usr/share/icons/Papirus/24x24/panel/battery-low.svg",
+        "-u",
+        urgency,
+        "-r",
+        msg_id,
+        notification,
     ]
     try:
         subprocess.run(cmd, check=False, stderr=subprocess.DEVNULL)
@@ -60,8 +64,8 @@ def main():
             ac_online = False
             if ac_path.exists():
                 ac_content = ac_path.read_text().strip()
-                ac_online = (int(ac_content) == 1)
-            
+                ac_online = int(ac_content) == 1
+
             percentage = 0
             if bat_path.exists():
                 bat_content = bat_path.read_text().strip()
@@ -71,7 +75,11 @@ def main():
                 if ac_online:
                     # Clear the warning if plugged in
                     try:
-                        subprocess.run(["dunstify", "-C", NOTIFICATION_ID], check=False, stderr=subprocess.DEVNULL)
+                        subprocess.run(
+                            ["dunstify", "-C", NOTIFICATION_ID],
+                            check=False,
+                            stderr=subprocess.DEVNULL,
+                        )
                     except FileNotFoundError:
                         pass
                 else:
@@ -81,8 +89,8 @@ def main():
                         msg_id=NOTIFICATION_ID,
                     )
         except ValueError:
-             # Handle cases where file read might return partial/empty content temporarily
-             pass
+            # Handle cases where file read might return partial/empty content temporarily
+            pass
         except Exception as e:
             print(f"Unexpected error: {e}", file=sys.stderr)
 
