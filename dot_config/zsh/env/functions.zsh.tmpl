@@ -1,3 +1,9 @@
+{{ if eq .machine "cloudtop" -}}
+function gcert() {
+  unset SSH_AUTH_SOCK && eval "$(tmux show-environment -s)" && gcertstatus -quiet || /usr/bin/gcert
+}
+{{ end -}}
+
 function calculator() {
   if [[ -z "$1" || "$1" == "-h" || "$1" == "--help" ]]; then
     echo "Usage: calculator <expression>"
@@ -384,6 +390,9 @@ function run_mkcons() {
   cd "$CONS_BASE/$1" || return 1
   mkdir -p conf csv har json logs sql ss traces txt pcap yaml
   touch README.md
+  if [[ -f "$CONS_BASE/default_GEMINI.md" ]]; then
+    cp "$CONS_BASE/default_GEMINI.md" GEMINI.md
+  fi
 }
 
 function mkcons() {

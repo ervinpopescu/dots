@@ -57,7 +57,7 @@ case "$1" in
         printf "Updating the IP address...\n"
         gateway=$(ip r | grep -vwE '(default)' | awk '{print $1}')
         if [ -z "$gateway" ]; then gateway="192.168.1.0/24"; fi
-        
+
         PHONE_IP=$(sudo arp-scan "$gateway" | grep -i "$PHONE_MAC" | awk '{print $1}')
         if [ -z "$PHONE_IP" ]; then
             printf "Couldn't find device's IP address. Make sure it's connected and screen is on.\n" >&2

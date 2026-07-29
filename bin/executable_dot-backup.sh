@@ -34,13 +34,13 @@ rm keybinds.md.bak
 # Only commit if there are changes
 if [ -n "$(git -C "$DOTS_FOLDER" status --porcelain)" ]; then
     git -C "$DOTS_FOLDER" add .
-    
+
     # Try to get a funny commit message, fallback to timestamp if it fails
     commit_msg=$(curl -sk https://whatthecommit.com/index.txt)
     if [ -z "$commit_msg" ]; then
         commit_msg="Update dotfiles: $(date '+%Y-%m-%d %H:%M:%S')"
     fi
-    
+
     git -C "$DOTS_FOLDER" commit -m "$commit_msg"
     git -C "$DOTS_FOLDER" push
 else

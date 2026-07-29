@@ -22,12 +22,12 @@ for branch in "${branches[@]}"; do
     echo "--------------------------------------------------"
     echo "Processing branch: $branch"
     git checkout "$branch"
-    
+
     echo "Fetching..."
     git fetch
-    
+
     # Check if we have an upstream to pull from
-    if git rev-parse --abbrev-ref @{u} >/dev/null 2>&1; then
+    if git rev-parse --abbrev-ref "@{u}" >/dev/null 2>&1; then
         echo "Pulling..."
         git pull
     else

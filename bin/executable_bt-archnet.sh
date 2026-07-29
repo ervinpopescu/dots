@@ -20,7 +20,7 @@ if ping "$ARCHNET_IP" -c 3 -W 5 &>/dev/null; then
 	printf "Starting bluetooth connection to 'archnet'...\n"
 	ssh -i "$SSH_KEY" -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "sudo -S start_music.sh"
 	sleep 2
-    
+
 	if ! bluetoothctl info "$ARCHNET_MAC" | grep -q 'Connected: yes'; then
 		bluetoothctl connect "$ARCHNET_MAC" &>/dev/null
 		printf "Connected!\n"

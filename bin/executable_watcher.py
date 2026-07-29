@@ -35,7 +35,7 @@ class Watcher:
         self.observer.schedule(event_handler, str(self.DIRECTORY_TO_WATCH), recursive=True)
         self.observer.start()
         print(f"Watching {self.DIRECTORY_TO_WATCH}...")
-        
+
         try:
             while True:
                 time.sleep(1)

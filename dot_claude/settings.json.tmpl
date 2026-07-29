@@ -1,60 +1,52 @@
 {
   "agentPushNotifEnabled": true,
   "autoDreamEnabled": false,
+  "effortLevel": "medium",
   "enabledPlugins": {
-    "agent-orchestration@claude-code-workflows": true,
-    "agent-teams@claude-code-workflows": true,
-    "cicd-automation@claude-code-workflows": true,
     "claude-md-management@claude-plugins-official": true,
-    "code-documentation@claude-code-workflows": true,
     "code-review@claude-plugins-official": true,
     "code-simplifier@claude-plugins-official": true,
     "commit-commands@claude-plugins-official": true,
-    "context-management@claude-code-workflows": true,
-    "developer-essentials@claude-code-workflows": true,
-    "error-debugging@claude-code-workflows": true,
-    "error-diagnostics@claude-code-workflows": true,
     "feature-dev@claude-plugins-official": true,
-    "git-pr-workflows@claude-code-workflows": true,
-    "github@claude-plugins-official": true,
-    "greptile@claude-plugins-official": true,
-    "kubernetes-operations@claude-code-workflows": true,
+    "frontend-design@claude-plugins-official": true,
     "lua-lsp@claude-plugins-official": true,
     "pyright-lsp@claude-plugins-official": true,
-    "python-development@claude-code-workflows": true,
     "rust-analyzer-lsp@claude-plugins-official": true,
     "security-guidance@claude-plugins-official": true,
-    "shell-scripting@claude-code-workflows": true,
     "skill-creator@claude-plugins-official": true,
-    "superpowers@claude-plugins-official": true,
-    "systems-programming@claude-code-workflows": true,
-    "unit-testing@claude-code-workflows": true,
-    "frontend-design@claude-plugins-official": true
+    "superpowers@claude-plugins-official": true
   },
+{{- if .is_cloudtop }}
+  "env": {
+    "ANTHROPIC_BASE_URL": "http://localhost:4000",
+    "ANTHROPIC_AUTH_TOKEN": "sk-dummy-key-for-proxy",
+    "CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS": "1",
+    "CLAUDE_CODE_DISABLE_STREAMING": "1",
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
+    "GEMINI_API_KEY": "{{ .gemini_api_key }}"
+  },
+{{- else }}
   "env": {
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
   },
-  "extraKnownMarketplaces": {
-    "claude-code-workflows": {
-      "source": {
-        "repo": "wshobson/agents",
-        "source": "github"
-      }
-    }
-  },
+{{- end }}
   "includeCoAuthoredBy": false,
-  "model": "sonnet",
   "inputNeededNotifEnabled": true,
+{{- if .is_cloudtop }}
+  "model": "sonnet[1m]",
+{{- else }}
+  "model": "sonnet",
+{{- end }}
   "skipAutoPermissionPrompt": true,
+  "skipDangerousModePermissionPrompt": true,
   "statusLine": {
     "command": "bash {{ .chezmoi.homeDir }}/.claude/statusline.sh",
     "type": "command"
   },
+  "tui": "fullscreen",
   "voice": {
     "enabled": false,
     "mode": "hold"
   },
-  "effortLevel": "medium",
-  "tui": "fullscreen",
   "voiceEnabled": false
 }

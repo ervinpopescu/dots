@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import os
 import sys
 import shutil
 import subprocess
@@ -14,6 +13,7 @@ except ImportError:
     sys.exit(1)
 
 BOOKMARKS_FILE = Path.home() / ".local" / "share" / "bookmarks"
+
 
 def main():
     if not shutil.which("rofi"):
@@ -45,6 +45,7 @@ def main():
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )
+
 
 if __name__ == "__main__":
     main()

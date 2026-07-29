@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import subprocess
-import os
 import sys
 import shutil
 from pathlib import Path
@@ -15,6 +14,7 @@ except ImportError:
 
 try:
     import notify2
+
     HAS_NOTIFY = True
 except ImportError:
     HAS_NOTIFY = False
@@ -25,7 +25,7 @@ def main():
         try:
             notify2.init("rofi-wallpaper")
         except Exception:
-            pass # Ignore if notification daemon is not available
+            pass  # Ignore if notification daemon is not available
 
     # Get XDG Pictures dir
     try:
@@ -35,14 +35,15 @@ def main():
         pictures_dir = Path.home() / "Pictures"
 
     directory = pictures_dir / "wallpapers" / "rand"
-    
+
     if not directory.exists():
         print(f"Error: Wallpaper directory {directory} not found.", file=sys.stderr)
         sys.exit(1)
 
     # Get list of wallpapers
-    wallpapers = [f.name for f in directory.iterdir() 
-                 if f.is_file() and not f.name.startswith(".git")]
+    wallpapers = [
+        f.name for f in directory.iterdir() if f.is_file() and not f.name.startswith(".git")
+    ]
     wallpapers.sort()
 
     if not wallpapers:
@@ -56,17 +57,17 @@ def main():
         rofi_args.extend(["-config", str(rofi_config)])
 
     r = Rofi(lines=min(len(wallpapers), 15), rofi_args=rofi_args)
-    
+
     index, key = r.select(prompt="Select wallpaper", options=wallpapers)
 
     if key == 0 and index != -1:
         selected_wallpaper = directory / wallpapers[index]
-        
+
         # Call run_wall.sh
         run_wall_cmd = ["run_wall.sh", str(selected_wallpaper), "all"]
         if shutil.which("run_wall.sh") is None:
-             # Try absolute path if not in PATH
-             run_wall_cmd[0] = str(Path.home() / "bin" / "run_wall.sh")
+            # Try absolute path if not in PATH
+            run_wall_cmd[0] = str(Path.home() / "bin" / "run_wall.sh")
 
         try:
             ret = subprocess.run(run_wall_cmd, check=False).returncode

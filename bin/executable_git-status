@@ -24,7 +24,7 @@ for repo in "$target_dir"/*; do
             cd "$repo" || exit
 
             is_dirty=0
-            
+
             # Check for modified/added/deleted files (staged or unstaged)
             if [ -n "$(git status --porcelain)" ]; then
                 echo -e "${RED}Dirty (Modified/Untracked)${NC}"
@@ -33,9 +33,9 @@ for repo in "$target_dir"/*; do
 
             # Check for unpushed commits
             # Check if upstream is configured
-            if git rev-parse --abbrev-ref @{u} >/dev/null 2>&1; then
-                ahead=$(git rev-list --count @{u}..HEAD)
-                behind=$(git rev-list --count HEAD..@{u})
+            if git rev-parse --abbrev-ref "@{u}" >/dev/null 2>&1; then
+              ahead=$(git rev-list --count "@{u}"..HEAD)
+              behind=$(git rev-list --count HEAD.."@{u}")
 
                 if [ "$ahead" -gt 0 ]; then
                     echo -e "${RED}Ahead by $ahead commit(s)${NC}"
