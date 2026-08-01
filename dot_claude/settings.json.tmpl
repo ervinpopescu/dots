@@ -16,6 +16,11 @@
     "skill-creator@claude-plugins-official": true,
     "superpowers@claude-plugins-official": true
   },
+  "permissions": {
+    "allow": [
+      "Bash(git push no-mistakes *)"
+    ]
+  },
 {{- if .is_cloudtop }}
   "env": {
     "ANTHROPIC_BASE_URL": "http://localhost:4000",

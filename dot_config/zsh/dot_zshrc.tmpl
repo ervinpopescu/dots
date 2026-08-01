@@ -13,7 +13,9 @@ zplug "woefe/git-prompt.zsh", use:"{git-prompt.zsh,examples/multiline.zsh}"
 zplug "zdharma-continuum/fast-syntax-highlighting"
 zplug "zsh-users/zsh-autosuggestions"
 zplug "agkozak/zsh-z"
+{{- if .is_cloudtop }}
 zplug "macunha1/zsh-terraform"
+{{- end }}
 
 if ! zplug check --verbose; then
     printf "Install? [y/N]: "
