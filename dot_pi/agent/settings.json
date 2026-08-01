@@ -1,0 +1,14 @@
+{
+  "defaultModel": "gemini-3.1-pro-preview",
+  "defaultProvider": "google",
+  "defaultThinkingLevel": "high",
+  "lastChangelogVersion": "0.83.0",
+  "theme": "dark",
+  "packages": [
+    "npm:pi-subagents",
+    "npm:pi-web-access",
+    "npm:context-mode",
+    "npm:pi-lens",
+    "npm:@narumitw/pi-plan-mode"
+  ]
+}
