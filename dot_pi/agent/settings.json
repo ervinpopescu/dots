@@ -1,6 +1,6 @@
 {
-  "defaultModel": "gemini-3.1-pro-preview",
-  "defaultProvider": "google",
+  "defaultModel": "gpt-5.6-sol",
+  "defaultProvider": "openai-codex",
   "defaultThinkingLevel": "high",
   "lastChangelogVersion": "0.83.0",
   "theme": "dark",
