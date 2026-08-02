@@ -1,5 +1,5 @@
 {
-  "model": "gemini-3.1-pro-preview",
-  "provider": "google",
+  "defaultModel": "gpt-5.6-sol",
+  "defaultProvider": "openai-codex",
   "reasoningLevel": "high"
 }
