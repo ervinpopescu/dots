@@ -1,6 +1,11 @@
 {
-  "defaultModel": "gpt-5.6-sol",
+{{- if .is_cloudtop }}
+  "defaultModel": "gemini-3.1-pro-preview",
+  "defaultProvider": "google",
+{{- else }}
+  "defaultModel": "gpt-5.6-luna",
   "defaultProvider": "openai-codex",
+{{- end }}
   "defaultThinkingLevel": "high",
   "lastChangelogVersion": "0.83.0",
   "packages": [
