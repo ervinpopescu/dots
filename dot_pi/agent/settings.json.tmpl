@@ -1,4 +1,6 @@
 {
+  "autocompleteMaxVisible": 15,
+  "collapseChangelog": true,
 {{- if .is_cloudtop }}
   "defaultModel": "gemini-3.1-pro-preview",
   "defaultProvider": "google",
@@ -7,13 +9,16 @@
   "defaultProvider": "openai-codex",
 {{- end }}
   "defaultThinkingLevel": "high",
+  "hideThinkingBlock": true,
   "lastChangelogVersion": "0.83.0",
   "packages": [
+    "npm:pi-mcp-adapter",
     "npm:pi-subagents",
     "npm:pi-web-access",
     "npm:context-mode",
     "npm:pi-lens",
     "npm:@narumitw/pi-plan-mode"
   ],
+  "quietStartup": true,
   "theme": "dark"
 }
