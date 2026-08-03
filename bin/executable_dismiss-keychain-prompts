@@ -1,0 +1,21 @@
+#!/bin/sh
+set -eu
+
+if [ "$(uname -s)" != "Darwin" ]; then
+    echo "This command only works on macOS." >&2
+    exit 1
+fi
+
+if ! pgrep -x SecurityAgent >/dev/null; then
+    echo "No keychain prompts found."
+    exit 0
+fi
+
+pkill -TERM -x SecurityAgent 2>/dev/null || true
+sleep 1
+
+if pgrep -x SecurityAgent >/dev/null; then
+    pkill -KILL -x SecurityAgent
+fi
+
+echo "Dismissed keychain prompts."
