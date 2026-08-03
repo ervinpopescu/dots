@@ -1,0 +1,356 @@
+#compdef pi
+
+# Zsh completion for pi, the minimal terminal coding harness.
+
+_pi_commands() {
+  local -a commands=(
+    'install:Install a package and add it to settings'
+    'remove:Remove a package and its source from settings'
+    'uninstall:Alias for remove'
+    'update:Update pi, installed packages, or model catalogs'
+    'list:List installed packages'
+    'config:Configure enabled package resources'
+    'auth:Print credentials for external clients'
+  )
+
+  _describe -t commands 'pi command' commands
+}
+
+_pi_providers() {
+  local provider model rest
+  local -a providers
+
+  while read -r provider model rest; do
+    [[ $provider == provider || -z $model ]] && continue
+    providers+=("$provider")
+  done < <(_call_program providers pi --list-models 2>/dev/null)
+
+  typeset -U providers
+  _wanted providers expl provider compadd -- $providers
+}
+
+_pi_selected_provider() {
+  local i
+
+  reply=
+  for (( i = 2; i < CURRENT; i++ )); do
+    case $words[i] in
+      --provider)
+        (( i++ ))
+        reply=$words[i]
+        ;;
+      --provider=*)
+        reply=${words[i]#--provider=}
+        ;;
+    esac
+  done
+}
+
+_pi_models() {
+  local provider model rest selected_provider
+  local -a models
+
+  if [[ $PREFIX == *:* ]]; then
+    compset -P '*:'
+    _values 'thinking level' off minimal low medium high xhigh max
+    return
+  fi
+
+  _pi_selected_provider
+  selected_provider=$reply
+
+  while read -r provider model rest; do
+    [[ $provider == provider || -z $model ]] && continue
+    [[ -n $selected_provider && $provider != $selected_provider ]] && continue
+
+    models+=("${model}:${provider}")
+    [[ -z $selected_provider ]] && models+=("${provider}/${model}:${provider}")
+  done < <(_call_program models pi --list-models 2>/dev/null)
+
+  _describe -t models model models
+}
+
+_pi_model_patterns() {
+  _sequence -s , _pi_models
+}
+
+_pi_tools() {
+  _values -s , tool read bash edit write grep find ls
+}
+
+_pi_session_ids() {
+  local root file name
+  local -a ids
+
+  root=${PI_CODING_AGENT_SESSION_DIR:-${PI_CODING_AGENT_DIR:-$HOME/.pi/agent}/sessions}
+  for file in "$root"/**/*.jsonl(N); do
+    name=${file:t:r}
+    [[ $name == *_* ]] && ids+=("${name#*_}")
+  done
+
+  typeset -U ids
+  _wanted session-ids expl 'session ID' compadd -- $ids
+}
+
+_pi_sessions() {
+  _alternative \
+    'session-files:session file:_files' \
+    'session-ids:session ID:_pi_session_ids'
+}
+
+_pi_installed_packages() {
+  local -a packages
+
+  packages=("${(@f)$(_call_program packages pi list --no-approve 2>/dev/null | awk '/^  [^ ]/ { sub(/^  /, ""); print }')}")
+  _wanted packages expl 'installed package' compadd -- $packages
+}
+
+_pi_package_prefixes() {
+  compadd -S '' -- 'npm:' 'git:' 'https://' 'ssh://'
+}
+
+_pi_package_source() {
+  _alternative \
+    'source-types:package source type:_pi_package_prefixes' \
+    'local-paths:local package:_files'
+}
+
+_pi_message_or_file() {
+  if [[ $PREFIX == @* ]]; then
+    compset -P '@'
+    _files
+  else
+    _message 'message or @file'
+  fi
+}
+
+_pi_extension_options() {
+  setopt local_options extended_glob
+
+  local line option description
+  local in_extension_options=0
+
+  if (( ! ${+_pi_extension_option_cache} )); then
+    typeset -ga _pi_extension_option_cache
+
+    while IFS= read -r line; do
+      if [[ $line == 'Extension CLI Flags:' ]]; then
+        in_extension_options=1
+        continue
+      fi
+      (( in_extension_options )) || continue
+      [[ $line == '  --'* ]] || continue
+
+      option=${${line#  }%%[[:space:]]*}
+      description=${line#*${option}}
+      description=${description##[[:space:]]#}
+      _pi_extension_option_cache+=("${option}:${description}")
+    done < <(_call_program extension-options pi --help 2>/dev/null)
+  fi
+
+  _describe -t extension-options 'extension option' _pi_extension_option_cache
+}
+
+_pi_install() {
+  _arguments -s -S \
+    '(-l --local)'{-l,--local}'[Install into project settings]' \
+    '(-a --approve)'{-a,--approve}'[Trust project-local files for this command]' \
+    '(-na --no-approve)'{-na,--no-approve}'[Ignore project-local files for this command]' \
+    '(-h --help)'{-h,--help}'[Show help]' \
+    '1:package source:_pi_package_source'
+}
+
+_pi_remove() {
+  _arguments -s -S \
+    '(-l --local)'{-l,--local}'[Remove from project settings]' \
+    '(-a --approve)'{-a,--approve}'[Trust project-local files for this command]' \
+    '(-na --no-approve)'{-na,--no-approve}'[Ignore project-local files for this command]' \
+    '(-h --help)'{-h,--help}'[Show help]' \
+    '1:package source:_pi_installed_packages'
+}
+
+_pi_update() {
+  _arguments -s -S \
+    '(targets)--self[Update pi only]' \
+    '(targets)--extensions[Update installed packages only]' \
+    '(targets)--models[Refresh model catalogs only]' \
+    '(targets)--all[Update pi and installed packages]' \
+    '(targets)--extension[Update one package only]:package source:_pi_installed_packages' \
+    '(-a --approve)'{-a,--approve}'[Trust project-local files for this command]' \
+    '(-na --no-approve)'{-na,--no-approve}'[Ignore project-local files for this command]' \
+    '--force[Reinstall pi even if the current version is latest]' \
+    '(-h --help)'{-h,--help}'[Show help]' \
+    '1:update target:->target'
+
+  if [[ $state == target ]]; then
+    local -a targets=('self:Update pi only' 'pi:Update pi only')
+    _describe -t targets 'update target' targets
+    _pi_installed_packages
+  fi
+}
+
+_pi_list() {
+  _arguments -s -S \
+    '(-a --approve)'{-a,--approve}'[Trust project-local files for this command]' \
+    '(-na --no-approve)'{-na,--no-approve}'[Ignore project-local files for this command]' \
+    '(-h --help)'{-h,--help}'[Show help]'
+}
+
+_pi_config() {
+  _arguments -s -S \
+    '(-l --local)'{-l,--local}'[Start in project settings]' \
+    '(-a --approve)'{-a,--approve}'[Trust project-local files for this command]' \
+    '(-na --no-approve)'{-na,--no-approve}'[Ignore project-local files for this command]' \
+    '(-h --help)'{-h,--help}'[Show help]'
+}
+
+_pi_auth_credential() {
+  local auth_command=$1
+  local -a arguments=(
+    '--model[Select the model used to resolve credentials]:model:_pi_models'
+    '--provider[Select the provider explicitly]:provider:_pi_providers'
+    '(-h --help)'{-h,--help}'[Show help]'
+  )
+
+  if [[ $auth_command == print-bearer-token ]]; then
+    arguments+=(
+      '--min-expiry[Set minimum token expiry, such as 30m]:duration:'
+    )
+  fi
+
+  _arguments -s -S $arguments
+}
+
+_pi_auth() {
+  local auth_command=$words[2]
+
+  if (( CURRENT > 2 )) && [[ $auth_command == (print-api-key|print-bearer-token) ]]; then
+    shift words
+    (( CURRENT-- ))
+    _pi_auth_credential $auth_command
+    return
+  fi
+
+  local -a commands=(
+    'print-api-key:Print the configured API key'
+    'print-bearer-token:Print or refresh the configured bearer token'
+  )
+
+  _arguments -s -S \
+    '(-h --help)'{-h,--help}'[Show help]' \
+    '1:auth command:_describe -t commands "auth command" commands'
+}
+
+_pi_main() {
+  local context state state_descr line
+  local argument_status
+  typeset -A opt_args
+
+  _arguments -s -S \
+    '--provider[Select a provider]:provider:_pi_providers' \
+    '--model[Select a model pattern or ID]:model:_pi_models' \
+    '--api-key[Override provider API key]:API key:' \
+    '--system-prompt[Replace the default system prompt]:text:' \
+    '*--append-system-prompt[Append text or file contents to the system prompt]:text or file:' \
+    '--mode[Select output mode]:mode:(text json rpc)' \
+    '(-p --print)'{-p,--print}'[Process the prompt and exit]' \
+    '(-c --continue)'{-c,--continue}'[Continue the most recent session]' \
+    '(-r --resume)'{-r,--resume}'[Select a session to resume]' \
+    '--session[Use a session file or partial UUID]:session:_pi_sessions' \
+    '--session-id[Use an exact project session ID, creating it if missing]:session ID:' \
+    '--fork[Fork a session file or partial UUID]:session:_pi_sessions' \
+    '--session-dir[Set the session storage directory]:directory:_files -/' \
+    '--no-session[Use an ephemeral session]' \
+    '(-n --name)'{-n,--name}'[Set the session display name]:name:' \
+    '--models[Set model patterns for model cycling]:model patterns:_pi_model_patterns' \
+    '(-nt --no-tools)'{-nt,--no-tools}'[Disable all tools by default]' \
+    '(-nbt --no-builtin-tools)'{-nbt,--no-builtin-tools}'[Disable built-in tools by default]' \
+    '(-t --tools)'{-t,--tools}'[Set the tool allowlist]:tools:_pi_tools' \
+    '(-xt --exclude-tools)'{-xt,--exclude-tools}'[Set the tool denylist]:tools:_pi_tools' \
+    '--thinking[Set the thinking level]:thinking level:(off minimal low medium high xhigh max)' \
+    '*'{-e,--extension}'[Load an extension file]:extension:_files' \
+    '(-ne --no-extensions)'{-ne,--no-extensions}'[Disable extension discovery]' \
+    '*--skill[Load a skill file or directory]:skill:_files' \
+    '(-ns --no-skills)'{-ns,--no-skills}'[Disable skill discovery]' \
+    '*--prompt-template[Load a prompt template file or directory]:prompt template:_files' \
+    '(-np --no-prompt-templates)'{-np,--no-prompt-templates}'[Disable prompt template discovery]' \
+    '*--theme[Load a theme file or directory]:theme:_files' \
+    '--no-themes[Disable theme discovery]' \
+    '(-nc --no-context-files)'{-nc,--no-context-files}'[Disable context file discovery]' \
+    '--export[Export a session to HTML]:input session:_files::output file:_files' \
+    '--list-models[List available models]::search:' \
+    '--verbose[Force verbose startup]' \
+    '(-a --approve)'{-a,--approve}'[Trust project-local files for this run]' \
+    '(-na --no-approve)'{-na,--no-approve}'[Ignore project-local files for this run]' \
+    '--offline[Disable startup network operations]' \
+    '(-h --help)'{-h,--help}'[Show help]' \
+    '(-v --version)'{-v,--version}'[Show version]' \
+    '1:pi command or message:->command' \
+    '*:message or @file:_pi_message_or_file'
+  argument_status=$?
+
+  if [[ $state == command ]]; then
+    if [[ $PREFIX == -* ]]; then
+      _pi_extension_options
+    else
+      _pi_commands
+      _pi_message_or_file
+    fi
+    return
+  fi
+
+  if [[ $PREFIX == -* ]]; then
+    _pi_extension_options
+  fi
+
+  return $argument_status
+}
+
+_pi() {
+  local command=$words[2]
+
+  if (( CURRENT > 2 )); then
+    case $command in
+      install)
+        shift words
+        (( CURRENT-- ))
+        _pi_install
+        return
+        ;;
+      remove|uninstall)
+        shift words
+        (( CURRENT-- ))
+        _pi_remove
+        return
+        ;;
+      update)
+        shift words
+        (( CURRENT-- ))
+        _pi_update
+        return
+        ;;
+      list)
+        shift words
+        (( CURRENT-- ))
+        _pi_list
+        return
+        ;;
+      config)
+        shift words
+        (( CURRENT-- ))
+        _pi_config
+        return
+        ;;
+      auth)
+        shift words
+        (( CURRENT-- ))
+        _pi_auth
+        return
+        ;;
+    esac
+  fi
+
+  _pi_main
+}
+
+_pi "$@"
