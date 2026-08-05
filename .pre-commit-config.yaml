@@ -69,7 +69,7 @@ repos:
     rev: v0.10.0.1
     hooks:
       - id: shellcheck
-        exclude: (^system/|\.zsh$)
+        exclude: (^system/|\.zsh$|\.tmpl$)
         args: [--severity=warning]
 
   - repo: https://github.com/scop/pre-commit-shfmt
