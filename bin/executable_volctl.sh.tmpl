@@ -54,3 +54,18 @@ if command -v dunstify >/dev/null 2>&1; then
         -r "$msgId" \
         -h int:value:"${volume%\%}" "${volume}"
 fi
+volume="$(pamixer --get-volume-human)"
+
+# Notification
+icon_arg=""
+if [ -f "$icon" ]; then
+    icon_arg="-I $icon"
+fi
+
+dunstify \
+    -a "changeVolume" \
+    -u low \
+    $icon_arg \
+    -r "$msgId" \
+    -h int:value:"${volume%\%}" "${volume}"
+{{- end }}
