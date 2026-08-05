@@ -16,7 +16,7 @@ return {
         zsh = { "shfmt" },
         javascript = { "prettier" },
         toml = { "taplo" },
-        markdown = { "prettier" },
+        markdown = { "mdformat" },
         jq = { "jqfmt" },
         python = {
           -- To fix auto-fixable lint errors.
@@ -28,8 +28,12 @@ return {
         },
         xml = { "xmlformatter" },
         rust = { "rustfmt" },
+{{ if .is_lenovo }}
         octave = { "mh_style" },
+{{ end }}
         json = { "jq" },
+        yaml = { "prettier" },
+        sql = { "sql_formatter" },
       },
       -- The options you set here will be merged with the builtin formatters.
       -- You can also define any custom formatters here.
