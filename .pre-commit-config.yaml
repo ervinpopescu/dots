@@ -43,7 +43,7 @@ repos:
         language: system
         entry: bash -c 'for f in "$@"; do jq -S . "$f" > "$f.tmp" && mv "$f.tmp" "$f"; done' --
         types: [json]
-        exclude: (\.tmpl$|VSCodium/)
+        exclude: (\.tmpl$|VSCodium/|\.luarc\.json$)
 
   # JSON / Markdown / CSS / JS / YAML — prettier (system install)
   - repo: local
