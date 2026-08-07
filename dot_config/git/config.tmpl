@@ -17,10 +17,10 @@ tool = nvimdiff
 wordregex = .
 
 [difftool]
-    prompt = true
+prompt = true
 
 [difftool "nvimdiff"]
-    cmd = "nvim -d \"$LOCAL\" \"$REMOTE\""
+cmd = "nvim -d \"$LOCAL\" \"$REMOTE\""
 
 [difftool "vscode"]
 cmd = code -r --wait --diff $LOCAL $REMOTE
@@ -50,18 +50,25 @@ signingkey = {{ if .is_hetzner }}~/.ssh/github.pub{{ else }}~/.ssh/id_ed25519.pu
 
 {{ if .is_cloudtop -}}
 [includeIf "gitdir:~/prjs/cgn/"]
-  path = ~/prjs/cgn/.gitconfig
+path = ~/prjs/cgn/.gitconfig
 
+[credential "https://*.*.sourcemanager.dev"]
+helper = gcloud.sh
 {{ end -}}
+
 [core]
 ; editor = code -r --wait
 editor = nvim
-	pager = delta
+pager = delta
+
 [safe]
-	directory = /usr/share/zsh/plugins/zsh-completions
+directory = /usr/share/zsh/plugins/zsh-completions
+
 [interactive]
-	diffFilter = delta --color-only
+diffFilter = delta --color-only
+
 [delta]
-	navigate = true
+navigate = true
+
 [merge]
-	conflictStyle = zdiff3
+conflictStyle = zdiff3
