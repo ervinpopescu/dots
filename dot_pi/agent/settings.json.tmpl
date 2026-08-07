@@ -2,7 +2,7 @@
   "autocompleteMaxVisible": 15,
   "collapseChangelog": true,
 {{- if .is_cloudtop }}
-  "defaultModel": "gemini-3.1-pro-preview",
+  "defaultModel": "gemini-3.6-flash",
   "defaultProvider": "google",
 {{- else }}
   "defaultModel": "gpt-5.6-luna",
@@ -17,7 +17,9 @@
     "npm:pi-web-access",
     "npm:context-mode",
     "npm:pi-lens",
-    "npm:@narumitw/pi-plan-mode"
+    "npm:@narumitw/pi-plan-mode",
+    "npm:pi-add-dir",
+    "npm:pi-interactive-shell"
   ],
   "quietStartup": true,
   "theme": "dark"
