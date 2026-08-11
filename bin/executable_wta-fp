@@ -1,0 +1,60 @@
+#!/bin/bash
+
+# Target remote, defaults to origin or $1
+REMOTE=${1:-origin}
+
+# Ask for repository directory
+if command -v fzf >/dev/null 2>&1; then
+    # Look for git repositories in the home directory
+    # Using fd if available for speed, fallback to find
+    if command -v fd >/dev/null 2>&1; then
+        REPO_DIR=$(fd -H '^\.git$' ~ --max-depth 4 -t d -x echo {//} | fzf --prompt="Select Repo (for $REMOTE)> " --select-1 --query "$PWD")
+    else
+        REPO_DIR=$(find ~ -maxdepth 4 -name .git -type d -prune 2>/dev/null | sed 's|/\.git$||' | fzf --prompt="Select Repo (for $REMOTE)> " --select-1 --query "$PWD")
+    fi
+
+    if [ -z "$REPO_DIR" ]; then
+        echo "No repository selected."
+        exit 1
+    fi
+else
+    # Fallback to readline completion if fzf is not installed
+    read -e -i "$PWD" -p "Enter repository directory: " REPO_DIR
+fi
+
+if [ ! -d "$REPO_DIR" ]; then
+    echo "Error: Directory '$REPO_DIR' does not exist."
+    exit 1
+fi
+
+cd "$REPO_DIR" || exit 1
+
+# Check if inside a git repository
+if [ ! -d ".git" ] && [ ! -f ".git" ]; then
+    echo "Error: '$REPO_DIR' is not a git repository."
+    exit 1
+fi
+
+echo "Repository: $(pwd)"
+
+# Extract all branch names associated with worktrees
+# `git worktree list --porcelain` outputs lines like:
+# branch refs/heads/branch_name
+BRANCHES=$(git worktree list --porcelain | grep '^branch ' | sed 's|^branch refs/heads/||')
+
+if [ -z "$BRANCHES" ]; then
+    echo "No worktree branches found."
+    exit 0
+fi
+
+echo "Force pushing the following branches to '$REMOTE':"
+echo "$BRANCHES"
+echo ""
+
+# Loop over the branches and force push them
+for BRANCH in $BRANCHES; do
+    echo "Pushing $BRANCH..."
+    git push --force "$REMOTE" "$BRANCH"
+done
+
+echo "Done."

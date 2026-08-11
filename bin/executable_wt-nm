@@ -1,0 +1,38 @@
+#!/bin/bash
+# ==============================================================================
+# Worktree no-mistakes runner
+# ==============================================================================
+# Asks for a repository directory, then continuously prompts to select a worktree
+# and runs `no-mistakes` in the chosen worktree.
+
+# 1. Ask for repository directory using fzf
+echo "Searching for git repositories..."
+REPO_DIR=$(find ~/ -maxdepth 4 -name .git -type d -prune 2>/dev/null | sed 's/\/.git$//' | fzf --prompt="Select repository > ")
+
+if [ -z "$REPO_DIR" ]; then
+  echo "No repository selected. Exiting."
+  exit 0
+fi
+
+if [ ! -d "$REPO_DIR" ]; then
+  echo "Selected repository directory does not exist: $REPO_DIR"
+  exit 1
+fi
+
+# 2. Loop: cd, clear, wt, no-mistakes
+while true; do
+  cd "$REPO_DIR" || break
+  clear
+
+  # wt prints the selected directory when run directly
+  WT_DIR=$(wt)
+
+  if [ -n "$WT_DIR" ] && [ -d "$WT_DIR" ]; then
+    cd "$WT_DIR" || continue
+    no-mistakes
+  else
+    # If the user cancels the wt prompt (ESC in fzf), exit the loop
+    echo "No worktree selected. Exiting."
+    break
+  fi
+done

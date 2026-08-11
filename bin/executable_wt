@@ -1,0 +1,56 @@
+#!/bin/bash
+
+# Function to find the selected worktree directory
+get_wt_dir() {
+  if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    echo "Error: Not inside a git repository or worktree." >&2
+    return 1
+  fi
+
+  # List worktrees and feed to fzf.
+  # Note: git worktree list format is: <path> <commit> [<branch>]
+  # We display the branch/path nicely and preview with branch name using git rev-parse on the worktree path ({1})
+  local selection
+  selection=$(git worktree list | fzf \
+    --height=40% \
+    --layout=reverse \
+    --border \
+    --prompt="Go to Worktree > " \
+    --header="Use Up/Down to navigate, Enter to select, Esc to cancel" \
+    --preview="echo -e '\033[1;36mBranch: '\$(git -C {1} rev-parse --abbrev-ref HEAD)'\033[0m\n'; git -C {1} log -n 5 --oneline --color=always" \
+    --preview-window="right:60%:wrap")
+
+  if [ -n "$selection" ]; then
+    echo "$selection" | awk '{print $1}'
+  fi
+}
+
+# Determine if the script is being sourced or executed
+if [ -n "$BASH_VERSION" ]; then
+  if [ "${BASH_SOURCE[0]}" != "${0}" ]; then
+    sourced=1
+  else
+    sourced=0
+  fi
+elif [ -n "$ZSH_VERSION" ]; then
+  case $ZSH_EVAL_CONTEXT in
+    *:file:*) sourced=1 ;;
+    *) sourced=0 ;;
+  esac
+else
+  (return 0 2>/dev/null) && sourced=1 || sourced=0
+fi
+
+if [ "$sourced" -eq 1 ]; then
+  # Sourced mode: change directory of the parent shell directly
+  dir=$(get_wt_dir)
+  if [ -n "$dir" ] && [ -d "$dir" ]; then
+    cd "$dir"
+  fi
+else
+  # Executable mode: print the path
+  dir=$(get_wt_dir)
+  if [ -n "$dir" ]; then
+    echo "$dir"
+  fi
+fi
