@@ -1,0 +1,16 @@
+#compdef wta-fp wta-diff
+
+local -a remotes
+if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  remotes=(${(f)"$(git remote 2>/dev/null)"})
+fi
+
+# Also add some common defaults just in case they aren't configured yet
+remotes+=(no-mistakes origin upstream)
+
+# Remove duplicates
+remotes=(${(u)remotes})
+
+_arguments \
+  '1:remote:(${remotes})' \
+  && return 0

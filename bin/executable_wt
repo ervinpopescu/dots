@@ -45,7 +45,7 @@ if [ "$sourced" -eq 1 ]; then
   # Sourced mode: change directory of the parent shell directly
   dir=$(get_wt_dir)
   if [ -n "$dir" ] && [ -d "$dir" ]; then
-    cd "$dir"
+    cd "$dir" || return 1
   fi
 else
   # Executable mode: print the path

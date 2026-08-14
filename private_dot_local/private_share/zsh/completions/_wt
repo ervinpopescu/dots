@@ -1,0 +1,3 @@
+#compdef wt wt-nm wta-lint wta-test
+
+_message "no arguments expected"

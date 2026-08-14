@@ -8,7 +8,7 @@ if command -v fzf >/dev/null 2>&1; then
     # Look for git repositories in the home directory
     # Using fd if available for speed, fallback to find
     if command -v fd >/dev/null 2>&1; then
-        REPO_DIR=$(fd -H '^\.git$' ~ --max-depth 4 -t d -x echo {//} | fzf --prompt="Select Repo (for $REMOTE)> " --select-1 --query "$PWD")
+        REPO_DIR=$(fd -H '^\.git$' ~ --max-depth 4 -t d -x echo "{//}" | fzf --prompt="Select Repo (for $REMOTE)> " --select-1 --query "$PWD")
     else
         REPO_DIR=$(find ~ -maxdepth 4 -name .git -type d -prune 2>/dev/null | sed 's|/\.git$||' | fzf --prompt="Select Repo (for $REMOTE)> " --select-1 --query "$PWD")
     fi

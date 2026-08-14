@@ -1,0 +1,6 @@
+#compdef wttr.sh
+
+_arguments \
+  '1:location:' \
+  '*:parameters:' \
+  && return 0
