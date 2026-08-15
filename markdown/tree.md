@@ -47,10 +47,16 @@ dots/                              # chezmoi source directory
 │       ├── plugins/               # Zsh plugins
 │       └── files/                 # Misc zsh files
 │
+├── private_dot_config/             # Private, profile-specific user config
+│   └── transmission-daemon/        # Aslan settings (RPC secret templated)
+│
 ├── system/                        # System-level configs, deployed via run_after_ script
 │   ├── etc/
 │   │   ├── xdg/                   # XDG defaults
 │   │   └── zsh/zshenv             # Sets ZDOTDIR system-wide
+│   ├── hetzner/                   # Aslan-only server configuration
+│   │   ├── etc/                   # Nginx, security, monitoring, and systemd
+│   │   └── www/                   # Nginx homepage and error pages
 │   └── usr/lib/python3.11/        # Custom Python logging library
 │
 ├── markdown/                      # Documentation
