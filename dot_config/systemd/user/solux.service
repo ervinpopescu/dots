@@ -1,0 +1,13 @@
+[Unit]
+Description=Solux Web App
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/ervin/prjs/solux
+ExecStart=/home/ervin/.local/share/nvm/versions/node/v22.8.0/bin/npm run preview -- --port 4173 --host 127.0.0.1
+Restart=on-failure
+Environment=PATH=/home/ervin/.local/share/nvm/versions/node/v22.8.0/bin:/usr/local/bin:/usr/bin:/bin
+
+[Install]
+WantedBy=default.target
