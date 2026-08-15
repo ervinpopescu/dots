@@ -1,0 +1,6 @@
+[DEFAULT]
+# Incremental bans: 1h -> 1d -> 2d -> 4d ... up to five weeks.
+bantime = 1h
+bantime.increment = true
+bantime.factor = 24
+bantime.maxtime = 5w
