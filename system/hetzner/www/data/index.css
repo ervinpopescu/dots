@@ -1,0 +1,46 @@
+html {
+  color-scheme: light dark;
+  background-color: #1e1e2e;
+}
+
+body {
+  font-family: CaskaydiaCove Nerd Font Mono;
+  font-size: 30px;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  min-height: 95vh;
+  /*gap: 10px;*/
+}
+
+.element {
+  max-width: fit-content;
+  max-height: fit-content;
+  margin-inline: auto;
+  padding: 10px;
+}
+
+a {
+  text-decoration: None;
+  color: white;
+}
+
+span.icon {
+  font-family: Font Awesome 6 Free Solid;
+}
+
+.icon {
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.15em;
+  margin-left: -0.125em;
+}
+
+svg > path {
+  fill: white;
+}

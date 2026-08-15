@@ -1,19 +1,81 @@
 {{ if .is_linux -}}
 #!/bin/bash
+set -euo pipefail
+
 CHEZMOI_SOURCE="{{ .chezmoi.sourceDir }}"
 SYSTEM_DIR="$CHEZMOI_SOURCE/system"
+SERVER_DIR="$SYSTEM_DIR/hetzner"
 
 [ ! -d "$SYSTEM_DIR" ] && exit 0
 
-changed=0
-while IFS= read -r -d '' src; do
-  dest="${src#"$SYSTEM_DIR"}"
+install_file() {
+  local src="$1" dest="$2" mode=644 owner=root group=root
+
+  case "$dest" in
+    /etc/grafana.ini)
+      mode=640
+      if getent group grafana >/dev/null 2>&1; then
+        group=grafana
+      fi
+      ;;
+  esac
+
   if ! cmp -s "$src" "$dest" 2>/dev/null; then
     echo "System file changed: $dest"
-    sudo install -Dm644 "$src" "$dest" 2>/dev/null || echo "WARN: needs sudo for $dest"
-    changed=1
+    sudo install -Dm"$mode" -o "$owner" -g "$group" "$src" "$dest" || \
+      echo "WARN: needs sudo or service account for $dest"
+  else
+    # Keep permissions and ownership correct even when file contents are unchanged.
+    sudo chmod "$mode" "$dest" 2>/dev/null || true
+    sudo chown "$owner:$group" "$dest" 2>/dev/null || true
   fi
-done < <(find "$SYSTEM_DIR" -type f -print0)
+}
 
-[ "$changed" -eq 0 ] && echo "System files: no changes detected."
+deploy_tree() {
+  local source_root="$1" excluded_root="${2:-}"
+  while IFS= read -r -d '' src; do
+    install_file "$src" "${src#"$source_root"}"
+  done < <(
+    if [ -n "$excluded_root" ]; then
+      find "$source_root" -type f ! -path "$excluded_root/*" -print0
+    else
+      find "$source_root" -type f -print0
+    fi
+  )
+}
+
+# Common system files are always deployed. The hetzner subtree is excluded from
+# this pass so server-only files cannot accidentally land on a workstation.
+deploy_tree "$SYSTEM_DIR" "$SERVER_DIR"
+
+{{ if .is_hetzner -}}
+if [ -d "$SERVER_DIR" ]; then
+  deploy_tree "$SERVER_DIR"
+
+  # Report files from managed server directories that are no longer in this
+  # source tree. They are intentionally not removed automatically because some
+  # may have been installed by the distribution or another service.
+  report_stale() {
+    local source_dir="$1" target_dir="$2"
+    [ -d "$target_dir" ] || return 0
+    while IFS= read -r -d '' dest; do
+      local rel="${dest#"$target_dir/"}"
+      if [ ! -f "$source_dir/$rel" ]; then
+        echo "WARN: stale unmanaged server file remains: $dest"
+      fi
+    done < <(sudo find "$target_dir" -type f -print0 2>/dev/null)
+  }
+
+  report_stale "$SERVER_DIR/etc/nginx/conf.d" /etc/nginx/conf.d
+  report_stale "$SERVER_DIR/etc/nginx/snippets" /etc/nginx/snippets
+  report_stale "$SERVER_DIR/etc/fail2ban/jail.d" /etc/fail2ban/jail.d
+  report_stale "$SERVER_DIR/etc/ssh/sshd_config.d" /etc/ssh/sshd_config.d
+fi
+{{ else -}}
+# These paths were previously in the common tree. Report them rather than
+# deleting them automatically if an older apply left them on a workstation.
+for stale in /etc/nginx/conf.d/solux.conf /www/data/index.html /www/data/index.css; do
+  [ -e "$stale" ] && echo "WARN: stale server file remains on non-hetzner host: $stale"
+done
+{{ end -}}
 {{ end -}}

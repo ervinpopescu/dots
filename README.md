@@ -35,7 +35,13 @@ chezmoi apply
 ```
 
 System files under `system/` (e.g. `/etc/zsh/zshenv`) are deployed automatically
-via a post-apply script with `sudo`.
+via a post-apply script with `sudo`. The `system/hetzner/` subtree is applied only
+when the machine profile is `aslan`/`hetzner`; it contains the server's Nginx,
+monitoring, security, and service overrides.
+
+The former `archnet-cfg` repository remains useful for destructive Hetzner
+installation, package bootstrap, and service-data migration. It must not also
+deploy files managed by this repository.
 
 ---
 
