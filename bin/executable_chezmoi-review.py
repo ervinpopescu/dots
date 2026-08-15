@@ -144,7 +144,9 @@ def main():
         <span id="total-count">0</span>
     </div>
   </div>
-  <div>
+  <div class="flex flex-wrap gap-2 justify-end">
+    <button id="queue-viewed" class="btn btn-secondary btn-sm" type="button">Queue viewed + hide</button>
+    <button id="show-viewed" class="btn btn-ghost btn-sm" type="button">Show viewed</button>
     <button class="btn btn-primary shadow-lg" onclick="openReviewModal()">Review Changes</button>
   </div>
 </div>
@@ -192,6 +194,40 @@ def main():
     const updateProgress = () => {
       document.getElementById('viewed-count').textContent = viewedCount;
     };
+
+    const viewedFiles = () => [...panels]
+      .filter(panel => panel.querySelector('.viewed-checkbox').checked)
+      .map(panel => panel.getAttribute('data-file'));
+
+    const hideViewed = () => panels.forEach(panel => {
+      if (panel.querySelector('.viewed-checkbox').checked) panel.classList.add('hidden');
+    });
+
+    const showViewed = () => panels.forEach(panel => panel.classList.remove('hidden'));
+
+    document.getElementById('queue-viewed').addEventListener('click', () => {
+      const files = viewedFiles();
+      if (!files.length) {
+        alert('Mark at least one file as Viewed first.');
+        return;
+      }
+
+      const text = `I reviewed these chezmoi files; exclude them from the remaining review:\\n${files.map(file => `- ${file}`).join('\\n')}`;
+      if (!window.lavish || !window.lavish.queuePrompt) {
+        alert('Lavish queueing is unavailable in this view.');
+        return;
+      }
+
+      window.lavish.queuePrompt(text, {
+        tag: 'reviewed-files',
+        text: `Exclude ${files.length} reviewed file${files.length === 1 ? '' : 's'} from the remaining review`,
+        queueKey: 'reviewed-files',
+        data: { files }
+      });
+      hideViewed();
+    });
+
+    document.getElementById('show-viewed').addEventListener('click', showViewed);
 
     // Use event delegation for better performance
     document.getElementById('panels-container').addEventListener('change', (e) => {
