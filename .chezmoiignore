@@ -26,6 +26,10 @@ bin/battery-notification.py
 bin/dismiss-keychain-prompts
 {{ end }}
 
+{{ if not .is_hetzner }}
+.config/transmission-daemon/**
+{{ end }}
+
 {{ if not .is_cloudtop }}
 bin/send_cmd_tmux.py
 {{ end }}
