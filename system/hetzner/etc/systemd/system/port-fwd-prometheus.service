@@ -1,0 +1,18 @@
+[Unit]
+Description=Port forwarding for prometheus-k8s
+Requires=minikube.service
+After=minikube.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+ExecStart=/usr/bin/kubectl --context=prod-docker --namespace=monitoring port-forward --address=127.0.0.1 svc/prometheus 9092:9090
+ExecReload=/bin/kill -s HUP $MAINPID
+TimeoutSec=0
+Restart=always
+RestartSec=2
+KillMode=mixed
+
+[Install]
+WantedBy=multi-user.target

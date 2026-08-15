@@ -1,0 +1,9 @@
+[sshd]
+enabled   = true
+filter    = sshd
+banaction = nftables-multiport
+backend   = systemd
+maxretry  = 5
+findtime  = 1d
+bantime   = 2w
+ignoreip  = 127.0.0.1/8,192.168.0.0/16,aslan.home.ro
