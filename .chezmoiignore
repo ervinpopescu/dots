@@ -28,6 +28,7 @@ bin/dismiss-keychain-prompts
 
 {{ if not .is_hetzner }}
 .config/transmission-daemon/**
+.config/systemd/**
 {{ end }}
 
 {{ if not .is_cloudtop }}
