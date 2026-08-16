@@ -122,6 +122,9 @@ alias rm="rm -ri"
 alias stg="sudo suspend-toggle"
 alias sway="sway --unsupported-gpu"
 alias systeroid-tui="systeroid-tui --bg-color 1e1e2e"
+{{ if .is_macbook -}}
+alias tailscale="/Applications/Tailscale.app/Contents/MacOS/Tailscale"
+{{ end -}}
 alias tty-clock="tty-clock -c -C 7 -f '%a, %d %b'"
 alias u='sudo pacman -Syu'
 alias v="vscodium"
