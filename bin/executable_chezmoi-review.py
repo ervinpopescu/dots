@@ -16,9 +16,7 @@ def main():
         sys.exit(f"Failed to run chezmoi status: {e}")
 
     lines = [
-        l
-        for l in status_out.split("\n")
-        if l.strip() and not l.startswith("chezmoi: warning")
+        l for l in status_out.split("\n") if l.strip() and not l.startswith("chezmoi: warning")
     ]
     files_status = {}
     for line in lines:
@@ -47,9 +45,7 @@ def main():
 
     print("Gathering chezmoi diff...")
     try:
-        diff_text = subprocess.check_output(["chezmoi", "diff", "--no-pager"]).decode(
-            "utf-8"
-        )
+        diff_text = subprocess.check_output(["chezmoi", "diff", "--no-pager"]).decode("utf-8")
     except subprocess.CalledProcessError as e:
         diff_text = e.output.decode("utf-8")
 
@@ -418,9 +414,7 @@ def main():
     try:
         with open(out_path, "w") as f:
             f.write(html_out)
-        print(
-            f"\n\033[1;32m✓ Generated interactive review artifact at {out_path}\033[0m"
-        )
+        print(f"\n\033[1;32m✓ Generated interactive review artifact at {out_path}\033[0m")
         print("\033[1mTo open the review UI, run:\033[0m")
         print(f"  npx -y lavish-axi {out_path}\n")
     except Exception as e:
