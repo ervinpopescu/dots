@@ -16,7 +16,9 @@ def main():
         sys.exit(f"Failed to run chezmoi status: {e}")
 
     lines = [
-        l for l in status_out.split("\n") if l.strip() and not l.startswith("chezmoi: warning")
+        l
+        for l in status_out.split("\n")
+        if l.strip() and not l.startswith("chezmoi: warning")
     ]
     files_status = {}
     for line in lines:
@@ -45,7 +47,9 @@ def main():
 
     print("Gathering chezmoi diff...")
     try:
-        diff_text = subprocess.check_output(["chezmoi", "diff", "--no-pager"]).decode("utf-8")
+        diff_text = subprocess.check_output(["chezmoi", "diff", "--no-pager"]).decode(
+            "utf-8"
+        )
     except subprocess.CalledProcessError as e:
         diff_text = e.output.decode("utf-8")
 
@@ -151,6 +155,8 @@ def main():
   </div>
 </div>
 
+<div id="review-status" class="alert alert-info hidden mx-6 mt-4 max-w-[95%] mx-auto" role="status"></div>
+
 <div id="panels-container" class="p-6 max-w-[95%] mx-auto mt-4">
   __FILE_PANELS__
 </div>
@@ -195,6 +201,12 @@ def main():
       document.getElementById('viewed-count').textContent = viewedCount;
     };
 
+    const showStatus = message => {
+      const status = document.getElementById('review-status');
+      status.textContent = message;
+      status.classList.remove('hidden');
+    };
+
     const viewedFiles = () => [...panels]
       .filter(panel => panel.querySelector('.viewed-checkbox').checked)
       .map(panel => panel.getAttribute('data-file'));
@@ -208,13 +220,13 @@ def main():
     document.getElementById('queue-viewed').addEventListener('click', () => {
       const files = viewedFiles();
       if (!files.length) {
-        alert('Mark at least one file as Viewed first.');
+        showStatus('Mark at least one file as Viewed first.');
         return;
       }
 
       const text = `I reviewed these chezmoi files; exclude them from the remaining review:\\n${files.map(file => `- ${file}`).join('\\n')}`;
       if (!window.lavish || !window.lavish.queuePrompt) {
-        alert('Lavish queueing is unavailable in this view.');
+        showStatus('Lavish queueing is unavailable in this view.');
         return;
       }
 
@@ -225,6 +237,7 @@ def main():
         data: { files }
       });
       hideViewed();
+      showStatus(`Queued ${files.length} reviewed file${files.length === 1 ? '' : 's'} and hid them.`);
     });
 
     document.getElementById('show-viewed').addEventListener('click', showViewed);
@@ -405,7 +418,9 @@ def main():
     try:
         with open(out_path, "w") as f:
             f.write(html_out)
-        print(f"\n\033[1;32m✓ Generated interactive review artifact at {out_path}\033[0m")
+        print(
+            f"\n\033[1;32m✓ Generated interactive review artifact at {out_path}\033[0m"
+        )
         print("\033[1mTo open the review UI, run:\033[0m")
         print(f"  npx -y lavish-axi {out_path}\n")
     except Exception as e:
