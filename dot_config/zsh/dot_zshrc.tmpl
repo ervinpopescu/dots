@@ -4,9 +4,18 @@ export ZPLUG_HOME="$HOME/.local/share/zplug"
 {{ else if .is_macbook -}}
 export ZPLUG_HOME=/opt/homebrew/opt/zplug
 {{ else -}}
-export ZPLUG_HOME=/usr/share/zsh/scripts/zplug
+export ZPLUG_HOME="${XDG_DATA_HOME:-$HOME/.local/share}/zplug"
+export ZPLUG_BIN="$ZPLUG_HOME/bin"
+export ZPLUG_CACHE_DIR="$ZPLUG_HOME/cache"
+export ZPLUG_ERROR_LOG="$ZPLUG_HOME/.error_log"
+export ZPLUG_LOADFILE="$ZPLUG_HOME/packages.zsh"
+export ZPLUG_REPOS="$ZPLUG_HOME/repos"
 {{ end -}}
+{{ if and (not .is_cloudtop) (not .is_macbook) -}}
+source /usr/share/zsh/scripts/zplug/init.zsh
+{{ else -}}
 source "$ZPLUG_HOME/init.zsh"
+{{ end -}}
 
 zplug "zsh-users/zsh-history-substring-search"
 zplug "woefe/git-prompt.zsh", use:"{git-prompt.zsh,examples/multiline.zsh}"
