@@ -60,6 +60,10 @@ if [ -d "$SERVER_DIR" ]; then
     [ -d "$target_dir" ] || return 0
     while IFS= read -r -d '' dest; do
       local rel="${dest#"$target_dir/"}"
+      # This is an Arch-provided baseline, not a repository-managed file.
+      if [ "$target_dir" = "/etc/ssh/sshd_config.d" ] && [ "$rel" = "99-archlinux.conf" ]; then
+        continue
+      fi
       if [ ! -f "$source_dir/$rel" ]; then
         echo "WARN: stale unmanaged server file remains: $dest"
       fi
