@@ -31,6 +31,10 @@ bin/dismiss-keychain-prompts
 .config/systemd/**
 {{ end }}
 
+{{ if .is_hetzner }}
+.ssh/config.d/hetzner
+{{ end }}
+
 {{ if not .is_cloudtop }}
 bin/send_cmd_tmux.py
 {{ end }}

@@ -1,6 +1,9 @@
 Host github.com
   Hostname ssh.github.com
   Port 443
+{{- if .is_hetzner }}
+  IdentityFile ~/.ssh/github
+{{- end }}
 {{- if eq .chezmoi.os "darwin" }}
   AddKeysToAgent yes
   UseKeychain yes
