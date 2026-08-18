@@ -22,9 +22,14 @@ zplug "woefe/git-prompt.zsh", use:"{git-prompt.zsh,examples/multiline.zsh}"
 zplug "zdharma-continuum/fast-syntax-highlighting"
 zplug "zsh-users/zsh-autosuggestions"
 zplug "agkozak/zsh-z"
+zplug "olets/zsh-abbr", defer:2
 {{- if .is_cloudtop }}
 zplug "macunha1/zsh-terraform"
 {{- end }}
+
+# zsh-abbr is loaded by zplug after compinit, rather than sourced last.
+ABBR_TMPDIR=/tmp/zsh-abbr-user/
+ABBR_USER_ABBREVIATIONS_FILE="$ZDOTDIR"/files/abbreviations
 
 if ! zplug check --verbose; then
     printf "Install? [y/N]: "
@@ -60,13 +65,4 @@ source "$ZDOTDIR/rc/command_not_found_handler.zsh"
 source "$ZDOTDIR/rc/misc.zsh"
 {{ if ne .machine "cloudtop" -}}
 source "$ZDOTDIR/rc/hooks.zsh"
-{{ end -}}
-
-# zsh-abbr is special, needs to be at the end
-ABBR_TMPDIR=/tmp/zsh-abbr-user/
-ABBR_USER_ABBREVIATIONS_FILE="$ZDOTDIR"/files/abbreviations
-{{ if .is_macbook -}}
-source /opt/homebrew/share/zsh-abbr/zsh-abbr.zsh
-{{ else -}}
-source /usr/share/zsh/plugins/zsh-abbr/zsh-abbr.zsh
 {{ end -}}
