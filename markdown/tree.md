@@ -61,6 +61,7 @@ dots/                              # chezmoi source directory
 │
 ├── markdown/                      # Documentation
 │   ├── features.md
+│   ├── profiles.md                # Machine profile matrix and detection
 │   ├── keybinds.md
 │   ├── tree.md                    # This file
 │   └── archinstall.md             # Arch Linux installation guide
