@@ -9,7 +9,8 @@
    ▀▀▀ ▀▀    ▀▀▀▀       ▀▀▀▀    ▀▀▀▀▀▀
 ```
 
-Arch Linux dotfiles for two machines — `lenovo` (Wayland) and `cloudtop` (X11/HiDPI).
+Cross-platform dotfiles for five machine profiles: `lenovo`, `cloudtop`,
+`macbook`, `hp`, and `hetzner` (the `aslan` server hostname).
 Managed with [chezmoi](https://www.chezmoi.io/), secrets age-encrypted, single branch.
 
 **Stack:** Qtile · Zsh · Neovim (LazyVim) · Alacritty · Catppuccin Mocha
@@ -48,6 +49,7 @@ deploy files managed by this repository.
 ## Docs
 
 - [Features](./markdown/features.md) — configs, tools, machine-specific behaviour
+- [Profiles](./markdown/profiles.md) — profile detection, capabilities, and exclusions
 - [Keybindings](./markdown/keybinds.md) — Qtile key reference
 - [Directory tree](./markdown/tree.md) — repo layout explained
 - [Arch install guide](./markdown/archinstall.md)
@@ -56,13 +58,18 @@ deploy files managed by this repository.
 
 ## Machine Profiles
 
-| Profile    | Hostname | Display     | Battery | Cursor |
-| ---------- | -------- | ----------- | ------- | ------ |
-| `lenovo`   | lenovo   | Wayland     | yes     | 24px   |
-| `cloudtop` | cloudtop | X11 (HiDPI) | no      | 48px   |
+| Profile    | Hostname | Platform / session      | Battery | Cursor |
+| ---------- | -------- | ----------------------- | ------- | ------ |
+| `lenovo`   | lenovo   | Linux / Qtile Wayland   | yes     | 24px   |
+| `cloudtop` | cloudtop | Linux / Qtile X11 HiDPI | no      | 48px   |
+| `macbook`  | prompted | macOS / native desktop  | yes     | n/a    |
+| `hp`       | hp       | Linux / Qtile X11       | yes     | 48px   |
+| `hetzner`  | aslan    | Linux / headless server | no      | n/a    |
 
-Templates use `{{ if .is_lenovo }}` / `{{ if .is_cloudtop }}` guards.
-Machine is auto-detected from hostname; new machines are prompted on first `chezmoi init`.
+The profiles are auto-selected for the `lenovo`, `cloudtop`, `hp`, and `aslan`
+hostnames. `macbook` and unknown hosts use the profile prompt during
+`chezmoi init`. See [Profiles](./markdown/profiles.md) for all capability flags
+and machine-specific behavior.
 
 ---
 

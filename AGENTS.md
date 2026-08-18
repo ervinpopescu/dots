@@ -2,7 +2,7 @@
 
 ## What This Is
 
-Personal dotfiles repository for an Arch Linux setup, managed with [chezmoi](https://www.chezmoi.io/). Uses Go templates for machine-conditional configs and age encryption for secrets. Single branch supports multiple machines (`lenovo`, `cloudtop`).
+Personal dotfiles repository managed with [chezmoi](https://www.chezmoi.io/). Uses Go templates for machine-conditional configs and age encryption for secrets. A single branch supports five profiles: `lenovo`, `cloudtop`, `macbook`, `hp`, and `hetzner` (`aslan`).
 
 ## Installation
 
@@ -54,15 +54,6 @@ Files ending in `.tmpl` are Go templates rendered by chezmoi. Template variables
 - Catppuccin Mocha is the color scheme used across tools (zsh syntax highlighting, Qtile themes, FZF)
 
 ## Known Issues / TODOs
-
-- `.is_arch` is referenced in `dot_config/zsh/dot_zshrc.tmpl` and
-  `dot_config/zsh/rc/command_not_found_handler.zsh.tmpl` but is never
-  defined in `.chezmoi.toml.tmpl`'s `[data]` block. Go templates treat a
-  missing map key as falsy, so `{{ if .is_arch }}` is always false on
-  every machine — including lenovo/cloudtop, which are Arch and should
-  get the pacman-based `command_not_found_handler`. Likely needs
-  `is_arch = {{ or (eq $machine "lenovo") (eq $machine "cloudtop") }}`
-  (or similar) added to `.chezmoi.toml.tmpl`.
 
 - `dot_claude/settings.json.tmpl` drifts frequently: Claude Code rewrites
   `~/.claude/settings.json` in its own non-alphabetical key order whenever

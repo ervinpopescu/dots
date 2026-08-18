@@ -62,13 +62,14 @@ Two configs: `qtile/` (X11) and `qtile-wl/` (Wayland). Both share the same archi
 
 ## Machine Profiles
 
-Managed via chezmoi templates. Two active profiles:
+Managed via chezmoi templates. The complete profile matrix is documented in
+[profiles.md](./profiles.md). The main differences are:
 
-| Variable      | `lenovo`          | `cloudtop`           |
-| ------------- | ----------------- | -------------------- |
-| `has_wayland` | true              | false                |
-| `has_battery` | true              | false                |
-| Cursor size   | 24 (standard DPI) | 48 (HiDPI)           |
-| picom backend | GLX               | xrender              |
-| LSP extras    | —                 | lemminx (Apigee XSD) |
-| Git includeIf | —                 | cgn project config   |
+| Variable         | `lenovo`      | `cloudtop`        | `macbook`      | `hp`                  | `hetzner`                      |
+| ---------------- | ------------- | ----------------- | -------------- | --------------------- | ------------------------------ |
+| `is_linux`       | true          | true              | false          | true                  | true                           |
+| `is_server`      | false         | false             | false          | false                 | true                           |
+| `has_wayland`    | true          | false             | false          | false                 | false                          |
+| `has_battery`    | true          | false             | true           | true                  | false                          |
+| Desktop stack    | Qtile Wayland | Qtile X11         | native macOS   | Qtile X11             | headless                       |
+| Special behavior | standard DPI  | HiDPI, Apigee LSP | Homebrew paths | battery-aware desktop | `system/hetzner/` server files |
