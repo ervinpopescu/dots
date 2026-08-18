@@ -560,9 +560,8 @@ zathura
 zathura-pdf-mupdf
 zig
 zram-generator
+zplug
 zsh
-zsh-autosuggestions
 zsh-completions
-zsh-fast-syntax-highlighting
 zsh-notify-git
 zsh-you-should-use
