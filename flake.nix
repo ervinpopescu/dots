@@ -65,6 +65,7 @@
             sops-nix.homeManagerModules.sops
             ./nix/home/profiles/common.nix
             ./nix/home/profiles/development.nix
+            ./nix/home/profiles/legacy-static.nix
             ./nix/home/profiles/agents.nix
             ./nix/home/profiles/${profile}.nix
             {
@@ -128,6 +129,7 @@
                 imports = [
                   ./nix/home/profiles/common.nix
                   ./nix/home/profiles/development.nix
+                  ./nix/home/profiles/legacy-static.nix
                   ./nix/home/profiles/agents.nix
                   ./nix/home/profiles/macbook.nix
                 ];
