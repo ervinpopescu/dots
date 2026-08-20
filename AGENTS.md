@@ -2,36 +2,31 @@
 
 ## What This Is
 
-Personal dotfiles managed with [chezmoi](https://www.chezmoi.io/). Go templates
-provide machine-conditional configuration and age encryption protects secrets.
-One branch supports five profiles: `lenovo`, `cloudtop`, `macbook`, `hp`, and
-`hetzner` (`aslan`).
+Cross-platform configuration repository managed by a pinned Nix flake. Home Manager owns user configuration and development tools, nix-darwin integrates macOS, and System Manager owns migrated Aslan runtime files. Active outputs support `lenovo`, `cloudtop`, `macbook`, `hp`, and `aslan`. Cloudtop uses the invoking account's existing `$HOME` under impure evaluation and must never assume or create `/home/ervin`.
 
 ## Installation
 
-```bash
-chezmoi init --source /path/to/this/repo   # prompts for machine profile + secrets
-chezmoi apply
-```
-
-Secrets are age-encrypted. Place the age key at
-`~/.config/chezmoi/key.txt` before initialization.
+See `markdown/nix-migration.md` and `markdown/nix-operations.md`. The primary
+entrypoint is `flake.nix`; Linux hosts use standalone Home Manager, macOS uses
+nix-darwin, and Aslan system files use System Manager. Encrypted secrets use
+sops-nix.
 
 ## Repository Structure
 
-- `dot_config/` - XDG config home (`$HOME/.config`) in chezmoi source layout
-- `bin/` - user scripts for `$HOME/bin` (files prefixed `executable_`)
-- `system/` - system configs for `/etc` and `/usr`, deployed by
-  `run_after_system-deploy.sh.tmpl`; `arch/` and `hetzner/` subtrees are
-  conditionally applied
-- `dot_agents/` - shared global agent guidance
-- `dot_pi/` - Pi configuration and private agent files
-- `pkgs` - complete package list
-- `.chezmoi.toml.tmpl` - machine detection, secrets, and age settings
-- `.chezmoiignore` - machine-conditional file exclusions
-- `markdown/` - feature, keybind, installation, and directory-tree documentation
+- `nix/` — Home Manager, nix-darwin, System Manager, and profile modules
+- `dot_config/` — transitional source material for user configuration
+- `dot_agents/` — shared global agent guidance
+- `dot_pi/` — Pi configuration and private agent files
+- `bin/` — user scripts for `$HOME/bin` (prefixed `executable_`)
+- `system/` — transitional system source material; `arch/` remains legacy-host scoped while `hetzner/` feeds the Aslan System Manager configuration
+- `secrets/` — sops-nix encrypted secrets and instructions
+- `flake.nix` — pinned multi-host entrypoint
+- `pkgs` — transitional legacy package inventory
+- `.chezmoi.toml.tmpl` — transitional chezmoi config template
+- `.chezmoiignore` — transitional machine-conditional exclusions
+- `markdown/` — documentation (features, profiles, migration, operations, keybinds, tree)
 
-Preview changes with `chezmoi-dry-apply` or
+Preview legacy chezmoi changes with `chezmoi-dry-apply` or
 `system-deploy.sh --dry-run`. `chezmoi apply --dry-run` alone skips hooks, and
 these wrappers detect the active worktree when run from one.
 
@@ -62,13 +57,9 @@ lives under `lua/`, and formatting uses `stylua.toml`.
 
 ## Templating
 
-Files ending in `.tmpl` are Go templates rendered by chezmoi. Variables in
-`.chezmoi.toml.tmpl` include machine flags (`is_lenovo`, `is_cloudtop`,
-`is_macbook`, `is_hp`, `is_hetzner`, `is_server`, and `is_linux`) and secrets
-(`opensubtitles_api_key`, `opensubtitles_username`, `opensubtitles_password`,
-`tstruct_token`, and `openweather_api_key`). The
-`encrypted_` prefix marks age-encrypted files; `private_` marks source
-directories deployed with mode 0700.
+New machine conditionals belong in Nix profile modules under `nix/`; do not add
+new Go templates or chezmoi-only flags. Existing `.tmpl` files are transitional
+source material and are removed as their destinations move to Home Manager.
 
 ## Conventions
 
@@ -81,3 +72,10 @@ directories deployed with mode 0700.
   and FZF.
 - Pre-commit hooks run Black, ruff, shellcheck, shfmt, stylua, and jq key
   sorting.
+
+## Known Issues / TODOs
+
+- The Nix migration is staged. Do not delete the remaining chezmoi source
+  material until each Home Manager destination has been activated and verified.
+- `flake.lock` must be generated and committed from a host with Nix installed;
+  the current development environment does not provide the Nix CLI.
