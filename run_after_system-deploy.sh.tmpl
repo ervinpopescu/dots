@@ -90,6 +90,7 @@ if [ -d "$SERVER_DIR" ]; then
   report_stale "$SERVER_DIR/etc/nginx/snippets" /etc/nginx/snippets
   report_stale "$SERVER_DIR/etc/fail2ban/jail.d" /etc/fail2ban/jail.d
   report_stale "$SERVER_DIR/etc/ssh/sshd_config.d" /etc/ssh/sshd_config.d
+  report_stale "$SERVER_DIR/etc/systemd/system/transmission.service.d" /etc/systemd/system/transmission.service.d
 fi
 {{ else -}}
 # These paths were previously in the common tree. Report them rather than
