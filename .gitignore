@@ -1,3 +1,5 @@
+.worktrees/
+
 **/__pycache__/
 **/lazy-lock.json
 **/.vscode/

@@ -1,9 +1,12 @@
 # Repository Structure
 
 ```text
-dots/                              # chezmoi source directory
-├── .chezmoi.toml.tmpl             # per-machine config (machine detection, secrets, age)
-├── .chezmoiignore                 # machine-conditional file exclusions
+dots/                              # Nix/Home Manager source directory
+├── flake.nix                      # pinned Nix/Home Manager entrypoint
+├── nix/                            # reusable Home Manager, Darwin, and System Manager modules
+├── secrets/                        # sops-nix encrypted secrets and instructions
+├── .chezmoi.toml.tmpl             # transitional legacy config (to be removed)
+├── .chezmoiignore                 # transitional legacy exclusions
 ├── .pre-commit-config.yaml        # code quality hooks (black, isort, ruff, stylua, shellcheck…)
 │
 ├── bin/                           # → $HOME/bin (user scripts)
@@ -47,8 +50,8 @@ dots/                              # chezmoi source directory
 │       ├── plugins/               # Zsh plugins
 │       └── files/                 # Misc zsh files
 │
-├── system/                        # System-level configs, deployed via run_after_ script (preview: chezmoi-dry-apply or system-deploy.sh -n)
-│   ├── arch/                      # Arch-only system configuration
+├── system/                        # Transitional system sources and Aslan System Manager inputs (legacy preview: chezmoi-dry-apply or system-deploy.sh -n)
+│   ├── arch/                      # Remaining Arch-only legacy system configuration
 │   │   └── etc/                   # pacman.conf, reflector.conf
 │   ├── etc/
 │   │   └── zsh/zshenv             # Sets ZDOTDIR system-wide
@@ -59,11 +62,13 @@ dots/                              # chezmoi source directory
 │
 ├── markdown/                      # Documentation
 │   ├── features.md
+│   ├── nix-migration.md            # Migration architecture and boundaries
+│   ├── nix-operations.md           # Host activation and recovery runbook
 │   ├── profiles.md                # Machine profile matrix and detection
 │   ├── keybinds.md
 │   ├── tree.md                    # This file
 │   ├── solux-migration.md         # Solux static hosting migration runbook
 │   └── archinstall.md             # Arch Linux installation guide
 │
-└── pkgs                           # Full list of installed packages
+└── pkgs                           # Transitional legacy package inventory
 ```
