@@ -74,6 +74,9 @@
           ];
         };
 
+      aslanSystemConfig = system-manager.lib.makeSystemConfig {
+        modules = [ ./nix/system/aslan.nix ];
+      };
     in
     {
       homeConfigurations = {
@@ -134,6 +137,12 @@
         };
       };
 
+      # System Manager's CLI consumes systemConfigs.default. Keep the named
+      # Aslan output for direct evaluation and documentation as well.
+      systemConfigs = {
+        default = aslanSystemConfig;
+        aslan = aslanSystemConfig;
+      };
 
       formatter = forAllSystems (system: (pkgsFor system).nixfmt-rfc-style);
     };
