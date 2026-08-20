@@ -2,26 +2,27 @@
 
 ## What This Is
 
-Personal dotfiles repository managed with [chezmoi](https://www.chezmoi.io/). Uses Go templates for machine-conditional configs and age encryption for secrets. A single branch supports five profiles: `lenovo`, `cloudtop`, `macbook`, `hp`, and `hetzner` (`aslan`).
+Cross-platform configuration repository managed by a pinned Nix flake. Home Manager owns user configuration and development tools, nix-darwin integrates macOS, and System Manager owns migrated Aslan runtime files. Active outputs support `lenovo`, `cloudtop`, `macbook`, `hp`, and `aslan`. Cloudtop uses the invoking account's existing `$HOME` under impure evaluation and must never assume or create `/home/ervin`.
 
 ## Installation
 
-```bash
-chezmoi init --source /path/to/this/repo   # prompts for machine profile + secrets
-chezmoi apply
-```
-
-Secrets are age-encrypted. Place the age key at `~/.config/chezmoi/key.txt` before init.
+See `markdown/nix-migration.md` and `markdown/nix-operations.md`. The primary
+entrypoint is `flake.nix`; Linux hosts use standalone Home Manager, macOS uses
+nix-darwin, and Aslan system files use System Manager. Encrypted secrets use
+sops-nix.
 
 ## Repository Structure
 
-- `dot_config/` — XDG config home (`$HOME/.config`), chezmoi source layout
+- `nix/` — Home Manager, nix-darwin, System Manager, and profile modules
+- `dot_config/` — transitional source material for user configuration
 - `bin/` — user scripts for `$HOME/bin` (prefixed `executable_`)
-- `system/` — system-level configs (`/etc/`, `/usr/`), deployed via `run_after_system-deploy.sh.tmpl` (subtrees for `arch/` and `hetzner/` are conditionally applied)
-- `pkgs` — full list of installed packages
-- `.chezmoi.toml.tmpl` — chezmoi config template (machine detection, secrets, age settings)
-- `.chezmoiignore` — machine-conditional file exclusion
-- `markdown/` — documentation (features, keybinds, arch install guide, directory tree)
+- `system/` — transitional system source material; `arch/` remains legacy-host scoped while `hetzner/` feeds the Aslan System Manager configuration
+- `secrets/` — sops-nix encrypted secrets and instructions
+- `flake.nix` — pinned multi-host entrypoint
+- `pkgs` — transitional legacy package inventory
+- `.chezmoi.toml.tmpl` — transitional chezmoi config template
+- `.chezmoiignore` — transitional machine-conditional exclusions
+- `markdown/` — documentation (features, profiles, migration, operations, keybinds, tree)
 
 ## Key Configurations
 
@@ -45,7 +46,9 @@ LazyVim-based configuration. Entry point: `init.lua`. Lua config in `lua/`. Form
 
 ## Templating
 
-Files ending in `.tmpl` are Go templates rendered by chezmoi. Template variables are defined in `.chezmoi.toml.tmpl` and include machine flags (`is_lenovo`, `has_wayland`) and secrets (`opensubtitles_api_key`, `tstruct_token`). Encrypted files use the `encrypted_` prefix.
+New machine conditionals belong in Nix profile modules under `nix/`; do not add
+new Go templates or chezmoi-only flags. Existing `.tmpl` files are transitional
+source material and are removed as their destinations move to Home Manager.
 
 ## Conventions
 
@@ -56,10 +59,7 @@ Files ending in `.tmpl` are Go templates rendered by chezmoi. Template variables
 
 ## Known Issues / TODOs
 
-- `dot_claude/settings.json.tmpl` drifts frequently: Claude Code rewrites
-  `~/.claude/settings.json` in its own non-alphabetical key order whenever
-  it modifies the file (e.g. changing model, toggling settings). The
-  chezmoi source has alphabetically-sorted keys (enforced by pre-commit
-  hook), so every Claude Code write causes a fresh diff. Consider either
-  excluding this file from chezmoi management or accepting periodic
-  `chezmoi apply` re-syncs.
+- The Nix migration is staged. Do not delete the remaining chezmoi source
+  material until each Home Manager destination has been activated and verified.
+- `flake.lock` must be generated and committed from a host with Nix installed;
+  the current development environment does not provide the Nix CLI.

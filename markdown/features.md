@@ -62,14 +62,14 @@ Two configs: `qtile/` (X11) and `qtile-wl/` (Wayland). Both share the same archi
 
 ## Machine Profiles
 
-Managed via chezmoi templates. The complete profile matrix is documented in
-[profiles.md](./profiles.md). The main differences are:
+Managed via Nix and Home Manager profile modules. The complete profile matrix
+is documented in [profiles.md](./profiles.md). The main differences are:
 
-| Variable         | `lenovo`      | `cloudtop`        | `macbook`      | `hp`                  | `hetzner`                      |
-| ---------------- | ------------- | ----------------- | -------------- | --------------------- | ------------------------------ |
-| `is_linux`       | true          | true              | false          | true                  | true                           |
-| `is_server`      | false         | false             | false          | false                 | true                           |
-| `has_wayland`    | true          | false             | false          | false                 | false                          |
-| `has_battery`    | true          | false             | true           | true                  | false                          |
-| Desktop stack    | Qtile Wayland | Qtile X11         | native macOS   | Qtile X11             | headless                       |
-| Special behavior | standard DPI  | HiDPI, Apigee LSP | Homebrew paths | battery-aware desktop | `system/hetzner/` server files |
+| Variable         | `lenovo`      | `cloudtop`        | `macbook`      | `hp`                  | `aslan`                    |
+| ---------------- | ------------- | ----------------- | -------------- | --------------------- | -------------------------- |
+| `is_linux`       | true          | true              | false          | true                  | true                       |
+| `is_server`      | false         | false             | false          | false                 | true                       |
+| `has_wayland`    | true          | false             | false          | false                 | false                      |
+| `has_battery`    | true          | false             | true           | true                  | false                      |
+| Desktop stack    | Qtile Wayland | Qtile X11         | native macOS   | Qtile X11             | headless                   |
+| Special behavior | standard DPI  | HiDPI, Apigee LSP | Homebrew paths | battery-aware desktop | System Manager Aslan files |

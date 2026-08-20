@@ -9,9 +9,10 @@
    ▀▀▀ ▀▀    ▀▀▀▀       ▀▀▀▀    ▀▀▀▀▀▀
 ```
 
-Cross-platform dotfiles for five machine profiles: `lenovo`, `cloudtop`,
-`macbook`, `hp`, and `hetzner` (the `aslan` server hostname).
-Managed with [chezmoi](https://www.chezmoi.io/), secrets age-encrypted, single branch.
+Cross-platform configuration for five machine profiles: `lenovo`, `cloudtop`,
+`macbook`, `hp`, and `aslan` (the legacy `hetzner` profile name). Cloudtop uses
+the invoking account's existing `$HOME`; it does not assume `/home/ervin`.
+Managed with Nix, Home Manager, nix-darwin, and System Manager in a single flake.
 
 **Stack:** Qtile · Zsh · Neovim (LazyVim) · Alacritty · Catppuccin Mocha
 
@@ -19,31 +20,40 @@ Managed with [chezmoi](https://www.chezmoi.io/), secrets age-encrypted, single b
 
 ## Install
 
+Install Nix with flakes enabled, then lock and check the flake:
+
 ```bash
-# 1. Install dependencies
-pacman -S chezmoi age
-
-# 2. Place age key (from backup / password manager)
-mkdir -p ~/.config/chezmoi
-cp /path/to/key.txt ~/.config/chezmoi/key.txt
-
-# 3. Initialize — prompts for machine profile and secrets on first run
-chezmoi init --source /path/to/this/repo
-
-# 4. Preview, then apply
-chezmoi diff
-chezmoi apply
+nix flake lock
+nix flake check
 ```
 
-System files under `system/` (e.g. `/etc/zsh/zshenv`) are deployed automatically
-via a post-apply script with `sudo`. The `system/arch/` subtree is applied only on
-Arch Linux systems, and the `system/hetzner/` subtree is applied only when the
-machine profile is `aslan`/`hetzner`; it contains the server's Nginx,
-monitoring, security, and service overrides.
+During the staged migration, remaining legacy system sources retain their
+existing host conditions: `system/arch/` is Arch-only, while active Aslan
+runtime configuration from `system/hetzner/` is moving to System Manager.
+Do not let the legacy post-apply hook and System Manager deploy the same path.
 
-The former `archnet-cfg` repository remains useful for destructive Hetzner
-installation, package bootstrap, and service-data migration. It must not also
-deploy files managed by this repository.
+On Linux, activate the matching standalone Home Manager profile:
+
+```bash
+nix run github:nix-community/home-manager -- \
+  switch --flake .#ervin@lenovo
+```
+
+On macOS, use the matching nix-darwin architecture output:
+
+```bash
+darwin-rebuild switch --flake .#macbook-apple-silicon
+```
+
+The `system/hetzner/` subtree is exposed through `systemConfigs.aslan` for
+System Manager. It owns active Aslan Nginx, monitoring, security, and systemd
+runtime configuration without replacing the Linux distribution or its native
+package manager. See the [Nix operations runbook](./markdown/nix-operations.md)
+before activating it.
+
+`archnet-cfg` remains responsible for destructive installation, bootstrap,
+disk/data migration, and service-data migration. It must not deploy runtime
+paths owned by this repository.
 
 ---
 
@@ -53,6 +63,8 @@ deploy files managed by this repository.
 - [Profiles](./markdown/profiles.md) — profile detection, capabilities, and exclusions
 - [Keybindings](./markdown/keybinds.md) — Qtile key reference
 - [Directory tree](./markdown/tree.md) — repo layout explained
+- [Nix migration](./markdown/nix-migration.md) — architecture and migration boundary
+- [Nix operations](./markdown/nix-operations.md) — host preflight, activation, validation, and recovery
 - [Arch install guide](./markdown/archinstall.md)
 
 ---
@@ -65,12 +77,13 @@ deploy files managed by this repository.
 | `cloudtop` | cloudtop | Linux / Qtile X11 HiDPI | no      | 48px   |
 | `macbook`  | prompted | macOS / native desktop  | yes     | n/a    |
 | `hp`       | hp       | Linux / Qtile X11       | yes     | 48px   |
-| `hetzner`  | aslan    | Linux / headless server | no      | n/a    |
+| `aslan`    | aslan    | Linux / headless server | no      | n/a    |
 
-The profiles are auto-selected for the `lenovo`, `cloudtop`, `hp`, and `aslan`
-hostnames. `macbook` and unknown hosts use the profile prompt during
-`chezmoi init`. See [Profiles](./markdown/profiles.md) for all capability flags
-and machine-specific behavior.
+Flake outputs select the active profiles explicitly. Linux keeps its current
+system distribution; macOS uses nix-darwin. Cloudtop must be activated with
+`--impure` so it uses the invoking account's `$HOME`. See
+[Profiles](./markdown/profiles.md) for all capability flags and [Nix
+migration](./markdown/nix-migration.md) for activation commands.
 
 ---
 
