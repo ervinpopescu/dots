@@ -192,7 +192,20 @@ It must contain:
 transmission/rpc-password: replace-with-a-real-secret
 ```
 
-After a successful Lenovo Home Manager switch, validate:
+Home Manager never overwrites an existing Transmission settings file. If one
+exists, activation reports that it was preserved and the service continues to
+use it. To deliberately adopt the Nix-generated settings, stop Transmission,
+make an explicit backup, and activate again:
+
+```bash
+systemctl --user stop transmission
+mv ~/.config/transmission-daemon/settings.json \
+  ~/.config/transmission-daemon/settings.json.pre-nix-$(date +%F)
+nix run github:nix-community/home-manager -- \
+  switch --flake .#ervin@lenovo
+```
+
+Then validate:
 
 ```bash
 stat -c '%a %n' ~/.config/transmission-daemon/settings.json
@@ -200,9 +213,9 @@ systemctl --user restart transmission
 systemctl --user status --no-pager transmission
 ```
 
-The settings file must have mode `600`. Confirm Transmission is bound as
-configured and that no Aslan Transmission service, Nginx proxy, or server
-configuration is reintroduced.
+A settings file created by Home Manager has mode `600`. Confirm Transmission is
+bound as configured and that no Aslan Transmission service, Nginx proxy, or
+server configuration is reintroduced.
 
 ## Aslan System Manager cutover
 

@@ -25,8 +25,13 @@ in
 
   home.activation.transmissionSettings = lib.mkIf hasSecret (
     lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-      install -Dm600 ${config.sops.templates."transmission-settings.json".path} \
-        "$HOME/.config/transmission-daemon/settings.json"
+      target="$HOME/.config/transmission-daemon/settings.json"
+      if [ -e "$target" ] || [ -L "$target" ]; then
+        echo "Preserving existing Transmission settings: $target"
+        echo "Move it aside manually before reactivating to adopt Nix-managed settings."
+      else
+        install -Dm600 ${config.sops.templates."transmission-settings.json".path} "$target"
+      fi
   ''
   );
 

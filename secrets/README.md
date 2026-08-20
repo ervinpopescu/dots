@@ -20,7 +20,8 @@ transmission/rpc-password: replace-me
 ```
 
 The Lenovo Home Manager profile enables the user Transmission service only
-when `secrets/lenovo.yaml` exists. The rendered settings file is installed
-with mode `0600`; the password is never written to the Nix store or the
-repository in plaintext. Follow the Lenovo verification steps in the [Nix
-operations runbook](../markdown/nix-operations.md).
+when `secrets/lenovo.yaml` exists. It creates the rendered settings file with
+mode `0600` only when no settings file already exists; an existing file is
+preserved rather than overwritten. The password is never written to the Nix
+store or repository in plaintext. Follow the deliberate-cutover and
+verification steps in the [Nix operations runbook](../markdown/nix-operations.md).
