@@ -3,6 +3,15 @@ CLAUDE.md
 AGENTS.md
 SESSION.md
 LICENSE
+flake.nix
+flake.lock
+.sops.yaml
+nix/**
+secrets/**
+.pi/**
+.claude/**
+.gemini/**
+.agents/**
 ruff.toml
 tmp
 configs

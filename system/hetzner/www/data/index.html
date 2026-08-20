@@ -62,19 +62,6 @@
                             </span>
                             <span class="service-arrow" aria-hidden="true">↗</span>
                         </a>
-                        <a
-                            class="service-card service-card--transmission"
-                            href="/transmission"
-                            data-status-url="/health/transmission"
-                        >
-                            <span class="service-icon" aria-hidden="true">↓</span>
-                            <span class="service-copy">
-                                <span class="service-name">Transmission</span>
-                                <span class="service-description">Downloads and torrents</span>
-                                <span class="service-tag">Transfer / manage</span>
-                            </span>
-                            <span class="service-arrow" aria-hidden="true">↗</span>
-                        </a>
                     </div>
                 </section>
 
@@ -182,7 +169,7 @@
                     if (checking) return;
                     checking = true;
                     const controller = new AbortController();
-                    const timeoutMs = card.dataset.statusUrl === "/health/transmission" ? 14000 : 2500;
+                    const timeoutMs = 2500;
                     const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
                     try {
                         const response = await fetch(checkUrl.href, {
