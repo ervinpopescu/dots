@@ -256,6 +256,25 @@ not implement rollback. Keep the pre-switch root backups and the legacy deploy
 path until a reversible Aslan test has been performed and documented. Never
 activate this output on Lenovo, Cloudtop, HP, or the MacBook.
 
+## Rust toolchains
+
+Home Manager installs the pinned Nix `rustup` launcher, not a fixed Nix
+`rustc`/`cargo` toolchain. Rustup manages its own toolchains, components, and
+cargo-installed binaries as user runtime state; they remain outside Git and are
+not deleted by Home Manager rollback.
+
+After the first Home Manager activation, install the desired baseline:
+
+```bash
+rustup toolchain install stable
+rustup default stable
+rustup component add rustfmt clippy rust-analyzer
+```
+
+Use a project-specific `rust-toolchain.toml` when a project needs a different
+compiler version. Do not run rustup commands from a Home Manager activation,
+since they download mutable network state.
+
 ## Ongoing maintenance
 
 For any intentional Nix change:
