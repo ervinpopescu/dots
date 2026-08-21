@@ -29,8 +29,8 @@ in
     python3
     nodejs
     go
-    rustc
-    cargo
+    # Nix owns the rustup launcher; rustup owns user toolchains and components.
+    rustup
     jdk17
     zig
 
