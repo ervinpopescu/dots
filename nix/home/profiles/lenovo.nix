@@ -1,14 +1,22 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 let
   secretFile = ../../../secrets/lenovo.yaml;
   hasSecret = builtins.pathExists secretFile;
-  transmissionPackage = lib.attrByPath [ "transmission_4" ] (lib.attrByPath [ "transmission" ] null pkgs) pkgs;
+  transmissionPackage = lib.attrByPath [ "transmission_4" ] (lib.attrByPath [
+    "transmission"
+  ] null pkgs) pkgs;
   hasTransmission = transmissionPackage != null;
   transmissionSource = builtins.readFile ../../data/transmission-settings.json;
-  transmissionSettings = lib.replaceStrings
-    [ "__TRANSMISSION_RPC_PASSWORD__" ]
-    [ config.sops.placeholder."transmission/rpc-password" ]
-    transmissionSource;
+  transmissionSettings =
+    lib.replaceStrings
+      [ "__TRANSMISSION_RPC_PASSWORD__" ]
+      [ config.sops.placeholder."transmission/rpc-password" ]
+      transmissionSource;
 in
 {
   imports = [ ./desktop.nix ];
@@ -20,20 +28,17 @@ in
     secrets."transmission/rpc-password" = {
       sopsFile = secretFile;
     };
-    templates."transmission-settings.json".content = transmissionSettings;
+    templates."transmission-settings.json" = {
+      content = transmissionSettings;
+      mode = "0600";
+    };
   };
 
-  home.activation.transmissionSettings = lib.mkIf hasSecret (
-    lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-      target="$HOME/.config/transmission-daemon/settings.json"
-      if [ -e "$target" ] || [ -L "$target" ]; then
-        echo "Preserving existing Transmission settings: $target"
-        echo "Move it aside manually before reactivating to adopt Nix-managed settings."
-      else
-        install -Dm600 ${config.sops.templates."transmission-settings.json".path} "$target"
-      fi
-  ''
-  );
+  home.file = lib.mkIf hasSecret {
+    ".config/transmission-daemon/settings.json".source =
+      config.lib.file.mkOutOfStoreSymlink
+        config.sops.templates."transmission-settings.json".path;
+  };
 
   systemd.user.services.transmission = lib.mkIf (hasSecret && hasTransmission) {
     Unit = {

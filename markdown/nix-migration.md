@@ -53,11 +53,11 @@ See the [Nix operations runbook](./nix-operations.md) for backup-aware first
 activation and rollback. The short commands below are architecture examples,
 not a substitute for its preflight checklist.
 
-On Linux, use standalone Home Manager:
+On Linux, review and switch with the flake's pinned Home Manager tools:
 
 ```bash
-nix run github:nix-community/home-manager -- \
-  switch --flake .#ervin@lenovo
+nix run .#hm-preflight -- ervin@lenovo
+nix run .#hm-switch -- ervin@lenovo
 ```
 
 Replace `lenovo` with `hp` or `aslan` on those hosts. Home Manager currently
@@ -69,9 +69,11 @@ Cloudtop targets the invoking account's existing `$HOME`; it never assumes or
 creates `/home/ervin`. Its configuration therefore requires impure evaluation:
 
 ```bash
-nix run github:nix-community/home-manager -- \
-  switch --impure --flake .#ervin@cloudtop
+nix run .#hm-preflight -- ervin@cloudtop
+nix run .#hm-switch -- ervin@cloudtop
 ```
+
+The wrappers add `--impure` automatically for the Cloudtop output.
 
 Run this only as the intended Cloudtop account after confirming `$HOME` is its
 actual existing home directory.

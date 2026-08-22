@@ -32,12 +32,17 @@ existing host conditions: `system/arch/` is Arch-only, while active Aslan
 runtime configuration from `system/hetzner/` is moving to System Manager.
 Do not let the legacy post-apply hook and System Manager deploy the same path.
 
-On Linux, activate the matching standalone Home Manager profile:
+On Linux, review and activate the matching standalone Home Manager profile with
+the repository's pinned, manifest-backed commands:
 
 ```bash
-nix run github:nix-community/home-manager -- \
-  switch --flake .#ervin@lenovo
+nix run .#hm-preflight -- ervin@lenovo
+nix run .#hm-switch -- ervin@lenovo
 ```
+
+`hm-preflight` shows path-level changes without activation. Collision backups
+are recorded as user state and restored automatically when rollback makes their
+original paths unmanaged.
 
 On macOS, use the matching nix-darwin architecture output:
 
@@ -91,14 +96,17 @@ migration](./markdown/nix-migration.md) for activation commands.
 
 Pre-commit hooks run on every commit:
 
-| Hook               | Covers                                 |
-| ------------------ | -------------------------------------- |
-| black + isort      | Python (`bin/`, `qtile/`, `qtile-wl/`) |
-| ruff               | Python linting + auto-fix              |
-| stylua             | Lua (`nvim/`)                          |
-| prettier           | JSON, YAML, CSS, Markdown              |
-| shellcheck + shfmt | Shell scripts (`bin/`)                 |
-| gitleaks           | Secret detection                       |
+| Hook                      | Covers                                      |
+| ------------------------- | ------------------------------------------- |
+| black + isort             | Python (`bin/`, `qtile/`, `qtile-wl/`)      |
+| ruff                      | Python linting + auto-fix                   |
+| stylua                    | Lua (`nvim/`)                               |
+| prettier                  | JSON, YAML, CSS, Markdown                   |
+| shellcheck + shfmt        | Shell scripts, including `nix/scripts/`     |
+| nixfmt + flake evaluation | Nix formatting and all-system output checks |
+| Home Manager backup test  | Executable manifest backup/restore behavior |
+| executable/shebang checks | Script mode and interpreter consistency     |
+| gitleaks                  | Secret detection                            |
 
 ```bash
 pre-commit install        # install hooks

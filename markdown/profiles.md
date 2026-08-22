@@ -10,7 +10,7 @@ rather than assuming a repository-controlled home path.
 | Profile    | Hostname   | Platform   | Linux | Server | Wayland | Battery | Desktop behavior                         |
 | ---------- | ---------- | ---------- | ----- | ------ | ------- | ------- | ---------------------------------------- |
 | `lenovo`   | `lenovo`   | Arch Linux | yes   | no     | yes     | yes     | Qtile Wayland, standard DPI, 24px cursor |
-| `cloudtop` | `cloudtop` | Arch Linux | yes   | no     | no      | no      | Qtile X11, HiDPI, 48px cursor            |
+| `cloudtop` | `cloudtop` | Debian     | yes   | no     | no      | no      | Qtile X11, HiDPI, 48px cursor            |
 | `macbook`  | prompted   | macOS      | no    | no     | no      | yes     | Native macOS tools and Homebrew paths    |
 | `hp`       | `hp`       | Linux      | yes   | no     | no      | yes     | Qtile X11, 48px cursor                   |
 | `aslan`    | `aslan`    | Arch Linux | yes   | yes    | no      | no      | Headless server configuration            |

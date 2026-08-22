@@ -21,7 +21,24 @@ secrets.age
 pkgs
 **/__pycache__/**
 **/**.log
+.config/alacritty/**
+.config/dunst/**
+.config/lf/**
+.config/libinput-gestures.conf
+.config/md-preview/**
+.config/nwg-launchers/**
+.config/systemd/**
+.config/VSCodium/**
+.config/X11/**
+.config/zathura/**
 .config/qtile{,-wl}/json/keys.json
+.config/qtile-wl/json/focus_history.json
+.jq
+.local/share/zsh/completions/**
+.ssh/config
+.ssh/config.d/archnet
+.ssh/config.d/hetzner
+bin/**
 
 bin/teriyaki.sh
 bin/update-qtile.py

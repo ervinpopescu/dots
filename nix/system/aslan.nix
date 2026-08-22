@@ -48,9 +48,13 @@ let
     group = if relativePath == "grafana.ini" then "grafana" else "root";
   });
 
-  webRules = map (relativePath: let
-    mode = if lib.hasSuffix ".css" relativePath then "0644" else "0644";
-  in "C+ /www/data/${relativePath} ${mode} root root - ${webRoot}/${relativePath}") webFiles;
+  webRules = map (
+    relativePath:
+    let
+      mode = if lib.hasSuffix ".css" relativePath then "0644" else "0644";
+    in
+    "C+ /www/data/${relativePath} ${mode} root root - ${webRoot}/${relativePath}"
+  ) webFiles;
 
 in
 {
@@ -64,5 +68,6 @@ in
     "d /www 0755 root root -"
     "d /www/data 0755 root root -"
     "d /www/data/error 0755 root root -"
-  ] ++ webRules;
+  ]
+  ++ webRules;
 }
