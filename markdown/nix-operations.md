@@ -43,18 +43,37 @@ must be switched only on Aslan.
 1. Install Nix with flakes enabled using the official multi-user installer for
    the host. Do not run a system-wide installer on Cloudtop without the system
    administrator's approval.
-2. Confirm flakes work before continuing:
+2. Enable the required Nix experimental features persistently. On a
+   multi-user installation, replace any existing `experimental-features` line
+   with the required values, then restart the Linux daemon:
+
+   ```bash
+   sudo install -d -m 0755 /etc/nix
+   sudo touch /etc/nix/nix.conf
+   sudo sed -i -E \
+     's/^[[:space:]]*experimental-features[[:space:]]*=.*/experimental-features = nix-command flakes/' \
+     /etc/nix/nix.conf
+   if ! sudo /usr/bin/grep -qE '^[[:space:]]*experimental-features[[:space:]]*=' /etc/nix/nix.conf; then
+     printf '\nexperimental-features = nix-command flakes\n' | sudo tee -a /etc/nix/nix.conf
+   fi
+   sudo systemctl restart nix-daemon.service  # Linux only
+   ```
+
+   On macOS, use the same `/etc/nix/nix.conf` update and open a new shell; do
+   not run the Linux `systemctl` command.
+
+3. Confirm flakes work before continuing:
 
    ```bash
    nix --version
    nix flake --help >/dev/null
+   nix show-config | /usr/bin/grep '^experimental-features'
    ```
 
-   If flakes are not enabled persistently yet, use
-   `--extra-experimental-features 'nix-command flakes'` on every Nix command
-   until the installer configuration is corrected.
+   As a temporary fallback only, pass
+   `--extra-experimental-features 'nix-command flakes'` to every Nix command.
 
-3. Clone this repository as the target user and enter it:
+4. Clone this repository as the target user and enter it:
 
    ```bash
    git clone git@github.com:ervinpopescu/dots.git ~/src/dots
@@ -63,7 +82,7 @@ must be switched only on Aslan.
    git pull --ff-only
    ```
 
-4. Before changing a host, create an external backup or snapshot of its home
+5. Before changing a host, create an external backup or snapshot of its home
    directory and retain the existing chezmoi source and generated state. For
    Aslan, also keep a root-level backup of every file to be handed to System
    Manager.
