@@ -3,10 +3,9 @@
 # Volume Control Script
 # Usage: volctl.sh [+5%|-5%]
 
-msgId="991049"
-step="${1:1}" # Extract number (e.g., 5 from -5 or +5)
-direction="${1:0:1}" # Extract sign (- or +)
-icon="$HOME/.local/share/assets/volume.svg"
+step="${1:1}"
+step="${step%\%}"
+direction="${1:0:1}"
 
 # Determine Volume Control Command
 {{- if .is_macbook }}
@@ -23,9 +22,10 @@ if [ "$new_vol" -gt 100 ]; then new_vol=100; fi
 if [ "$new_vol" -lt 0 ]; then new_vol=0; fi
 
 osascript -e "set volume output volume $new_vol"
-volume="${new_vol}%"
 {{- else }}
 # Linux / PulseAudio
+msgId="991049"
+icon="$HOME/.local/share/assets/volume.svg"
 if [[ "$direction" == "-" ]]; then
     pamixer --allow-boost -d "$step" >/dev/null
 else
@@ -34,15 +34,15 @@ fi
 volume="$(pamixer --get-volume-human)"
 
 # Notification
-icon_arg=""
+icon_args=()
 if [ -f "$icon" ]; then
-    icon_arg="-I $icon"
+    icon_args=(-I "$icon")
 fi
 
 dunstify \
     -a "changeVolume" \
     -u low \
-    $icon_arg \
+    "${icon_args[@]}" \
     -r "$msgId" \
     -h int:value:"${volume%\%}" "${volume}"
 {{- end }}
