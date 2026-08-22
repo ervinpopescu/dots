@@ -67,7 +67,7 @@ must be switched only on Aslan.
    ```bash
    nix --version
    nix flake --help >/dev/null
-   nix show-config | /usr/bin/grep '^experimental-features'
+   nix config show | /usr/bin/grep '^experimental-features'
    ```
 
    As a temporary fallback only, pass
