@@ -62,6 +62,14 @@ must be switched only on Aslan.
    On macOS, use the same `/etc/nix/nix.conf` update and open a new shell; do
    not run the Linux `systemctl` command.
 
+   On Arch, if the `nix` package is installed but `/nix/store` is missing,
+   initialize the incomplete store once and enable the daemon at boot:
+
+   ```bash
+   sudo nix-store --init
+   sudo systemctl enable --now nix-daemon.service
+   ```
+
 3. Confirm flakes work before continuing:
 
    ```bash
