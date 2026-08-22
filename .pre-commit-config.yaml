@@ -14,6 +14,43 @@ repos:
       - id: check-merge-conflict
       - id: mixed-line-ending
       - id: detect-private-key
+      - id: check-executables-have-shebangs
+      - id: check-shebang-scripts-are-executable
+
+  # Nix — format changed modules, evaluate every output, and execute the
+  # manifest backup/restore behavior check on the current host platform.
+  - repo: local
+    hooks:
+      - id: nixfmt
+        name: nixfmt
+        language: system
+        entry: nix fmt --
+        files: \.nix$
+        types: [file]
+      - id: nix-flake-check
+        name: nix flake check (evaluation)
+        language: system
+        entry: nix flake check --impure --all-systems --no-build
+        pass_filenames: false
+        files: ^(\.pre-commit-config\.yaml|\.sops\.yaml|flake\.(nix|lock)|nix/|secrets/|dot_(agents|claude|config|jq|pi)(/|$)|bin/|private_dot_(local|ssh)/|system/)
+      - id: home-manager-backup-restore-test
+        name: Home Manager backup/restore behavior
+        language: system
+        entry: >-
+          bash -eu -o pipefail -c 'system=$(nix eval --impure --raw --expr
+          builtins.currentSystem); nix build
+          ".#checks.${system}.home-manager-backup-restore" --no-link'
+        pass_filenames: false
+        files: ^(\.pre-commit-config\.yaml|flake\.(nix|lock)|nix/home/profiles/common\.nix|nix/lib/home-manager-tools\.nix|nix/scripts/(darwin-switch|hm-(backup-collision|check-collisions|link-no-clobber|preflight|restore-collisions|rm-no-clobber|switch))\.sh|nix/scripts/hm-(link-atomic|rename-no-replace)\.c)$
+      - id: rendered-shellcheck
+        name: ShellCheck rendered executable templates
+        language: system
+        entry: >-
+          bash -eu -o pipefail -c 'system=$(nix eval --impure --raw --expr
+          builtins.currentSystem); nix build
+          ".#checks.${system}.rendered-shells" --no-link'
+        pass_filenames: false
+        files: ^(\.pre-commit-config\.yaml|flake\.(nix|lock)|run_(after_system-deploy|onchange_install-deps)\.sh\.tmpl|dot_claude/executable_statusline\.sh\.tmpl|bin/executable_(netspeed|volctl|wallpaper|wallpaper-wl)\.sh\.tmpl|nix/lib/(profiles|rendered-bin)\.nix|nix/home/profiles/(agents|legacy-static)\.nix)$
 
   # Python — qtile / qtile-wl / bin scripts
   - repo: https://github.com/psf/black
@@ -35,13 +72,16 @@ repos:
       - id: stylua
         args: [--config-path=dot_config/nvim/stylua.toml]
 
-  # JSON — sort keys for stable diffs
+  # JSON — sort keys, then apply Prettier's stable layout in the same pass.
   - repo: local
     hooks:
       - id: jq-sort-keys
         name: jq sort keys
         language: system
-        entry: bash -c 'for f in "$@"; do jq -S . "$f" > "$f.tmp" && mv "$f.tmp" "$f"; done' --
+        entry: >-
+          bash -eu -o pipefail -c 'for f in "$@"; do
+          jq -S . "$f" | prettier --parser json > "$f.tmp";
+          chmod --reference="$f" "$f.tmp"; mv "$f.tmp" "$f"; done' --
         types: [json]
         exclude: (\.tmpl$|VSCodium/|\.luarc\.json$)
 

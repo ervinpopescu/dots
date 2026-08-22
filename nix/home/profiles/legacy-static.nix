@@ -1,23 +1,83 @@
-{ lib, pkgs, profile, ... }:
+{
+  lib,
+  pkgs,
+  profile,
+  ...
+}:
 let
   capabilities = import ../../lib/profiles.nix { inherit profile; };
 
+  runtimeConfigPaths = [
+    "nvim/lua/plugins/colorscheme.lua"
+    "VSCodium/User/settings.json"
+  ]
+  ++ lib.optionals (configEnabled "qtile") [
+    "qtile/firefox_themes/firefox_theme.json"
+    "qtile/json/config.json"
+  ]
+  ++ lib.optionals (configEnabled "qtile-wl") [
+    "qtile-wl/firefox_themes/firefox_theme.json"
+    "qtile-wl/json/config.json"
+  ];
+
+  staticSourceFilter =
+    path: type:
+    let
+      name = builtins.baseNameOf path;
+      pathString = toString path;
+      isRuntimeConfig = lib.any (relative: lib.hasSuffix "/${relative}" pathString) runtimeConfigPaths;
+    in
+    type == "directory"
+    || (
+      !isRuntimeConfig
+      && !lib.hasSuffix ".tmpl" name
+      && !lib.hasPrefix "encrypted_" name
+      && !lib.hasSuffix ".log" name
+      && name != "focus_history.json"
+    );
+
+  staticConfigSource = builtins.path {
+    path = ../../../dot_config;
+    name = "dots-static-config-source";
+    filter = staticSourceFilter;
+  };
+
+  staticBinSource = builtins.path {
+    path = ../../../bin;
+    name = "dots-static-bin-source";
+    filter = staticSourceFilter;
+  };
+
   staticConfig = pkgs.runCommand "dots-static-config" { } ''
     mkdir -p "$out"
-    cp -R ${../../../dot_config}/. "$out/"
-    chmod -R u+w "$out"
-    find "$out" -type f -name '*.tmpl' -delete
+    cp -R ${staticConfigSource}/. "$out/"
   '';
 
   staticBin = pkgs.runCommand "dots-static-bin" { } ''
     mkdir -p "$out"
-    cp -R ${../../../bin}/. "$out/"
-    chmod -R u+w "$out"
-    find "$out" -type f -name '*.tmpl' -delete
+    cp -R ${staticBinSource}/. "$out/"
   '';
+
+  renderedBinSources = import ../../lib/rendered-bin.nix {
+    inherit lib pkgs profile;
+  };
 
   configEntries = builtins.readDir ../../../dot_config;
   binEntries = builtins.readDir ../../../bin;
+
+  chezmoiOwnedConfigEntries = [
+    "Code"
+    "Code - OSS"
+    "git"
+    "lazygit"
+    "nvim"
+    "qtile"
+    "qtile-wl"
+    "rofi"
+    "spicetify"
+    "tmux"
+    "zsh"
+  ];
 
   desktopConfigEntries = [
     "alacritty"
@@ -81,26 +141,28 @@ let
 
   isDesktopLinux = capabilities.isLinux && !capabilities.isServer;
 
-  configEnabled = name:
+  configEnabled =
+    name:
     !lib.hasSuffix ".tmpl" name
+    && !builtins.elem name chezmoiOwnedConfigEntries
     && (name != "qtile-wl" || profile == "lenovo")
     && (name != "conky" || profile == "cloudtop")
     && (name != "lf" || capabilities.isLinux)
     && (name != "systemd" || capabilities.isServer)
     && (isDesktopLinux || !builtins.elem name desktopConfigEntries);
 
-  binTarget = name: lib.removePrefix "executable_" name;
+  binTarget = name: lib.removeSuffix ".tmpl" (lib.removePrefix "executable_" name);
 
-  binEnabled = name:
+  binEnabled =
+    name:
     let
       target = binTarget name;
     in
-      lib.hasPrefix "executable_" name
-      && !lib.hasSuffix ".tmpl" name
-      && (target != "battery-notification.py" || profile == "lenovo")
-      && (target != "dismiss-keychain-prompts" || profile == "macbook")
-      && (target != "send_cmd_tmux.py" || profile == "cloudtop")
-      && (isDesktopLinux || !builtins.elem target desktopBinEntries);
+    lib.hasPrefix "executable_" name
+    && (target != "battery-notification.py" || profile == "lenovo")
+    && (target != "dismiss-keychain-prompts" || profile == "macbook")
+    && (target != "send_cmd_tmux.py" || profile == "cloudtop")
+    && (isDesktopLinux || !builtins.elem target desktopBinEntries);
 
   configFiles = lib.listToAttrs (
     map (name: {
@@ -116,7 +178,11 @@ let
     map (name: {
       name = "bin/${binTarget name}";
       value = {
-        source = "${staticBin}/${name}";
+        source =
+          if builtins.hasAttr name renderedBinSources then
+            renderedBinSources.${name}
+          else
+            "${staticBin}/${name}";
         executable = true;
       };
     }) (lib.filter binEnabled (builtins.attrNames binEntries))
@@ -125,21 +191,45 @@ let
   sshFiles = {
     ".ssh/config".source = ../../../private_dot_ssh/config;
     ".ssh/config.d/archnet".source = ../../../private_dot_ssh/config.d/archnet;
-  } // lib.optionalAttrs (!capabilities.isServer) {
+  }
+  // lib.optionalAttrs (!capabilities.isServer) {
     ".ssh/config.d/hetzner".source = ../../../private_dot_ssh/config.d/hetzner;
   };
 in
 {
-  # Static chezmoi source files are copied into the Nix store with Go templates
-  # removed. Template targets are migrated separately so no unrendered .tmpl
-  # file can reach the home directory.
   xdg.configFile = configFiles;
 
-  home.file = binFiles // sshFiles // {
-    ".jq".source = ../../../dot_jq;
-    ".local/share/zsh/completions" = {
-      source = ../../../private_dot_local/private_share/zsh/completions;
-      recursive = true;
+  home.activation.initializeVSCodiumSettings = lib.mkIf isDesktopLinux (
+    lib.hm.dag.entryBefore [ "linkGeneration" ] ''
+      settings_file="$HOME/.config/VSCodium/User/settings.json"
+      if [[ ! -e "$settings_file" && ! -L "$settings_file" ]]; then
+        settings_dir=$(dirname -- "$settings_file")
+        $DRY_RUN_CMD mkdir -p -- "$settings_dir"
+        if [[ -z ''${DRY_RUN:-} ]]; then
+          settings_temporary=$(${pkgs.coreutils}/bin/mktemp \
+            "$settings_dir/.settings.json.XXXXXX")
+          ${pkgs.coreutils}/bin/install -m 0600 \
+            ${../defaults/vscodium-settings.jsonc} "$settings_temporary"
+          if ! ${pkgs.coreutils}/bin/ln -- "$settings_temporary" "$settings_file"; then
+            if [[ ! -e "$settings_file" && ! -L "$settings_file" ]]; then
+              ${pkgs.coreutils}/bin/rm -f -- "$settings_temporary"
+              exit 1
+            fi
+          fi
+          ${pkgs.coreutils}/bin/rm -f -- "$settings_temporary"
+        fi
+      fi
+    ''
+  );
+
+  home.file =
+    binFiles
+    // sshFiles
+    // {
+      ".jq".source = ../../../dot_jq;
+      ".local/share/zsh/completions" = {
+        source = ../../../private_dot_local/private_share/zsh/completions;
+        recursive = true;
+      };
     };
-  };
 }

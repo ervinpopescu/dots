@@ -1,26 +1,21 @@
 import json
 from os import path
 
-from modules.settings import config_path
+from modules.settings import config_path, load_runtime_config
 
 
 def load_theme():
-    theme = "catppuccin"
-
-    config = path.join(config_path, "json", "config.json")
-    if path.isfile(config):
-        with open(config) as f:
-            theme = json.load(f)["theme"]
-    else:
-        with open(config, "w") as f:
-            f.write(f'{{"theme": "{theme}"}}\n')
+    theme = load_runtime_config(config_path)["theme"]
 
     theme_file = path.join(config_path, "themes", f"{theme}.json")
     if not path.isfile(theme_file):
         raise FileNotFoundError(f'"{theme_file}" does not exist')
 
-    with open(path.join(theme_file)) as f:
-        return json.load(f)
+    try:
+        with open(theme_file) as f:
+            return json.load(f)
+    except (OSError, json.JSONDecodeError) as error:
+        raise RuntimeError(f'could not load theme "{theme}"') from error
 
 
 if __name__ == "modules.theme":

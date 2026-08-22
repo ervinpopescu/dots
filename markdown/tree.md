@@ -3,8 +3,13 @@
 ```text
 dots/                              # Nix/Home Manager source directory
 ├── flake.nix                      # pinned Nix/Home Manager entrypoint
-├── nix/                            # reusable Home Manager, Darwin, and System Manager modules
-├── secrets/                        # sops-nix encrypted secrets and instructions
+├── nix/                           # reusable Home Manager, Darwin, and System Manager modules
+│   ├── home/profiles/             # shared and host-specific user profiles
+│   ├── lib/home-manager-tools.nix # manifest backup, restore, switch, and preflight packages
+│   ├── scripts/                   # executable Home Manager safety workflows
+│   ├── darwin/                    # Apple Silicon nix-darwin integration
+│   └── system/                    # Aslan System Manager module
+├── secrets/                       # sops-nix encrypted secrets and instructions
 ├── .chezmoi.toml.tmpl             # transitional legacy config (to be removed)
 ├── .chezmoiignore                 # transitional legacy exclusions
 ├── .pre-commit-config.yaml        # code quality hooks (black, isort, ruff, stylua, shellcheck…)
