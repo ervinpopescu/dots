@@ -244,6 +244,61 @@ A settings file created by Home Manager has mode `600`. Confirm Transmission is
 bound as configured and that no Aslan Transmission service, Nginx proxy, or
 server configuration is reintroduced.
 
+## Aslan state bind mounts
+
+Aslan keeps application state on the large native ext4 RAID1 data filesystem.
+The filesystem layout and `/etc/fstab` remain distro-owned; System Manager does
+not manage these service-data mounts. The following bind mounts prevent
+Minikube, Docker, and containerd state from filling the root filesystem:
+
+| Source on `/mnt/data`                   | Runtime path                        |
+| --------------------------------------- | ----------------------------------- |
+| `/mnt/data/system-state/minikube-ervin` | `/home/ervin/.local/share/minikube` |
+| `/mnt/data/system-state/minikube-root`  | `/root/.minikube`                   |
+| `/mnt/data/system-state/docker`         | `/var/lib/docker`                   |
+| `/mnt/data/system-state/containerd`     | `/var/lib/containerd`               |
+
+The persistent `/etc/fstab` entries are:
+
+```fstab
+/mnt/data/system-state/minikube-ervin /home/ervin/.local/share/minikube none bind,x-systemd.requires-mounts-for=/mnt/data/system-state/minikube-ervin 0 0
+/mnt/data/system-state/minikube-root /root/.minikube none bind,x-systemd.requires-mounts-for=/mnt/data/system-state/minikube-root 0 0
+/mnt/data/system-state/docker /var/lib/docker none bind,x-systemd.requires-mounts-for=/mnt/data/system-state/docker 0 0
+/mnt/data/system-state/containerd /var/lib/containerd none bind,x-systemd.requires-mounts-for=/mnt/data/system-state/containerd 0 0
+```
+
+`x-systemd.requires-mounts-for` ensures `/mnt/data` is available before the
+binds. Do not add `nofail`: starting a service against an empty fallback path on
+`/` would create split state. Before changing these mounts, stop the Ervin user
+Minikube unit, both Minikube VMs, Docker, and containerd; copy state with
+`rsync -aHAXS --numeric-ids`; verify a dry run has no differences; and retain a
+copy of `/etc/fstab` outside the edited path until validation succeeds.
+
+QEMU runs as `libvirt-qemu`. The Aslan Home Manager profile grants that account
+execute-only traversal ACLs on `$HOME/.local` and `$HOME/.local/share`; it does
+not grant directory listing or file read access. Verify the final state with:
+
+```bash
+for path in \
+  /home/ervin/.local/share/minikube \
+  /root/.minikube \
+  /var/lib/docker \
+  /var/lib/containerd; do
+  sudo findmnt "$path"
+done
+getfacl -cp ~/.local ~/.local/share
+sudo docker info --format 'root={{.DockerRootDir}} images={{.Images}}'
+systemctl --user status --no-pager minikube.service
+sudo virsh list --all
+```
+
+The first migration recovered about 105 GiB on `/dev/md2`. Its rollback copy is
+`/etc/fstab.before-state-bind-20260822151533`. The `prod` KVM disks opened from
+the new bind mount after applying the ACL, but the existing two-node cluster did
+not complete startup because its SSH handshake reset while the worker remained
+off. It was left enabled but cleanly stopped; resolve that cluster-level issue
+before treating Minikube as healthy.
+
 ## Aslan System Manager cutover
 
 System Manager is limited to the files described by `nix/system/aslan.nix`; it
