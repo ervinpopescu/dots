@@ -51,8 +51,9 @@ dots/                              # chezmoi source directory
 │   └── transmission-daemon/        # Aslan settings (RPC secret templated)
 │
 ├── system/                        # System-level configs, deployed via run_after_ script
+│   ├── arch/                      # Arch-only system configuration
+│   │   └── etc/                   # pacman.conf, reflector.conf
 │   ├── etc/
-│   │   ├── xdg/                   # XDG defaults
 │   │   └── zsh/zshenv             # Sets ZDOTDIR system-wide
 │   ├── hetzner/                   # Aslan-only server configuration
 │   │   ├── etc/                   # Nginx, security, monitoring, and systemd

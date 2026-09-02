@@ -16,6 +16,8 @@ stored in `.machine`; it is separate from the hostname in some cases.
 `is_arch` is derived from the host operating system, not hardcoded to a
 profile. The `hetzner` profile enables the Aslan-only `system/hetzner/` tree,
 including Nginx, monitoring, security, systemd, and Transmission configuration.
+The `system/arch/` tree (`pacman.conf`, `reflector.conf`) is applied only when
+`is_arch` is true.
 
 ## Detection
 
