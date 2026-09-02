@@ -5,6 +5,7 @@ set -euo pipefail
 CHEZMOI_SOURCE="{{ .chezmoi.sourceDir }}"
 SYSTEM_DIR="$CHEZMOI_SOURCE/system"
 SERVER_DIR="$SYSTEM_DIR/hetzner"
+ARCH_DIR="$SYSTEM_DIR/arch"
 
 [ ! -d "$SYSTEM_DIR" ] && exit 0
 
@@ -32,21 +33,28 @@ install_file() {
 }
 
 deploy_tree() {
-  local source_root="$1" excluded_root="${2:-}"
+  local source_root="$1"
+  shift
+  local -a find_args=("$source_root" -type f)
+  for excluded in "$@"; do
+    if [ -n "$excluded" ]; then
+      find_args+=(! -path "$excluded/*")
+    fi
+  done
   while IFS= read -r -d '' src; do
     install_file "$src" "${src#"$source_root"}"
-  done < <(
-    if [ -n "$excluded_root" ]; then
-      find "$source_root" -type f ! -path "$excluded_root/*" -print0
-    else
-      find "$source_root" -type f -print0
-    fi
-  )
+  done < <(find "${find_args[@]}" -print0)
 }
 
-# Common system files are always deployed. The hetzner subtree is excluded from
-# this pass so server-only files cannot accidentally land on a workstation.
-deploy_tree "$SYSTEM_DIR" "$SERVER_DIR"
+# Common system files are always deployed. Subtrees for specific hosts/distros
+# (hetzner, arch) are excluded from this pass.
+deploy_tree "$SYSTEM_DIR" "$SERVER_DIR" "$ARCH_DIR"
+
+{{ if .is_arch -}}
+if [ -d "$ARCH_DIR" ]; then
+  deploy_tree "$ARCH_DIR"
+fi
+{{ end -}}
 
 {{ if .is_hetzner -}}
 if [ -d "$SERVER_DIR" ]; then
