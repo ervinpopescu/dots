@@ -1,7 +1,7 @@
 {{ if eq .machine "cloudtop" -}}
 # shellcheck disable=all
 
-typeset -gaU fpath=($fpath ~/.local/share/zsh/completions /usr/share/zsh/plugins/zsh-completions/src)
+typeset -gaU fpath=($fpath ~/.local/share/zsh/completions)
 
 autoload -Uz compinit
 compinit -d ~/.cache/zcompdump
