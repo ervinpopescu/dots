@@ -1,8 +1,6 @@
 {{ if eq .machine "cloudtop" -}}
 # shellcheck disable=all
 
-source /usr/share/zsh/plugins/git/git.zsh
-
 # set variable identifying the chroot you work in (used in the prompt below)
 if [ -z "${debian_chroot:-}" ] && [ -r /etc/debian_chroot ]; then
     debian_chroot=$(cat /etc/debian_chroot)
@@ -60,8 +58,7 @@ if [ "$color_prompt" = yes ]; then
     configure_prompt
 
     # enable syntax-highlighting
-    if [ -f /usr/share/zsh/plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh ] && [ "$color_prompt" = yes ]; then
-        source /usr/share/zsh/plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh
+    if [ "$color_prompt" = yes ]; then
         source "$ZDOTDIR"/rc/catppuccin_mocha-zsh-syntax-highlighting.zsh
     fi
 else
@@ -105,9 +102,6 @@ precmd() {
 }
 {{ else -}}
 # shellcheck disable=all
-
-[ -f $ZDOTDIR/plugins/git-prompt.zsh/git-prompt.plugin.zsh ] && source $ZDOTDIR/plugins/git-prompt.zsh/git-prompt.plugin.zsh
-[ -f $ZDOTDIR/plugins/git-prompt.zsh/examples/multiline.zsh ] && source $ZDOTDIR/plugins/git-prompt.zsh/examples/multiline.zsh
 
 # set variable identifying the chroot you work in (used in the prompt below)
 if [ -z "${debian_chroot:-}" ] && [ -r /etc/debian_chroot ]; then
@@ -161,8 +155,7 @@ if [ "$color_prompt" = yes ]; then
   configure_prompt
 
   # enable syntax-highlighting
-  if [ -f /usr/share/zsh/plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh ] && [ "$color_prompt" = yes ]; then
-    source /usr/share/zsh/plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh
+  if [ "$color_prompt" = yes ]; then
     source "$ZDOTDIR/rc/catppuccin_mocha-zsh-syntax-highlighting.zsh"
   fi
 else

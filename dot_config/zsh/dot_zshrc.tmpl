@@ -17,15 +17,17 @@ source /usr/share/zsh/scripts/zplug/init.zsh
 source "$ZPLUG_HOME/init.zsh"
 {{ end -}}
 
+zstyle ":omz:alpha:lib:git" async-prompt no
+
 zplug "zsh-users/zsh-history-substring-search"
 zplug "woefe/git-prompt.zsh", use:"{git-prompt.zsh,examples/multiline.zsh}"
 zplug "zdharma-continuum/fast-syntax-highlighting"
 zplug "zsh-users/zsh-autosuggestions"
 zplug "agkozak/zsh-z"
-zplug "olets/zsh-abbr", at:main, defer:2
-{{- if .is_cloudtop }}
 zplug "macunha1/zsh-terraform"
-{{- end }}
+zplug "plugins/git", from:oh-my-zsh
+zplug "zsh-users/zsh-completions"
+zplug "olets/zsh-abbr", at:main, defer:2
 
 # zsh-abbr is loaded by zplug after compinit, rather than sourced last.
 ABBR_TMPDIR=/tmp/zsh-abbr-user/
