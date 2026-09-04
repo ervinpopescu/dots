@@ -1,0 +1,14 @@
+[Unit]
+Description=Job Applier Web App
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/ervin/prjs/job-applier
+ExecStart=/home/ervin/.local/bin/uv run python src/job_applier/cli/web_app.py --port 8000 --host 127.0.0.1 --no-browser
+Restart=on-failure
+Environment=PATH=/home/ervin/.local/bin:/usr/local/bin:/usr/bin:/bin
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=default.target
