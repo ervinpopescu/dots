@@ -8,9 +8,9 @@ gui:
   wrapLinesInStagingView: true
 customCommands:
   - key: "P"
-    description: "Push selected local branch to remote"
+    description: "Push local branch(es) to remote (multi-select with fzf)"
     context: "localBranches"
-    loadingText: "Pushing selected branch..."
+    output: "terminal"
     prompts:
       - type: "menuFromCommand"
         title: "Which remote repository to push to?"
@@ -26,5 +26,22 @@ customCommands:
           - value: "push"
           - value: "push --force-with-lease"
           - value: "push --force"
-    command: "git {{ `{{.Form.PushMode}}` }} {{ `{{.Form.Remote}}` }} {{ `{{.SelectedLocalBranch.Name | quote}}` }}"
+    command: >-
+      bash -c '
+      mapfile -t branches < <((echo "{{ `{{.SelectedLocalBranch.Name}}` }}"; git for-each-ref --format="%(refname:short)" refs/heads/ | grep -vFx "{{ `{{.SelectedLocalBranch.Name}}` }}" || true) | fzf --multi --prompt="Push to {{ `{{.Form.Remote}}` }} > " --header="TAB: toggle | Ctrl-A: all | ENTER: push | ESC: cancel");
+      if [ ${#branches[@]} -eq 0 ] || [ -z "${branches[0]}" ]; then
+        echo "No branch selected.";
+        exit 0;
+      fi;
+      echo "Pushing ${#branches[@]} branch(es) to {{ `{{.Form.Remote}}` }} ({{ `{{.Form.PushMode}}` }})...";
+      printf "  • %s\n" "${branches[@]}";
+      echo "";
+      if git {{ `{{.Form.PushMode}}` }} {{ `{{.Form.Remote}}` }} "${branches[@]}"; then
+        echo "";
+        read -t 3 -n 1 -s -r -p "Pushed successfully. Press any key to return (or wait 3s)..." || true;
+      else
+        echo "";
+        read -n 1 -s -r -p "Push failed. Press any key to return to lazygit..." || true;
+        exit 1;
+      fi'
 {{- end }}
