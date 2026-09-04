@@ -8,9 +8,9 @@ gui:
   wrapLinesInStagingView: true
 customCommands:
   - key: "P"
-    description: "Push selected local branch(es) to remote"
+    description: "Push selected local branch to remote"
     context: "localBranches"
-    loadingText: "Pushing branch(es)..."
+    loadingText: "Pushing selected branch..."
     prompts:
       - type: "menuFromCommand"
         title: "Which remote repository to push to?"
@@ -26,11 +26,5 @@ customCommands:
           - value: "push"
           - value: "push --force-with-lease"
           - value: "push --force"
-      - type: "input"
-        title: "Branch name(s) to push (space-separated):"
-        key: "Branches"
-        initialValue: "{{ `{{.SelectedLocalBranch.Name}}` }}"
-        suggestions:
-          preset: "branches"
-    command: "git {{ `{{.Form.PushMode}}` }} {{ `{{.Form.Remote}}` }} {{ `{{.Form.Branches}}` }}"
+    command: "git {{ `{{.Form.PushMode}}` }} {{ `{{.Form.Remote}}` }} {{ `{{.SelectedLocalBranch.Name | quote}}` }}"
 {{- end }}
