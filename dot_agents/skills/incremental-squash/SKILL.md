@@ -60,12 +60,12 @@ git diff --name-status "$BASE_COMMIT"..HEAD
 
 Group changed files into logical layers:
 
-* **Layer 1: Backend / API Core (`feat(api)` or `fix(api)`)**: Data models, endpoints, database queries, server-side services, and their colocated unit tests.
-* **Layer 2: Frontend Services & State (`feat(ui)` or `fix(ui)`)**: Client services, API clients, state management, and service spec tests.
-* **Layer 3: Frontend UI Components (`feat(ui)` or `fix(ui)`)**: Angular/React components, templates, styling, and component spec tests.
-* **Layer 4: Infrastructure & Build (`chore(...)` or `infra(...)`)**: Terraform, Dockerfile, Makefile, package.json, scripts.
-* **Layer 5: End-to-End Tests (`test(...)` or `chore(tests)`)**: Playwright, Cypress, or integration test suites.
-* **Layer 6: Documentation (`docs(...)`)**: README, architecture docs, TODOs, API specs.
+- **Layer 1: Backend / API Core (`feat(api)` or `fix(api)`)**: Data models, endpoints, database queries, server-side services, and their colocated unit tests.
+- **Layer 2: Frontend Services & State (`feat(ui)` or `fix(ui)`)**: Client services, API clients, state management, and service spec tests.
+- **Layer 3: Frontend UI Components (`feat(ui)` or `fix(ui)`)**: Angular/React components, templates, styling, and component spec tests.
+- **Layer 4: Infrastructure & Build (`chore(...)` or `infra(...)`)**: Terraform, Dockerfile, Makefile, package.json, scripts.
+- **Layer 5: End-to-End Tests (`test(...)` or `chore(tests)`)**: Playwright, Cypress, or integration test suites.
+- **Layer 6: Documentation (`docs(...)`)**: README, architecture docs, TODOs, API specs.
 
 ---
 
@@ -95,7 +95,7 @@ For each logical layer identified in Step 2:
    git add path/to/file1 path/to/file2 path/to/related_test.spec.ts
    ```
 
-   *If a single file contains changes spanning multiple concerns, use patch staging:*
+   _If a single file contains changes spanning multiple concerns, use patch staging:_
 
    ```bash
    git add -p path/to/file
@@ -111,13 +111,13 @@ For each logical layer identified in Step 2:
    ```
 
    **Allowed Types:**
-   * `feat`: New feature or user-facing capability.
-   * `fix`: Bug fix or error resolution.
-   * `chore`: Build scripts, dependencies, auxiliary tooling, maintenance.
-   * `docs`: Documentation changes, TODO updates, guides.
-   * `test`: Adding or refactoring tests without application code changes.
-   * `refactor`: Code changes that neither fix a bug nor add a feature.
-   * `perf`: Performance improvements.
+   - `feat`: New feature or user-facing capability.
+   - `fix`: Bug fix or error resolution.
+   - `chore`: Build scripts, dependencies, auxiliary tooling, maintenance.
+   - `docs`: Documentation changes, TODO updates, guides.
+   - `test`: Adding or refactoring tests without application code changes.
+   - `refactor`: Code changes that neither fix a bug nor add a feature.
+   - `perf`: Performance improvements.
 
 3. **Verify Intermediate Build / Tests** (if fast):
    Run relevant local tests or lint checks for the staged files before proceeding to the next commit.

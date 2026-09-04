@@ -68,13 +68,13 @@ python3 /usr/local/google/home/ervinadrian/.agents/skills/gws-docs/gdocs_builder
 
 ## Supported Syntax & Styling Matrix
 
-| Markdown Element | Google Doc Element | Visual Style / Attributes |
-| :--- | :--- | :--- |
-| First `# Line` | Document `TITLE` | 26pt font, bold |
-| First `## Line` | Document `SUBTITLE` | 15pt font, gray subtitle |
-| `*Italic text*` line | Metadata Block | 10pt font, italic, #666666 gray |
-| `# Section` | `HEADING_1` | 20pt section header |
-| `## Subsection` | `HEADING_2` | 16pt subsection header |
-| `### Topic` | `HEADING_3` | 14pt topic header |
-| `- **Prefix:** Text` | Bulleted Paragraph | Bullet disc, prefix is **bolded** |
-| `\| Col 1 \| Col 2 \|` | Native `Table` | Header row has `#E8F0FE` background, bold dark blue text, 9.5pt font |
+| Markdown Element       | Google Doc Element  | Visual Style / Attributes                                            |
+| :--------------------- | :------------------ | :------------------------------------------------------------------- |
+| First `# Line`         | Document `TITLE`    | 26pt font, bold                                                      |
+| First `## Line`        | Document `SUBTITLE` | 15pt font, gray subtitle                                             |
+| `*Italic text*` line   | Metadata Block      | 10pt font, italic, #666666 gray                                      |
+| `# Section`            | `HEADING_1`         | 20pt section header                                                  |
+| `## Subsection`        | `HEADING_2`         | 16pt subsection header                                               |
+| `### Topic`            | `HEADING_3`         | 14pt topic header                                                    |
+| `- **Prefix:** Text`   | Bulleted Paragraph  | Bullet disc, prefix is **bolded**                                    |
+| `\| Col 1 \| Col 2 \|` | Native `Table`      | Header row has `#E8F0FE` background, bold dark blue text, 9.5pt font |

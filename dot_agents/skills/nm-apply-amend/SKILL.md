@@ -76,7 +76,7 @@ user-invocable: true
    git nm-apply
    ```
 
-   *(Note: `git nm-apply` is an alias for `GIT_PAGER= git diff $(git branch --show-current) no-mistakes/$(git branch --show-current) | git apply`)*
+   _(Note: `git nm-apply` is an alias for `GIT_PAGER= git diff $(git branch --show-current) no-mistakes/$(git branch --show-current) | git apply`)_
 
 4. **Verify Applied Changes**:
 
@@ -125,6 +125,7 @@ user-invocable: true
      ```
 
      Use patch staging (`git add -p "$FILE"`) to separate hunks if they belong to different commits, or target the latest commit that touched the relevant logic.
+
    - **Case C — File was not touched by any commit on this branch** (new file created by remote pipeline or pre-existing base file):
      Stage the file and either create a fixup targeting the main feature commit on the branch, or create a new logical commit (e.g. `test(...)` or `docs(...)`).
 
@@ -140,7 +141,7 @@ BASE=$(git merge-base origin/main HEAD 2>/dev/null || git merge-base main HEAD)
 for file in $(git diff --name-only); do
   # Find all commit hashes on the current branch touching this file
   COMMITS=($(git log "$BASE..HEAD" --format="%H" -- "$file"))
-  
+
   if [ ${#COMMITS[@]} -eq 1 ]; then
     TARGET="${COMMITS[0]}"
     echo "Attributing $file -> $TARGET"
@@ -200,10 +201,10 @@ done
 
 ## Quick Reference Summary
 
-| Phase | Command | Purpose |
-| --- | --- | --- |
-| **1. Inspect** | `git fetch no-mistakes && git diff HEAD no-mistakes/$(git branch --show-current)` | Review remote pipeline changes |
-| **2. Backup & Apply** | `git branch backup/... HEAD && git nm-apply` | Save current HEAD and apply patch |
-| **3. Fixup** | `git add <file> && git commit --fixup=<commit-hash>` | Create fixup commits targeted to branch commits |
-| **4. Autosquash** | `GIT_SEQUENCE_EDITOR=true git rebase -i --autosquash "$BASE"` | Fold all fixes into their parent commits |
-| **5. Verify** | `git diff HEAD no-mistakes/$(git branch --show-current)` | Confirm zero drift against remote |
+| Phase                 | Command                                                                           | Purpose                                         |
+| --------------------- | --------------------------------------------------------------------------------- | ----------------------------------------------- |
+| **1. Inspect**        | `git fetch no-mistakes && git diff HEAD no-mistakes/$(git branch --show-current)` | Review remote pipeline changes                  |
+| **2. Backup & Apply** | `git branch backup/... HEAD && git nm-apply`                                      | Save current HEAD and apply patch               |
+| **3. Fixup**          | `git add <file> && git commit --fixup=<commit-hash>`                              | Create fixup commits targeted to branch commits |
+| **4. Autosquash**     | `GIT_SEQUENCE_EDITOR=true git rebase -i --autosquash "$BASE"`                     | Fold all fixes into their parent commits        |
+| **5. Verify**         | `git diff HEAD no-mistakes/$(git branch --show-current)`                          | Confirm zero drift against remote               |
