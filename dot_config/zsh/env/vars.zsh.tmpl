@@ -42,9 +42,9 @@ export FZF_DEFAULT_OPTS='--color=bg+:#302D41,bg:#1E1E2E,spinner:#F8BD96,hl:#F28F
 export PAGER='less'
 export BROWSER='firefox'
 # export MOZ_ENABLE_WAYLAND=1
-export OPENSUBTITLES_API_KEY="ANqedh96HuRAYfx5up0nJwI6lg4HhjvE"
+export OPENSUBTITLES_API_KEY={{ .opensubtitles_api_key | quote }}
 export TF_CPP_MIN_LOG_LEVEL=2
-export TSTRUCT_TOKEN="tstruct_eyJ2ZXJzaW9uIjoxLCJkYXRhIjp7InVzZXJJRCI6MTQ0NDIxMTU1NywidXNlckVtYWlsIjoiZXJ2aW4ucG9wZXNjdTEwQGdtYWlsLmNvbSIsInRlYW1JRCI6OTg3NTM1ODgwLCJ0ZWFtTmFtZSI6ImVydmluLnBvcGVzY3UxMEBnbWFpbC5jb20ncyB0ZWFtIiwicmVuZXdhbERhdGUiOiIyMDIyLTEyLTA3VDAxOjMzOjMwLjIxNDIyMDUwMVoiLCJjcmVhdGVkQXQiOiIyMDIyLTExLTMwVDAxOjMzOjMwLjIxNDIyMzA5N1oifSwic2lnbmF0dXJlIjoiNEg1cEdxZEF1b3lYMVpUQm82eCtlMVZ0QlpqUm81S0pnZCswVU9vdHVxNmptZUNrdmJPRDk4alB6NlVoVW05TkRFOUx5V25oMlNZMnRsdXhCVnhJQWc9PSJ9"
+export TSTRUCT_TOKEN={{ .tstruct_token | quote }}
 export SSO_LOGIN_URL=https://login.apigee.com
 {{ else -}}
 # export XCURSOR_PATH=/usr/share/icons:${XDG_DATA_HOME}/icons

@@ -1,3 +1,7 @@
+# pyright: reportMissingImports=false
+
+import os
+
 from libqtile.widget.open_weather import (
     OpenWeatherResponseError,
     _OpenWeatherResponseParser,
@@ -9,7 +13,7 @@ from modules.settings import colors
 
 class Weather(OpenWeather):
     defaults = [
-        ("appkey", "ce4579dd88a8d4877a8c23f2a10d61cc", ""),
+        ("appkey", os.environ.get("OPENWEATHER_API_KEY", ""), ""),
         ("padding", 5, ""),
         ("fontsize", 12, ""),
         ("foreground", "#D9E0EE", ""),
