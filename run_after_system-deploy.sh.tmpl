@@ -2,18 +2,110 @@
 #!/bin/bash
 set -euo pipefail
 
-CHEZMOI_SOURCE="{{ .chezmoi.sourceDir }}"
+CHEZMOI_SOURCE="${SYSTEM_SOURCE_DIR:-{{ .chezmoi.sourceDir }}}"
 SYSTEM_DIR="$CHEZMOI_SOURCE/system"
 SERVER_DIR="$SYSTEM_DIR/hetzner"
 ARCH_DIR="$SYSTEM_DIR/arch"
+DEST_ROOT="${SYSTEM_TARGET_DIR:-}"
+
 nginx_changed=0
+changed_files=0
+
+script_name="$(basename "$0")"
+if [ "$script_name" = "bash" ] || [ "$script_name" = "-s" ] || [ "$script_name" = "sh" ]; then
+  script_name="system-deploy.sh"
+fi
+
+dry_run=0
+if [ "${DRY_RUN:-0}" = "1" ] || [ "${SYSTEM_DEPLOY_DRY_RUN:-0}" = "1" ] || [ "${CHEZMOI_DRY_RUN:-0}" = "1" ]; then
+  dry_run=1
+fi
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -n|--dry-run)
+      dry_run=1
+      shift
+      ;;
+    -h|--help)
+      echo "Usage: $script_name [OPTIONS]"
+      echo ""
+      echo "Deploy system-level configurations to /etc, /usr, etc."
+      echo ""
+      echo "Options:"
+      echo "  -n, --dry-run    Preview system changes and unified diffs without modifying files"
+      echo "  -h, --help       Show this help message"
+      exit 0
+      ;;
+    *)
+      echo "Unknown option: $1" >&2
+      echo "Usage: $script_name [-n|--dry-run] [-h|--help]" >&2
+      exit 1
+      ;;
+  esac
+done
 
 [ ! -d "$SYSTEM_DIR" ] && exit 0
 
-install_file() {
-  local src="$1" dest="$2" mode=644 owner=root group=root
+target_exists() {
+  local target="$1"
+  if [ -e "$target" ] || [ -L "$target" ]; then
+    return 0
+  fi
+  if [ -z "$DEST_ROOT" ] && { sudo -n test -e "$target" 2>/dev/null || sudo -n test -L "$target" 2>/dev/null; }; then
+    return 0
+  fi
+  return 1
+}
 
-  case "$dest" in
+content_matches() {
+  local src="$1" dest="$2"
+  if cmp -s "$src" "$dest" 2>/dev/null; then
+    return 0
+  fi
+  if [ -z "$DEST_ROOT" ] && [ ! -r "$dest" ]; then
+    if sudo -n cmp -s "$src" "$dest" 2>/dev/null; then
+      return 0
+    fi
+  fi
+  return 1
+}
+
+get_metadata() {
+  local target="$1"
+  if [ -n "$DEST_ROOT" ] && [ -w "${DEST_ROOT:-/}" ]; then
+    stat -c "%a %U %G" "$target" 2>/dev/null || echo ""
+  else
+    stat -c "%a %U %G" "$target" 2>/dev/null || sudo -n stat -c "%a %U %G" "$target" 2>/dev/null || echo ""
+  fi
+}
+
+print_diff() {
+  local src="$1" dest="$2" display_path="$3" is_new="$4"
+  local -a diff_cmd=(diff -u)
+  if diff --color=auto /dev/null /dev/null 2>/dev/null; then
+    diff_cmd+=(--color=auto)
+  fi
+
+  if [ "$is_new" -eq 1 ]; then
+    "${diff_cmd[@]}" --label /dev/null --label "b$display_path" /dev/null "$src" || true
+  else
+    if [ -r "$dest" ]; then
+      "${diff_cmd[@]}" --label "a$display_path" --label "b$display_path" "$dest" "$src" || true
+    elif [ -z "$DEST_ROOT" ] && sudo -n test -r "$dest" 2>/dev/null; then
+      sudo -n "${diff_cmd[@]}" --label "a$display_path" --label "b$display_path" "$dest" "$src" || true
+    else
+      echo "WARN: cannot read $display_path without elevated permissions; diff unavailable"
+    fi
+  fi
+}
+
+install_file() {
+  local src="$1" rel_dest="$2" mode=644 owner=root group=root
+  local dest="$DEST_ROOT$rel_dest"
+  local display_path="$rel_dest"
+
+  case "$display_path" in
     /etc/grafana.ini)
       mode=640
       if getent group grafana >/dev/null 2>&1; then
@@ -22,21 +114,112 @@ install_file() {
       ;;
   esac
 
-  if ! cmp -s "$src" "$dest" 2>/dev/null; then
-    echo "System file changed: $dest"
-    if sudo install -Dm"$mode" -o "$owner" -g "$group" "$src" "$dest"; then
-      case "$dest" in
+  local is_new=0
+  if ! target_exists "$dest"; then
+    is_new=1
+  fi
+
+  local content_differs=0
+  if [ "$is_new" -eq 1 ] || ! content_matches "$src" "$dest"; then
+    content_differs=1
+  fi
+
+  local meta_differs=0
+  local cur_mode="" cur_owner="" cur_group=""
+  if [ "$is_new" -eq 0 ]; then
+    local meta
+    meta="$(get_metadata "$dest")"
+    if [ -n "$meta" ]; then
+      read -r cur_mode cur_owner cur_group <<< "$meta"
+      if [[ "$cur_mode" =~ ^[0-7]+$ ]] && [ "$((8#$cur_mode))" -ne "$((8#$mode))" ]; then
+        meta_differs=1
+      fi
+      if [ -z "$DEST_ROOT" ]; then
+        if [ "$cur_owner" != "$owner" ] || [ "$cur_group" != "$group" ]; then
+          meta_differs=1
+        fi
+      fi
+    fi
+  fi
+
+  if [ "$dry_run" -eq 1 ]; then
+    if [ "$is_new" -eq 1 ]; then
+      echo "diff --git a$display_path b$display_path"
+      echo "new file mode 100$mode ($owner:$group)"
+      print_diff "$src" "$dest" "$display_path" 1
+      changed_files=$((changed_files + 1))
+      case "$display_path" in
         /etc/nginx/*)
           nginx_changed=1
           ;;
       esac
-    else
-      echo "WARN: needs sudo or service account for $dest"
+    elif [ "$content_differs" -eq 1 ]; then
+      echo "diff --git a$display_path b$display_path"
+      if [ "$meta_differs" -eq 1 ]; then
+        if [[ "$cur_mode" =~ ^[0-7]+$ ]] && [ "$((8#$cur_mode))" -ne "$((8#$mode))" ]; then
+          echo "mode: $cur_mode -> $mode"
+        fi
+        if [ -z "$DEST_ROOT" ] && { [ "$cur_owner" != "$owner" ] || [ "$cur_group" != "$group" ]; }; then
+          echo "owner: $cur_owner:$cur_group -> $owner:$group"
+        fi
+      fi
+      print_diff "$src" "$dest" "$display_path" 0
+      changed_files=$((changed_files + 1))
+      case "$display_path" in
+        /etc/nginx/*)
+          nginx_changed=1
+          ;;
+      esac
+    elif [ "$meta_differs" -eq 1 ]; then
+      echo "diff --git a$display_path b$display_path"
+      if [[ "$cur_mode" =~ ^[0-7]+$ ]] && [ "$((8#$cur_mode))" -ne "$((8#$mode))" ]; then
+        echo "mode: $cur_mode -> $mode"
+      fi
+      if [ -z "$DEST_ROOT" ] && { [ "$cur_owner" != "$owner" ] || [ "$cur_group" != "$group" ]; }; then
+        echo "owner: $cur_owner:$cur_group -> $owner:$group"
+      fi
+      echo "(contents unchanged)"
+      changed_files=$((changed_files + 1))
     fi
   else
-    # Keep permissions and ownership correct even when file contents are unchanged.
-    sudo chmod "$mode" "$dest" 2>/dev/null || true
-    sudo chown "$owner:$group" "$dest" 2>/dev/null || true
+    if [ "$content_differs" -eq 1 ]; then
+      echo "System file changed: $display_path"
+      local -a install_cmd=(install -Dm"$mode" -o "$owner" -g "$group" "$src" "$dest")
+      local install_ok=0
+      if [ -n "$DEST_ROOT" ] && [ -w "${DEST_ROOT:-/}" ]; then
+        if [ "$(id -u)" -ne 0 ]; then
+          install_cmd=(install -Dm"$mode" "$src" "$dest")
+        fi
+        if "${install_cmd[@]}"; then
+          install_ok=1
+        fi
+      else
+        if sudo "${install_cmd[@]}"; then
+          install_ok=1
+        fi
+      fi
+
+      if [ "$install_ok" -eq 1 ]; then
+        case "$display_path" in
+          /etc/nginx/*)
+            nginx_changed=1
+            ;;
+        esac
+      else
+        echo "WARN: needs sudo or service account for $display_path"
+      fi
+    elif [ "$meta_differs" -eq 1 ]; then
+      # Keep permissions and ownership correct even when file contents are unchanged.
+      if [ -n "$DEST_ROOT" ] && [ -w "${DEST_ROOT:-/}" ]; then
+        chmod "$mode" "$dest" 2>/dev/null || true
+        if [ "$(id -u)" -eq 0 ]; then
+          chown "$owner:$group" "$dest" 2>/dev/null || true
+        fi
+      else
+        sudo chmod "$mode" "$dest" 2>/dev/null || true
+        sudo chown "$owner:$group" "$dest" 2>/dev/null || true
+      fi
+    fi
   fi
 }
 
@@ -73,17 +256,26 @@ if [ -d "$SERVER_DIR" ]; then
   # may have been installed by the distribution or another service.
   report_stale() {
     local source_dir="$1" target_dir="$2"
-    [ -d "$target_dir" ] || return 0
+    local full_target="$DEST_ROOT$target_dir"
+    [ -d "$full_target" ] || return 0
     while IFS= read -r -d '' dest; do
-      local rel="${dest#"$target_dir/"}"
+      local rel="${dest#"$full_target/"}"
       # This is an Arch-provided baseline, not a repository-managed file.
       if [ "$target_dir" = "/etc/ssh/sshd_config.d" ] && [ "$rel" = "99-archlinux.conf" ]; then
         continue
       fi
       if [ ! -f "$source_dir/$rel" ]; then
-        echo "WARN: stale unmanaged server file remains: $dest"
+        echo "WARN: stale unmanaged server file remains: ${dest#"$DEST_ROOT"}"
       fi
-    done < <(sudo find "$target_dir" -type f -print0 2>/dev/null)
+    done < <(
+      if [ -n "$DEST_ROOT" ]; then
+        find "$full_target" -type f -print0 2>/dev/null
+      elif [ "$dry_run" -eq 1 ]; then
+        sudo -n find "$full_target" -type f -print0 2>/dev/null || find "$full_target" -type f -print0 2>/dev/null || true
+      else
+        sudo find "$full_target" -type f -print0 2>/dev/null
+      fi
+    )
   }
 
   report_stale "$SERVER_DIR/etc/nginx/conf.d" /etc/nginx/conf.d
@@ -95,15 +287,30 @@ fi
 # These paths were previously in the common tree. Report them rather than
 # deleting them automatically if an older apply left them on a workstation.
 for stale in /etc/nginx/conf.d/solux.conf /www/data/index.html /www/data/index.css; do
-  [ -e "$stale" ] && echo "WARN: stale server file remains on non-hetzner host: $stale"
+  [ -e "$DEST_ROOT$stale" ] && echo "WARN: stale server file remains on non-hetzner host: $stale"
 done
 {{ end -}}
 
 if [ "$nginx_changed" -eq 1 ]; then
-  if sudo nginx -t; then
-    sudo systemctl reload nginx || echo "WARN: Nginx reload failed"
+  if [ "$dry_run" -eq 1 ]; then
+    echo "[dry-run] Nginx configuration changed; service reload skipped"
   else
-    echo "WARN: Nginx configuration test failed; reload skipped"
+    if [ -n "$DEST_ROOT" ]; then
+      echo "Nginx configuration changed (custom target root; reload skipped)"
+    elif sudo nginx -t; then
+      sudo systemctl reload nginx || echo "WARN: Nginx reload failed"
+    else
+      echo "WARN: Nginx configuration test failed; reload skipped"
+    fi
+  fi
+fi
+
+if [ "$dry_run" -eq 1 ]; then
+  if [ "$changed_files" -eq 0 ]; then
+    echo "No system file changes detected."
+  else
+    echo ""
+    echo "[dry-run] $changed_files system file(s) would be changed. No system changes applied."
   fi
 fi
 {{ end -}}
