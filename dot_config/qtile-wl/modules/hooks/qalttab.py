@@ -43,23 +43,31 @@ def _is_excluded(window):
 
 def save_focus_history(qtile):
     global message
-    with open(
-        SAVED_HISTORY_PATH,
-        "w",
-    ) as f:
-        json.dump(
-            message,
-            f,
-        )
+    try:
+        with open(
+            SAVED_HISTORY_PATH,
+            "w",
+        ) as f:
+            json.dump(
+                message,
+                f,
+            )
+    except OSError:
+        logger.exception("Could not save focus history")
 
 
 def load_focus_history(qtile):
     global message, reloaded
-    with open(
-        SAVED_HISTORY_PATH,
-        "r",
-    ) as f:
-        message = json.load(f)
+    try:
+        with open(
+            SAVED_HISTORY_PATH,
+            "r",
+        ) as f:
+            message = json.load(f)
+    except (OSError, json.JSONDecodeError):
+        reloaded = True
+        logger.warning("Could not load focus history", exc_info=True)
+        return
     if os.path.exists(SOCKET_PATH):
         client = Client(socket_path=SOCKET_PATH, is_json=True)
         create_task(

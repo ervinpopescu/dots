@@ -68,6 +68,36 @@ fi
 if [ -d "$SERVER_DIR" ]; then
   deploy_tree "$SERVER_DIR"
 
+  retired_nginx=0
+  retired_systemd=0
+  if [ -e /etc/nginx/conf.d/transmission.conf ] || [ -L /etc/nginx/conf.d/transmission.conf ]; then
+    echo "Removing retired system file: /etc/nginx/conf.d/transmission.conf"
+    if sudo rm -f -- /etc/nginx/conf.d/transmission.conf; then
+      retired_nginx=1
+    else
+      echo "WARN: could not remove retired Transmission Nginx configuration"
+    fi
+  fi
+  if [ -e /etc/systemd/system/transmission.service.d/override.conf ] || [ -L /etc/systemd/system/transmission.service.d/override.conf ]; then
+    echo "Removing retired system file: /etc/systemd/system/transmission.service.d/override.conf"
+    if sudo rm -f -- /etc/systemd/system/transmission.service.d/override.conf; then
+      retired_systemd=1
+      sudo rmdir /etc/systemd/system/transmission.service.d 2>/dev/null || true
+    else
+      echo "WARN: could not remove retired Transmission service override"
+    fi
+  fi
+  if [ "$retired_systemd" -eq 1 ]; then
+    sudo systemctl daemon-reload || echo "WARN: systemd daemon-reload failed"
+  fi
+  if [ "$retired_nginx" -eq 1 ]; then
+    if sudo nginx -t; then
+      sudo systemctl reload nginx || echo "WARN: Nginx reload failed"
+    else
+      echo "WARN: Nginx configuration test failed; reload skipped"
+    fi
+  fi
+
   # Report files from managed server directories that are no longer in this
   # source tree. They are intentionally not removed automatically because some
   # may have been installed by the distribution or another service.
@@ -90,6 +120,7 @@ if [ -d "$SERVER_DIR" ]; then
   report_stale "$SERVER_DIR/etc/nginx/snippets" /etc/nginx/snippets
   report_stale "$SERVER_DIR/etc/fail2ban/jail.d" /etc/fail2ban/jail.d
   report_stale "$SERVER_DIR/etc/ssh/sshd_config.d" /etc/ssh/sshd_config.d
+  report_stale "$SERVER_DIR/etc/systemd/system/transmission.service.d" /etc/systemd/system/transmission.service.d
 fi
 {{ else -}}
 # These paths were previously in the common tree. Report them rather than
