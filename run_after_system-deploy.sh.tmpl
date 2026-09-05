@@ -6,6 +6,7 @@ CHEZMOI_SOURCE="{{ .chezmoi.sourceDir }}"
 SYSTEM_DIR="$CHEZMOI_SOURCE/system"
 SERVER_DIR="$SYSTEM_DIR/hetzner"
 ARCH_DIR="$SYSTEM_DIR/arch"
+nginx_changed=0
 
 [ ! -d "$SYSTEM_DIR" ] && exit 0
 
@@ -23,8 +24,15 @@ install_file() {
 
   if ! cmp -s "$src" "$dest" 2>/dev/null; then
     echo "System file changed: $dest"
-    sudo install -Dm"$mode" -o "$owner" -g "$group" "$src" "$dest" || \
+    if sudo install -Dm"$mode" -o "$owner" -g "$group" "$src" "$dest"; then
+      case "$dest" in
+        /etc/nginx/*)
+          nginx_changed=1
+          ;;
+      esac
+    else
       echo "WARN: needs sudo or service account for $dest"
+    fi
   else
     # Keep permissions and ownership correct even when file contents are unchanged.
     sudo chmod "$mode" "$dest" 2>/dev/null || true
@@ -90,4 +98,12 @@ for stale in /etc/nginx/conf.d/solux.conf /www/data/index.html /www/data/index.c
   [ -e "$stale" ] && echo "WARN: stale server file remains on non-hetzner host: $stale"
 done
 {{ end -}}
+
+if [ "$nginx_changed" -eq 1 ]; then
+  if sudo nginx -t; then
+    sudo systemctl reload nginx || echo "WARN: Nginx reload failed"
+  else
+    echo "WARN: Nginx configuration test failed; reload skipped"
+  fi
+fi
 {{ end -}}
