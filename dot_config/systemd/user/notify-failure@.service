@@ -1,0 +1,9 @@
+[Unit]
+Description=Failure notification for %i
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=%h/bin/systemd-notify-failure.sh %i
+StandardOutput=journal
+StandardError=journal
