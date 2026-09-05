@@ -47,7 +47,7 @@ dots/                              # chezmoi source directory
 │       ├── plugins/               # Zsh plugins
 │       └── files/                 # Misc zsh files
 │
-├── system/                        # System-level configs, deployed via run_after_ script
+├── system/                        # System-level configs, deployed via run_after_ script (preview: chezmoi-dry-apply or system-deploy.sh -n)
 │   ├── arch/                      # Arch-only system configuration
 │   │   └── etc/                   # pacman.conf, reflector.conf
 │   ├── etc/
