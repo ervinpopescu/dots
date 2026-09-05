@@ -1,0 +1,151 @@
+#!/bin/bash
+set -euo pipefail
+
+# Preview both chezmoi user dotfile changes and system configuration deployment
+# in dry-run mode without modifying any files or restarting services.
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source_dir=""
+has_source=0
+has_force=0
+has_interactive=0
+apply_args=()
+
+print_help() {
+  local name
+  name="$(basename "$0")"
+  if [ "$name" = "executable_chezmoi-dry-apply" ]; then
+    name="chezmoi-dry-apply"
+  fi
+  cat << EOF
+Usage: $name [OPTIONS] [TARGET...]
+
+Preview both chezmoi user dotfile changes and system configuration deployment
+in dry-run mode without modifying any files or restarting services.
+
+Executes:
+  1. chezmoi apply --dry-run --verbose [OPTIONS] [TARGET...]
+  2. system-deploy.sh --dry-run
+
+Options:
+  -h, --help           Show this help message and exit
+  -n, --dry-run        Accepted for compatibility (dry-run is always active)
+  -S, --source PATH    Use specified chezmoi source directory
+
+All other options and target paths are forwarded to chezmoi apply.
+Source options (-S, --source) are shared with system deployment inspection.
+EOF
+}
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -h | --help)
+      print_help
+      exit 0
+      ;;
+    -n | --dry-run)
+      shift
+      ;;
+    -S | --source)
+      if [ $# -lt 2 ]; then
+        echo "Error: $1 requires a directory path" >&2
+        exit 1
+      fi
+      source_dir="$2"
+      has_source=1
+      apply_args+=("$1" "$2")
+      shift 2
+      ;;
+    --source=*)
+      source_dir="${1#*=}"
+      has_source=1
+      apply_args+=("$1")
+      shift
+      ;;
+    --force)
+      has_force=1
+      apply_args+=("$1")
+      shift
+      ;;
+    --interactive | --less-interactive)
+      has_interactive=1
+      apply_args+=("$1")
+      shift
+      ;;
+    *)
+      apply_args+=("$1")
+      shift
+      ;;
+  esac
+done
+
+if [ -n "$source_dir" ]; then
+  source_dir="$(cd "$source_dir" 2>/dev/null && pwd || echo "$source_dir")"
+fi
+
+if [ -z "$source_dir" ]; then
+  if [ -n "${SYSTEM_SOURCE_DIR:-}" ] && [ -f "$SYSTEM_SOURCE_DIR/run_after_system-deploy.sh.tmpl" ]; then
+    source_dir="$SYSTEM_SOURCE_DIR"
+  elif [ -n "${CHEZMOI_SOURCE_DIR:-}" ] && [ -f "$CHEZMOI_SOURCE_DIR/run_after_system-deploy.sh.tmpl" ]; then
+    source_dir="$CHEZMOI_SOURCE_DIR"
+  elif [ -f "$SCRIPT_DIR/../run_after_system-deploy.sh.tmpl" ]; then
+    source_dir="$(cd "$SCRIPT_DIR/.." && pwd)"
+  else
+    source_dir="$(chezmoi source-path 2>/dev/null || true)"
+    if [ -z "$source_dir" ] || [ ! -f "$source_dir/run_after_system-deploy.sh.tmpl" ]; then
+      if [ -f "$HOME/.local/share/chezmoi/run_after_system-deploy.sh.tmpl" ]; then
+        source_dir="$HOME/.local/share/chezmoi"
+      fi
+    fi
+  fi
+fi
+
+if [ -n "$source_dir" ]; then
+  export SYSTEM_SOURCE_DIR="$source_dir"
+fi
+
+# Build chezmoi apply invocation
+chezmoi_cmd=(chezmoi)
+if [ "$has_source" -eq 0 ] && [ -n "$source_dir" ]; then
+  chezmoi_cmd+=(-S "$source_dir")
+fi
+chezmoi_cmd+=(apply --dry-run --verbose)
+
+# In non-interactive environments without a controlling terminal, default to
+# --force to prevent chezmoi from aborting on modified targets when prompting.
+if ! (: < /dev/tty) 2>/dev/null && [ "$has_interactive" -eq 0 ] && [ "$has_force" -eq 0 ]; then
+  chezmoi_cmd+=(--force)
+fi
+
+if [ ${#apply_args[@]} -gt 0 ]; then
+  chezmoi_cmd+=("${apply_args[@]}")
+fi
+
+"${chezmoi_cmd[@]}"
+
+# Locate system-deploy script
+deploy_cmd=""
+if [ -n "${SYSTEM_DEPLOY_BIN:-}" ] && [ -x "$SYSTEM_DEPLOY_BIN" ]; then
+  deploy_cmd="$SYSTEM_DEPLOY_BIN"
+elif [ -x "$SCRIPT_DIR/system-deploy.sh" ]; then
+  deploy_cmd="$SCRIPT_DIR/system-deploy.sh"
+elif [ -x "$SCRIPT_DIR/executable_system-deploy.sh" ]; then
+  deploy_cmd="$SCRIPT_DIR/executable_system-deploy.sh"
+elif command -v system-deploy.sh >/dev/null 2>&1; then
+  deploy_cmd="$(command -v system-deploy.sh)"
+elif [ -n "$source_dir" ] && [ -x "$source_dir/bin/executable_system-deploy.sh" ]; then
+  deploy_cmd="$source_dir/bin/executable_system-deploy.sh"
+elif [ -n "$source_dir" ] && [ -x "$source_dir/bin/system-deploy.sh" ]; then
+  deploy_cmd="$source_dir/bin/system-deploy.sh"
+fi
+
+if [ -n "$deploy_cmd" ]; then
+  "$deploy_cmd" --dry-run
+elif [ -n "$source_dir" ] && [ -f "$source_dir/run_after_system-deploy.sh.tmpl" ]; then
+  rendered="$(chezmoi -S "$source_dir" execute-template '{{ includeTemplate "run_after_system-deploy.sh.tmpl" . }}')"
+  if [ -n "$(echo "$rendered" | tr -d '[:space:]')" ]; then
+    bash -s -- --dry-run <<< "$rendered"
+  fi
+else
+  echo "WARN: could not locate system-deploy script to preview system files" >&2
+fi
