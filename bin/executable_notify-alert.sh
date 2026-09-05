@@ -24,6 +24,12 @@ if [[ -f "$CONFIG_FILE" ]]; then
   source "$CONFIG_FILE"
 fi
 
+LOCAL_CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/notify/config.local.env"
+if [[ -f "$LOCAL_CONFIG" ]]; then
+  # shellcheck source=/dev/null
+  source "$LOCAL_CONFIG"
+fi
+
 TITLE="System Notification"
 MESSAGE=""
 PRIORITY="high"
