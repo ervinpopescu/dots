@@ -8,7 +8,11 @@ CONFIG_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/notify/config.env"
 
 # Defaults
 NOTIFY_CHANNELS="${NOTIFY_CHANNELS:-ntfy}"
+NTFY_SERVER="${NTFY_SERVER:-https://ntfy.sh}"
 NTFY_TOPIC="${NTFY_TOPIC:-aslan-cluster-alerts}"
+NTFY_USER="${NTFY_USER:-}"
+NTFY_PASS="${NTFY_PASS:-}"
+NTFY_TOKEN="${NTFY_TOKEN:-}"
 NOTIFY_EMAIL_TO="${NOTIFY_EMAIL_TO:-ervin.popescu10@gmail.com}"
 SMTP_URL="${SMTP_URL:-smtp://smtp.gmail.com:587}"
 SMTP_USER="${SMTP_USER:-ervin.popescu10@gmail.com}"
@@ -67,13 +71,22 @@ send_ntfy() {
     echo "notify-alert: NTFY_TOPIC not configured" >&2
     return 1
   fi
+
+  local auth_args=()
+  if [[ -n "$NTFY_TOKEN" ]]; then
+    auth_args+=(-H "Authorization: Bearer $NTFY_TOKEN")
+  elif [[ -n "$NTFY_USER" && -n "$NTFY_PASS" ]]; then
+    auth_args+=(-u "$NTFY_USER:$NTFY_PASS")
+  fi
+
   curl -fsSL \
+    "${auth_args[@]}" \
     -H "Title: $TITLE" \
     -H "Priority: $PRIORITY" \
     -H "Tags: $TAGS" \
     -d "$MESSAGE" \
-    "https://ntfy.sh/$NTFY_TOPIC" >/dev/null || {
-      echo "notify-alert: failed to send ntfy notification" >&2
+    "${NTFY_SERVER%/}/$NTFY_TOPIC" >/dev/null || {
+      echo "notify-alert: failed to send ntfy notification to ${NTFY_SERVER%/}/$NTFY_TOPIC" >&2
       return 1
     }
 }
