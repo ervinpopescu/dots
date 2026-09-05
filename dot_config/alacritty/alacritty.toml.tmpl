@@ -1,0 +1,170 @@
+[general]
+live_config_reload = true
+
+[scrolling]
+history = 10000
+
+[selection]
+save_to_clipboard = true
+semantic_escape_chars = ",│`|:\"' ()[]{}<>"
+
+[cursor]
+thickness = 0.15
+unfocused_hollow = false
+
+[cursor.style]
+shape = "Beam"
+blinking = "Never"
+
+[mouse]
+hide_when_typing = true
+
+[window]
+decorations = "None"
+dynamic_title = false
+opacity = 0.95
+startup_mode = "Maximized"
+{{ if eq .chezmoi.os "darwin" -}}
+option_as_alt = "Both"
+{{ end }}
+[window.padding]
+x = 10
+y = 10
+
+[font]
+size = {{ if or .is_macbook .is_cloudtop }}18{{ else }}12{{ end }}
+
+[font.normal]
+family = "{{ if .is_macbook }}CaskaydiaMono Nerd Font Mono{{ else }}CaskaydiaCove Nerd Font Mono{{ end }}"
+style = "Regular"
+
+[font.bold]
+family = "{{ if .is_macbook }}CaskaydiaMono Nerd Font Mono{{ else }}CaskaydiaCove Nerd Font Mono{{ end }}"
+style = "Bold"
+
+[font.italic]
+family = "{{ if .is_macbook }}CaskaydiaMono Nerd Font Mono{{ else }}CaskaydiaCove Nerd Font Mono{{ end }}"
+style = "Italic"
+
+[font.glyph_offset]
+x = 0
+y = 0
+
+[font.offset]
+x = 0
+y = 0
+
+[colors.primary]
+background = "#1e1e2e"
+foreground = "#cdd6f4"
+bright_foreground = "#cdd6f4"
+dim_foreground = "#cdd6f4"
+
+[colors.cursor]
+cursor = "#f5e0dc"
+text = "#1e1e2e"
+
+[colors.vi_mode_cursor]
+cursor = "#b4befe"
+text = "#1e1e2e"
+
+[colors.search.matches]
+background = "#a6adc8"
+foreground = "#1e1e2e"
+
+[colors.search.focused_match]
+background = "#a6e3a1"
+foreground = "#1e1e2e"
+
+[colors.footer_bar]
+background = "#a6adc8"
+foreground = "#1e1e2e"
+
+[colors.hints.start]
+background = "#f9e2af"
+foreground = "#1e1e2e"
+
+[colors.hints.end]
+background = "#a6adc8"
+foreground = "#1e1e2e"
+
+[colors.selection]
+background = "#f5e0dc"
+text = "#1e1e2e"
+
+[colors.normal]
+black = "#45475a"
+red = "#f38ba8"
+green = "#a6e3a1"
+yellow = "#f9e2af"
+blue = "#89b4fa"
+magenta = "#f5c2e7"
+cyan = "#94e2d5"
+white = "#bac2de"
+
+[colors.bright]
+black = "#585b70"
+red = "#f38ba8"
+green = "#a6e3a1"
+yellow = "#f9e2af"
+blue = "#89b4fa"
+magenta = "#f5c2e7"
+cyan = "#94e2d5"
+white = "#a6adc8"
+
+[colors.dim]
+black = "#45475a"
+red = "#f38ba8"
+green = "#a6e3a1"
+yellow = "#f9e2af"
+blue = "#89b4fa"
+magenta = "#f5c2e7"
+cyan = "#94e2d5"
+white = "#bac2de"
+
+[[keyboard.bindings]]
+action = "Paste"
+key = "V"
+mods = "Control|Shift"
+
+[[keyboard.bindings]]
+action = "Copy"
+key = "C"
+mods = "Control|Shift"
+
+[[keyboard.bindings]]
+action = "ResetFontSize"
+key = "Key0"
+mods = "Control"
+
+[[keyboard.bindings]]
+action = "IncreaseFontSize"
+key = "Equals"
+mods = "Control"
+
+[[keyboard.bindings]]
+action = "DecreaseFontSize"
+key = "Minus"
+mods = "Control"
+
+[[keyboard.bindings]]
+action = "IncreaseFontSize"
+key = "NumpadAdd"
+mods = "None"
+
+[[keyboard.bindings]]
+action = "DecreaseFontSize"
+key = "NumpadSubtract"
+mods = "None"
+
+[[keyboard.bindings]]
+action = "SpawnNewInstance"
+key = "N"
+mods = "Control"
+{{- if eq .chezmoi.os "darwin" }}
+
+[[keyboard.bindings]]
+chars = "\u001b[13;3u"
+key = "Enter"
+mods = "Alt"
+{{- end }}

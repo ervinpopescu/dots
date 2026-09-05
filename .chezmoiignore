@@ -47,8 +47,11 @@ bin/send_cmd_tmux.py
 .config/lf/**
 {{ end }}
 
-{{ if or .is_macbook .is_server }}
+{{ if .is_server }}
 .config/alacritty/**
+{{ end }}
+
+{{ if or .is_macbook .is_server }}
 .config/Code/**
 .config/Code - OSS/**
 .config/conky/**

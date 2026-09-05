@@ -27,7 +27,7 @@ Executable script location:
 python3 /usr/local/google/home/ervinadrian/.agents/skills/gws-docs/gdocs_builder.py read <DOCUMENT_ID>
 ```
 
-*Outputs clean Markdown with `# Headings`, `**bold**`, `*italics*`, `[hyperlinks](url)`, `- bullets`, and `| markdown | tables |`.*
+_Outputs clean Markdown with `# Headings`, `**bold**`, `*italics*`, `[hyperlinks](url)`, `- bullets`, and `| markdown | tables |`._
 
 ### 2. Render Markdown to Google Doc (Full Formatting)
 
