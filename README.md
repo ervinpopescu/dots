@@ -31,8 +31,8 @@ cp /path/to/key.txt ~/.config/chezmoi/key.txt
 chezmoi init --source /path/to/this/repo
 
 # 4. Preview, then apply
-chezmoi diff
-chezmoi apply
+chezmoi-dry-apply            # preview both user dotfiles and system changes
+chezmoi apply                # apply dotfiles and deploy system files
 ```
 
 System files under `system/` (e.g. `/etc/zsh/zshenv`) are deployed automatically
@@ -40,6 +40,28 @@ via a post-apply script with `sudo`. The `system/arch/` subtree is applied only 
 Arch Linux systems, and the `system/hetzner/` subtree is applied only when the
 machine profile is `aslan`/`hetzner`; it contains the server's Nginx,
 monitoring, security, and service overrides.
+
+To preview pending changes safely without mutating `/etc`, modifying files, or
+reloading services, run:
+
+```bash
+chezmoi-dry-apply
+```
+
+This single command previews both normal chezmoi user dotfile changes
+(`chezmoi apply --dry-run --verbose`) and system configuration changes.
+
+To preview system configuration changes alone, run:
+
+```bash
+system-deploy.sh --dry-run   # or: system-deploy.sh -n
+```
+
+This displays unified diffs and file mode/owner changes for all pending system files.
+Because `chezmoi diff` and `chezmoi apply --dry-run` intentionally skip post-apply
+scripts, `chezmoi-dry-apply` and `system-deploy.sh` provide safe dry-run inspection
+interfaces. Setting `DRY_RUN=1` in the environment also triggers dry-run mode for
+system deployment.
 
 The former `archnet-cfg` repository remains useful for destructive Hetzner
 installation, package bootstrap, and service-data migration. It must not also
