@@ -26,7 +26,29 @@
   "subagents": {
     "defaultModel": "openai-codex/gpt-5.6-luna:high",
     "defaultProvider": "openai-codex",
-    "defaultThinking": "high"
+    "defaultThinking": "high",
+    "agentOverrides": {
+      "worker": {
+        "model": "openai-codex/gpt-5.6-luna:high",
+        "fallbackModels": ["google/gemini-3.8-flash:high"]
+      },
+      "delegate": {
+        "model": "openai-codex/gpt-5.6-luna:high",
+        "fallbackModels": ["google/gemini-3.8-flash:high"]
+      },
+      "reviewer": {
+        "model": "openai-codex/gpt-5.6-luna:high",
+        "fallbackModels": ["google/gemini-3.8-flash:high"]
+      },
+      "oracle": {
+        "model": "openai-codex/gpt-5.6-sol:high",
+        "fallbackModels": ["google/gemini-3.8-flash:high"]
+      },
+      "scout": {
+        "model": "openai-codex/gpt-5.6-luna:high",
+        "fallbackModels": ["google/gemini-3.8-flash:high"]
+      }
+    }
   },
   "theme": "dark"
 }
