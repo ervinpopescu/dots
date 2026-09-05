@@ -1,0 +1,17 @@
+[Unit]
+Description=Minikube Cluster (prod)
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Environment=MINIKUBE_HOME=%h/.local/share/minikube
+ExecStart=/bin/bash %h/prjs/arc/scripts/minikube/start.sh
+ExecStop=/bin/bash -c 'source %h/prjs/arc/runners/qtile/defaults.sh && minikube stop -p "$DEFAULT_MINIKUBE_PROFILE"'
+Restart=always
+RestartSec=30
+WorkingDirectory=%h
+StandardOutput=journal
+
+[Install]
+WantedBy=default.target
