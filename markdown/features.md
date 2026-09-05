@@ -52,6 +52,7 @@ Two configs: `qtile/` (X11) and `qtile-wl/` (Wayland). Both share the same archi
 
 ~70 user scripts covering:
 
+- Dry-run apply & deployment (`chezmoi-dry-apply` for combined user & system diffs, `system-deploy.sh` with `--dry-run` / `-n`)
 - Wallpaper management (`wallpaper.sh`, `rofi-wallpaper`, `run_wall.sh`)
 - Theme switching (`change_theme.py`)
 - System info (`filesizes.sh`, `all_disk_usage.sh`, `bt-bat.py`, `location.py`)
