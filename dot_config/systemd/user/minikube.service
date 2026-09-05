@@ -2,10 +2,12 @@
 Description=Minikube Cluster (prod)
 After=network.target
 StartLimitIntervalSec=0
+OnFailure=notify-failure@%n.service
 
 [Service]
 Type=simple
 Environment=MINIKUBE_HOME=%h/.local/share/minikube
+ExecStartPre=/usr/bin/setfacl -m u:libvirt-qemu:x,m:x %h/.local %h/.local/share
 ExecStart=/bin/bash %h/prjs/arc/scripts/minikube/start.sh
 ExecStop=/bin/bash -c 'source %h/prjs/arc/runners/qtile/defaults.sh && minikube stop -p "$DEFAULT_MINIKUBE_PROFILE"'
 Restart=always
