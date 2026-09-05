@@ -8,3 +8,4 @@ dot_config/qtile/modules/keys/apps.py
 dot_config/qtile/modules/widgets/weather.py
 dot_config/qtile-wl/json/settings.json
 .pi/
+.worktrees/
