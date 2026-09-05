@@ -182,8 +182,7 @@ function parseGeminiUsage(value: unknown, activeModel: string): UsageLimit[] {
 	});
 	const candidates = matching.length > 0 ? matching : buckets;
 	const bucket = candidates.reduce((lowest, candidate) =>
-		(candidate.remainingFraction as number) <
-		(lowest.remainingFraction as number)
+		(candidate.remainingFraction as number) < (lowest.remainingFraction as number)
 			? candidate
 			: lowest,
 	);
@@ -192,9 +191,7 @@ function parseGeminiUsage(value: unknown, activeModel: string): UsageLimit[] {
 			windows: [
 				{
 					label: "d",
-					remainingPercent: clampPercent(
-						(bucket.remainingFraction as number) * 100,
-					),
+					remainingPercent: clampPercent((bucket.remainingFraction as number) * 100),
 					resetsAt: parseResetAt(bucket.resetTime),
 				},
 			],
@@ -223,6 +220,8 @@ export default function (pi: ExtensionAPI) {
 	let providerUsage: UsageLimit[] = [];
 	let gitDiff = "";
 	let refreshProviderUsage: ((ctx: ExtensionContext) => void) | undefined;
+	let activeModel: ExtensionContext["model"];
+	let footerTui: RenderRequester | undefined;
 	let usageRequest: Promise<void> | undefined;
 	let usageRequestProvider: string | undefined;
 	let geminiProjectId: string | undefined;
@@ -298,8 +297,7 @@ export default function (pi: ExtensionAPI) {
 	async function fetchCodexUsage(
 		ctx: ExtensionContext,
 	): Promise<UsageLimit[] | undefined> {
-		const providerAuth =
-			await ctx.modelRegistry.getProviderAuth("openai-codex");
+		const providerAuth = await ctx.modelRegistry.getProviderAuth("openai-codex");
 		const accessToken = providerAuth?.auth.apiKey;
 		if (!accessToken) return [];
 		const accountId = extractAccountId(accessToken);
@@ -396,24 +394,18 @@ export default function (pi: ExtensionAPI) {
 		};
 		geminiProjectId ??= env.GOOGLE_CLOUD_PROJECT || env.GOOGLE_CLOUD_PROJECT_ID;
 		if (!geminiProjectId) {
-			const setup = await fetchJson(
-				`${GEMINI_CODE_ASSIST_URL}:loadCodeAssist`,
-				{
-					method: "POST",
-					headers,
-					body: JSON.stringify({
-						metadata: {
-							ideType: "IDE_UNSPECIFIED",
-							platform: "PLATFORM_UNSPECIFIED",
-							pluginType: "GEMINI",
-						},
-					}),
-				},
-			);
-			if (
-				isRecord(setup) &&
-				typeof setup.cloudaicompanionProject === "string"
-			) {
+			const setup = await fetchJson(`${GEMINI_CODE_ASSIST_URL}:loadCodeAssist`, {
+				method: "POST",
+				headers,
+				body: JSON.stringify({
+					metadata: {
+						ideType: "IDE_UNSPECIFIED",
+						platform: "PLATFORM_UNSPECIFIED",
+						pluginType: "GEMINI",
+					},
+				}),
+			});
+			if (isRecord(setup) && typeof setup.cloudaicompanionProject === "string") {
 				geminiProjectId = setup.cloudaicompanionProject;
 			}
 		}
@@ -554,17 +546,24 @@ export default function (pi: ExtensionAPI) {
 		return "?m";
 	}
 
-	pi.on("model_select", (_event, ctx) => {
+	pi.on("model_select", (event, ctx) => {
+		// The context captured by the footer at session_start can retain the
+		// previous model. Use the event model so model-specific values such as
+		// contextWindow update immediately after a model switch.
+		activeModel = event.model;
+		footerTui?.requestRender();
 		refreshProviderUsage?.(ctx);
 	});
 
 	pi.on("session_start", (_event, ctx) => {
+		activeModel = ctx.model;
 		let diffTimer: ReturnType<typeof setInterval> | undefined;
 		let resetTimer: ReturnType<typeof setInterval> | undefined;
 		let startupUsageTimer: ReturnType<typeof setTimeout> | undefined;
 		let usageTimer: ReturnType<typeof setInterval> | undefined;
 
 		ctx.ui.setFooter((tui, _theme, footerData) => {
+			footerTui = tui;
 			updateGitDiff(ctx.cwd, tui);
 			diffTimer = setInterval(() => {
 				updateGitDiff(ctx.cwd, tui);
@@ -588,6 +587,7 @@ export default function (pi: ExtensionAPI) {
 			return {
 				dispose: () => {
 					unsubBranch();
+					if (footerTui === tui) footerTui = undefined;
 					if (diffTimer) clearInterval(diffTimer);
 					if (resetTimer) clearInterval(resetTimer);
 					if (startupUsageTimer) clearTimeout(startupUsageTimer);
@@ -657,16 +657,14 @@ export default function (pi: ExtensionAPI) {
 						blue = "\x1b[34m";
 
 					// Model & Effort
-					const model = ctx.model?.id || "no-model";
-					const effort =
-						ctx.thinkingLevel || env.PI_REASONING_LEVEL || "default";
+					const model = activeModel ?? ctx.model;
+					const modelId = model?.id || "no-model";
+					const effort = ctx.thinkingLevel || env.PI_REASONING_LEVEL || "default";
 
 					if (effort && effort !== "off") {
-						parts.push(
-							`${bold}${cyan}${model}${reset}${dim}[${effort}]${reset}`,
-						);
+						parts.push(`${bold}${cyan}${modelId}${reset}${dim}[${effort}]${reset}`);
 					} else {
-						parts.push(`${bold}${cyan}${model}${reset}`);
+						parts.push(`${bold}${cyan}${modelId}${reset}`);
 					}
 
 					// Tokens
@@ -677,7 +675,7 @@ export default function (pi: ExtensionAPI) {
 					parts.push(`${dim}${tokensStr}${reset}`);
 
 					// Context
-					const contextWindow = ctx.model?.contextWindow || 0;
+					const contextWindow = model?.contextWindow || 0;
 					if (contextWindow > 0) {
 						// Using context limit calculation
 						const pct = Math.round((latestPromptTokens / contextWindow) * 100);
@@ -692,9 +690,7 @@ export default function (pi: ExtensionAPI) {
 						};
 
 						// Adding a space before the slash for readability
-						parts.push(
-							`ctx:${color}${pct}%${reset} / ${fmtMax(contextWindow)}`,
-						);
+						parts.push(`ctx:${color}${pct}%${reset} / ${fmtMax(contextWindow)}`);
 					}
 
 					// Provider subscription limits
@@ -703,13 +699,10 @@ export default function (pi: ExtensionAPI) {
 						const limitName = formatLimitName(limit.name);
 						for (const window of limit.windows) {
 							const remaining = Math.round(window.remainingPercent);
-							const color =
-								remaining <= 20 ? red : remaining <= 50 ? yellow : green;
+							const color = remaining <= 20 ? red : remaining <= 50 ? yellow : green;
 							const prefix = limitName ? `${limitName}/` : "";
 							const resetTimer = formatResetTimer(window.resetsAt);
-							const resetText = resetTimer
-								? `${dim}↻${resetTimer}${reset}`
-								: "";
+							const resetText = resetTimer ? `${dim}↻${resetTimer}${reset}` : "";
 							limitParts.push(
 								`${prefix}${window.label}:${color}${remaining}%${reset}${resetText}`,
 							);
