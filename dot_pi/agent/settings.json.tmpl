@@ -5,7 +5,7 @@
   "defaultModel": "gemini-3.7-flash",
   "defaultProvider": "google",
 {{- else }}
-  "defaultModel": "gpt-5.6-luna",
+  "defaultModel": "gpt-5.6-sol",
   "defaultProvider": "openai-codex",
 {{- end }}
   "defaultThinkingLevel": "high",
@@ -23,5 +23,10 @@
     "npm:pi-input-history"
   ],
   "quietStartup": true,
+  "subagents": {
+    "defaultModel": "openai-codex/gpt-5.6-luna:high",
+    "defaultProvider": "openai-codex",
+    "defaultThinking": "high"
+  },
   "theme": "dark"
 }
