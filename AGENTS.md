@@ -50,6 +50,7 @@ Files ending in `.tmpl` are Go templates rendered by chezmoi. Template variables
 ## Conventions
 
 - NEVER KILL TMUX SERVER UNLESS I APPROVE
+- All non-main / feature branches must reside in their own dedicated git worktree (under `.worktrees/<branch-name>`), keeping the main repo directory clean on `main`
 - XDG Base Directory compliance throughout — most tools are configured to respect `$XDG_CONFIG_HOME`, `$XDG_DATA_HOME`, `$XDG_CACHE_HOME`
 - Git commits are GPG-signed (SSH key) per `dot_config/git/config`
 - Catppuccin Mocha is the color scheme used across tools (zsh syntax highlighting, Qtile themes, FZF)

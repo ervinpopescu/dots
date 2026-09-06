@@ -73,6 +73,12 @@ When you refer to types or very short code snippets, place them in
 backticks. When you have a full line of code or more than one line of
 code, put them in indented code blocks.
 
+### Git worktrees
+
+- All non-main / feature branches must reside in their own dedicated git worktree (typically under `.worktrees/<branch-name>`).
+- The primary repository directory must remain clean and checked out to the default branch (`main` or `master`).
+- Never develop or switch feature branches directly inside the primary repository directory.
+
 ## Documentation preferences
 
 ### Documentation examples
