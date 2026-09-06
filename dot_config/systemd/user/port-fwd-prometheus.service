@@ -1,0 +1,15 @@
+[Unit]
+Description=Port forwarding for prometheus-k8s
+After=network.target minikube.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/kubectl --namespace=monitoring port-forward svc/prometheus 9092:9090
+ExecReload=/bin/kill -s HUP $MAINPID
+TimeoutSec=0
+RestartSec=2
+Restart=always
+KillMode=mixed
+
+[Install]
+WantedBy=default.target

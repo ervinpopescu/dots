@@ -63,7 +63,7 @@ function server-ssh() {
 }
 
 function server_services() {
-  server-ssh -C 'systemctl status calibre-server calibre-web transmission radarr sonarr jellyfin' |
+  server-ssh -C 'systemctl status calibre-server calibre-web radarr sonarr jellyfin' |
     grep -E "●|○|Active|Status" |
     /bin/cat
 }

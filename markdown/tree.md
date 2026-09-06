@@ -47,9 +47,6 @@ dots/                              # chezmoi source directory
 │       ├── plugins/               # Zsh plugins
 │       └── files/                 # Misc zsh files
 │
-├── private_dot_config/             # Private, profile-specific user config
-│   └── transmission-daemon/        # Aslan settings (RPC secret templated)
-│
 ├── system/                        # System-level configs, deployed via run_after_ script
 │   ├── arch/                      # Arch-only system configuration
 │   │   └── etc/                   # pacman.conf, reflector.conf

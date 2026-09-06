@@ -32,11 +32,6 @@ encryption = "age"
   opensubtitles_api_key = "{{ promptStringOnce . "opensubtitles_api_key" "OpenSubtitles API key" }}"
   tstruct_token = "{{ promptStringOnce . "tstruct_token" "Tstruct token" }}"
   gemini_api_key = "{{ promptStringOnce . "gemini_api_key" "Gemini API key" }}"
-{{- if eq $machine "hetzner" }}
-  transmission_rpc_password = "{{ promptStringOnce . "transmission_rpc_password" "Transmission RPC password" }}"
-{{- else }}
-  transmission_rpc_password = ""
-{{- end }}
 {{- if eq $machine "cloudtop" }}
   fact_table = "{{ promptStringOnce . "fact_table" "BigQuery Fact Table (project:dataset.table)" }}"
 {{- else }}

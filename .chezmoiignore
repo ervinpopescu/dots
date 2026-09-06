@@ -27,7 +27,6 @@ bin/dismiss-keychain-prompts
 {{ end }}
 
 {{ if not .is_hetzner }}
-.config/transmission-daemon/**
 .config/systemd/**
 {{ end }}
 
