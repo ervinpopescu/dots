@@ -15,3 +15,10 @@
   - Fall back to `google/gemini-3.8-flash` with `high` thinking.
   - Subagents automatically fall back to `google/gemini-3.8-flash:high` to complete delegated work.
   - The main session switches to `gemini-3.8-flash:high` for continued planning.
+
+## Git Worktree Policy
+
+- **Dedicated Worktrees for Branches**:
+  - All non-main / feature branches must reside in their own dedicated git worktree (typically under `.worktrees/<branch-name>`).
+  - The primary repository directory must remain clean and checked out to the default branch (`main` or `master`).
+  - Never switch branches or develop feature branches directly inside the primary repository checkout.
