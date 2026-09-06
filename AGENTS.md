@@ -17,7 +17,7 @@ Secrets are age-encrypted. Place the age key at `~/.config/chezmoi/key.txt` befo
 
 - `dot_config/` — XDG config home (`$HOME/.config`), chezmoi source layout
 - `bin/` — user scripts for `$HOME/bin` (prefixed `executable_`)
-- `system/` — system-level configs (`/etc/`, `/usr/`), deployed via `run_after_system-deploy.sh.tmpl` (subtrees for `arch/` and `hetzner/` are conditionally applied)
+- `system/` — system-level configs (`/etc/`, `/usr/`), deployed via `run_after_system-deploy.sh.tmpl` (subtrees for `arch/` and `hetzner/` are conditionally applied; preview with `chezmoi-dry-apply` or `system-deploy.sh --dry-run`; note that `chezmoi apply --dry-run` alone skips hooks; wrappers auto-detect active worktrees)
 - `pkgs` — full list of installed packages
 - `.chezmoi.toml.tmpl` — chezmoi config template (machine detection, secrets, age settings)
 - `.chezmoiignore` — machine-conditional file exclusion

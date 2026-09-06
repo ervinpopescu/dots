@@ -31,8 +31,8 @@ cp /path/to/key.txt ~/.config/chezmoi/key.txt
 chezmoi init --source /path/to/this/repo
 
 # 4. Preview, then apply
-chezmoi diff
-chezmoi apply
+chezmoi-dry-apply            # preview both user dotfiles and system changes
+chezmoi apply                # apply dotfiles and deploy system files
 ```
 
 System files under `system/` (e.g. `/etc/zsh/zshenv`) are deployed automatically
@@ -40,6 +40,42 @@ via a post-apply script with `sudo`. The `system/arch/` subtree is applied only 
 Arch Linux systems, and the `system/hetzner/` subtree is applied only when the
 machine profile is `aslan`/`hetzner`; it contains the server's Nginx,
 monitoring, security, and service overrides.
+
+To preview pending changes safely without mutating `/etc`, modifying files, or
+reloading services, run:
+
+```bash
+chezmoi-dry-apply
+```
+
+This single command previews both normal chezmoi user dotfile changes
+(`chezmoi apply --dry-run --verbose`) and system configuration changes.
+
+> **Warning:** Running `chezmoi apply --dry-run` or `chezmoi diff` alone
+> **skips post-apply lifecycle hooks** (`run_after_system-deploy.sh.tmpl`).
+> Running `chezmoi apply --dry-run` will therefore never preview system files
+> under `/etc` or `/usr`. Always use `chezmoi-dry-apply` to safely inspect both
+> user dotfiles and system changes together.
+
+To preview system configuration changes alone, run:
+
+```bash
+system-deploy.sh --dry-run   # or: system-deploy.sh -n
+```
+
+Key dry-run safety features:
+
+- **Worktree Source Detection:** When invoked from inside a git feature worktree,
+  both `chezmoi-dry-apply` and `system-deploy.sh` automatically detect and use that
+  worktree's source templates instead of falling back to the main configured chezmoi
+  source path.
+- **Fail-Closed Protection:** If `--dry-run` is requested but the target template
+  lacks explicit dry-run capability headers (`SYSTEM_DEPLOY_CAPABILITIES`), execution
+  aborts immediately with an error to prevent accidental live mutation.
+- **Guarded Destructive Cleanup:** Decommissioned configurations and service removals
+  are reported as `[dry-run] would remove ...` without deleting any files, and service
+  reloads (such as Nginx) are skipped. Setting `DRY_RUN=1` in the environment also
+  activates dry-run mode.
 
 The former `archnet-cfg` repository remains useful for destructive Hetzner
 installation, package bootstrap, and service-data migration. It must not also

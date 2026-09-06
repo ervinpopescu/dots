@@ -50,7 +50,7 @@ dots/                              # chezmoi source directory
 ├── private_dot_config/             # Private, profile-specific user config
 │   └── transmission-daemon/        # Aslan settings (RPC secret templated)
 │
-├── system/                        # System-level configs, deployed via run_after_ script
+├── system/                        # System-level configs, deployed via run_after_ script (preview: chezmoi-dry-apply or system-deploy.sh -n)
 │   ├── arch/                      # Arch-only system configuration
 │   │   └── etc/                   # pacman.conf, reflector.conf
 │   ├── etc/
