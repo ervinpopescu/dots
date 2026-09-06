@@ -1,5 +1,6 @@
 {{ if .is_linux -}}
 #!/bin/bash
+# SYSTEM_DEPLOY_CAPABILITIES: dry-run,unified-diff
 set -euo pipefail
 
 CHEZMOI_SOURCE="${SYSTEM_SOURCE_DIR:-{{ .chezmoi.sourceDir }}}"
@@ -27,19 +28,38 @@ while [ $# -gt 0 ]; do
       dry_run=1
       shift
       ;;
+    -S|--source)
+      if [ $# -lt 2 ]; then
+        echo "Error: $1 requires a directory path" >&2
+        exit 1
+      fi
+      CHEZMOI_SOURCE="$2"
+      SYSTEM_DIR="$CHEZMOI_SOURCE/system"
+      SERVER_DIR="$SYSTEM_DIR/hetzner"
+      ARCH_DIR="$SYSTEM_DIR/arch"
+      shift 2
+      ;;
+    --source=*)
+      CHEZMOI_SOURCE="${1#*=}"
+      SYSTEM_DIR="$CHEZMOI_SOURCE/system"
+      SERVER_DIR="$SYSTEM_DIR/hetzner"
+      ARCH_DIR="$SYSTEM_DIR/arch"
+      shift
+      ;;
     -h|--help)
       echo "Usage: $script_name [OPTIONS]"
       echo ""
       echo "Deploy system-level configurations to /etc, /usr, etc."
       echo ""
       echo "Options:"
-      echo "  -n, --dry-run    Preview system changes and unified diffs without modifying files"
-      echo "  -h, --help       Show this help message"
+      echo "  -n, --dry-run        Preview system changes and unified diffs without modifying files"
+      echo "  -S, --source PATH    Use specified chezmoi source directory"
+      echo "  -h, --help           Show this help message"
       exit 0
       ;;
     *)
       echo "Unknown option: $1" >&2
-      echo "Usage: $script_name [-n|--dry-run] [-h|--help]" >&2
+      echo "Usage: $script_name [-n|--dry-run] [-S|--source PATH] [-h|--help]" >&2
       exit 1
       ;;
   esac
@@ -73,7 +93,7 @@ content_matches() {
 
 get_metadata() {
   local target="$1"
-  if [ -n "$DEST_ROOT" ] && [ -w "${DEST_ROOT:-/}" ]; then
+  if [ -n "$DEST_ROOT" ]; then
     stat -c "%a %U %G" "$target" 2>/dev/null || echo ""
   else
     stat -c "%a %U %G" "$target" 2>/dev/null || sudo -n stat -c "%a %U %G" "$target" 2>/dev/null || echo ""
@@ -186,7 +206,7 @@ install_file() {
       echo "System file changed: $display_path"
       local -a install_cmd=(install -Dm"$mode" -o "$owner" -g "$group" "$src" "$dest")
       local install_ok=0
-      if [ -n "$DEST_ROOT" ] && [ -w "${DEST_ROOT:-/}" ]; then
+      if [ -n "$DEST_ROOT" ]; then
         if [ "$(id -u)" -ne 0 ]; then
           install_cmd=(install -Dm"$mode" "$src" "$dest")
         fi
@@ -210,7 +230,7 @@ install_file() {
       fi
     elif [ "$meta_differs" -eq 1 ]; then
       # Keep permissions and ownership correct even when file contents are unchanged.
-      if [ -n "$DEST_ROOT" ] && [ -w "${DEST_ROOT:-/}" ]; then
+      if [ -n "$DEST_ROOT" ]; then
         chmod "$mode" "$dest" 2>/dev/null || true
         if [ "$(id -u)" -eq 0 ]; then
           chown "$owner:$group" "$dest" 2>/dev/null || true
@@ -282,6 +302,33 @@ if [ -d "$SERVER_DIR" ]; then
   report_stale "$SERVER_DIR/etc/nginx/snippets" /etc/nginx/snippets
   report_stale "$SERVER_DIR/etc/fail2ban/jail.d" /etc/fail2ban/jail.d
   report_stale "$SERVER_DIR/etc/ssh/sshd_config.d" /etc/ssh/sshd_config.d
+
+  # Clean up decommissioned transmission configurations only when absent from source
+  for stale in /etc/nginx/conf.d/transmission.conf /etc/systemd/system/transmission.service.d /etc/systemd/system/transmission-daemon.service.d; do
+    if [ -e "$SERVER_DIR$stale" ]; then
+      continue
+    fi
+    target_stale="$DEST_ROOT$stale"
+    if target_exists "$target_stale"; then
+      if [ "$dry_run" -eq 1 ]; then
+        echo "[dry-run] would remove decommissioned transmission config: $stale"
+        changed_files=$((changed_files + 1))
+        if [[ "$stale" == /etc/nginx/* ]]; then
+          nginx_changed=1
+        fi
+      else
+        echo "Removing decommissioned transmission config: $stale"
+        if [ -n "$DEST_ROOT" ]; then
+          rm -rf "$target_stale" || echo "WARN: failed to remove $target_stale"
+        else
+          sudo rm -rf "$target_stale"
+        fi
+        if [[ "$stale" == /etc/nginx/* ]]; then
+          nginx_changed=1
+        fi
+      fi
+    fi
+  done
 fi
 {{ else -}}
 # These paths were previously in the common tree. Report them rather than
