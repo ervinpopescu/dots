@@ -2,6 +2,7 @@
 Description=Minikube Cluster (prod)
 After=network.target
 StartLimitIntervalSec=0
+OnFailure=notify-failure@%n.service
 
 [Service]
 Type=simple
