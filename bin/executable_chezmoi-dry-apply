@@ -88,12 +88,21 @@ if [ -z "$source_dir" ]; then
     source_dir="$SYSTEM_SOURCE_DIR"
   elif [ -n "${CHEZMOI_SOURCE_DIR:-}" ] && [ -f "$CHEZMOI_SOURCE_DIR/run_after_system-deploy.sh.tmpl" ]; then
     source_dir="$CHEZMOI_SOURCE_DIR"
-  elif [ -f "$SCRIPT_DIR/../run_after_system-deploy.sh.tmpl" ]; then
-    source_dir="$(cd "$SCRIPT_DIR/.." && pwd)"
   else
-    source_dir="$(chezmoi source-path 2>/dev/null || true)"
-    if [ -z "$source_dir" ] || [ ! -f "$source_dir/run_after_system-deploy.sh.tmpl" ]; then
-      if [ -f "$HOME/.local/share/chezmoi/run_after_system-deploy.sh.tmpl" ]; then
+    git_worktree="$(git rev-parse --show-toplevel 2>/dev/null || true)"
+    if [ -n "$git_worktree" ] && [ -f "$git_worktree/run_after_system-deploy.sh.tmpl" ]; then
+      source_dir="$git_worktree"
+    elif [ -f "$SCRIPT_DIR/../run_after_system-deploy.sh.tmpl" ]; then
+      source_dir="$(cd "$SCRIPT_DIR/.." && pwd)"
+    elif [ -n "${SYSTEM_SOURCE_DIR:-}" ] && [ -d "$SYSTEM_SOURCE_DIR" ]; then
+      source_dir="$SYSTEM_SOURCE_DIR"
+    elif [ -n "${CHEZMOI_SOURCE_DIR:-}" ] && [ -d "$CHEZMOI_SOURCE_DIR" ]; then
+      source_dir="$CHEZMOI_SOURCE_DIR"
+    else
+      configured="$(chezmoi source-path 2>/dev/null || true)"
+      if [ -n "$configured" ] && [ -f "$configured/run_after_system-deploy.sh.tmpl" ]; then
+        source_dir="$configured"
+      elif [ -f "$HOME/.local/share/chezmoi/run_after_system-deploy.sh.tmpl" ]; then
         source_dir="$HOME/.local/share/chezmoi"
       fi
     fi
@@ -127,24 +136,29 @@ fi
 deploy_cmd=""
 if [ -n "${SYSTEM_DEPLOY_BIN:-}" ] && [ -x "$SYSTEM_DEPLOY_BIN" ]; then
   deploy_cmd="$SYSTEM_DEPLOY_BIN"
+elif [ -n "$source_dir" ] && [ -x "$source_dir/bin/executable_system-deploy.sh" ]; then
+  deploy_cmd="$source_dir/bin/executable_system-deploy.sh"
+elif [ -n "$source_dir" ] && [ -x "$source_dir/bin/system-deploy.sh" ]; then
+  deploy_cmd="$source_dir/bin/system-deploy.sh"
 elif [ -x "$SCRIPT_DIR/system-deploy.sh" ]; then
   deploy_cmd="$SCRIPT_DIR/system-deploy.sh"
 elif [ -x "$SCRIPT_DIR/executable_system-deploy.sh" ]; then
   deploy_cmd="$SCRIPT_DIR/executable_system-deploy.sh"
 elif command -v system-deploy.sh >/dev/null 2>&1; then
   deploy_cmd="$(command -v system-deploy.sh)"
-elif [ -n "$source_dir" ] && [ -x "$source_dir/bin/executable_system-deploy.sh" ]; then
-  deploy_cmd="$source_dir/bin/executable_system-deploy.sh"
-elif [ -n "$source_dir" ] && [ -x "$source_dir/bin/system-deploy.sh" ]; then
-  deploy_cmd="$source_dir/bin/system-deploy.sh"
 fi
 
 if [ -n "$deploy_cmd" ]; then
-  "$deploy_cmd" --dry-run
+  "$deploy_cmd" --dry-run -S "$source_dir"
 elif [ -n "$source_dir" ] && [ -f "$source_dir/run_after_system-deploy.sh.tmpl" ]; then
   rendered="$(chezmoi -S "$source_dir" execute-template '{{ includeTemplate "run_after_system-deploy.sh.tmpl" . }}')"
   if [ -n "$(echo "$rendered" | tr -d '[:space:]')" ]; then
-    bash -s -- --dry-run <<< "$rendered"
+    if ! grep -q '^# SYSTEM_DEPLOY_CAPABILITIES:.*dry-run' <<< "$rendered"; then
+      echo "Error: system deployment template does not support dry-run protocol." >&2
+      echo "Aborting to prevent unintentional live system modifications." >&2
+      exit 1
+    fi
+    bash -s -- --dry-run -S "$source_dir" <<< "$rendered"
   fi
 else
   echo "WARN: could not locate system-deploy script to preview system files" >&2
