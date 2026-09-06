@@ -51,17 +51,31 @@ chezmoi-dry-apply
 This single command previews both normal chezmoi user dotfile changes
 (`chezmoi apply --dry-run --verbose`) and system configuration changes.
 
+> **Warning:** Running `chezmoi apply --dry-run` or `chezmoi diff` alone
+> **skips post-apply lifecycle hooks** (`run_after_system-deploy.sh.tmpl`).
+> Running `chezmoi apply --dry-run` will therefore never preview system files
+> under `/etc` or `/usr`. Always use `chezmoi-dry-apply` to safely inspect both
+> user dotfiles and system changes together.
+
 To preview system configuration changes alone, run:
 
 ```bash
 system-deploy.sh --dry-run   # or: system-deploy.sh -n
 ```
 
-This displays unified diffs and file mode/owner changes for all pending system files.
-Because `chezmoi diff` and `chezmoi apply --dry-run` intentionally skip post-apply
-scripts, `chezmoi-dry-apply` and `system-deploy.sh` provide safe dry-run inspection
-interfaces. Setting `DRY_RUN=1` in the environment also triggers dry-run mode for
-system deployment.
+Key dry-run safety features:
+
+- **Worktree Source Detection:** When invoked from inside a git feature worktree,
+  both `chezmoi-dry-apply` and `system-deploy.sh` automatically detect and use that
+  worktree's source templates instead of falling back to the main configured chezmoi
+  source path.
+- **Fail-Closed Protection:** If `--dry-run` is requested but the target template
+  lacks explicit dry-run capability headers (`SYSTEM_DEPLOY_CAPABILITIES`), execution
+  aborts immediately with an error to prevent accidental live mutation.
+- **Guarded Destructive Cleanup:** Decommissioned configurations and service removals
+  are reported as `[dry-run] would remove ...` without deleting any files, and service
+  reloads (such as Nginx) are skipped. Setting `DRY_RUN=1` in the environment also
+  activates dry-run mode.
 
 The former `archnet-cfg` repository remains useful for destructive Hetzner
 installation, package bootstrap, and service-data migration. It must not also
