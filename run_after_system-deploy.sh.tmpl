@@ -90,6 +90,17 @@ if [ -d "$SERVER_DIR" ]; then
   report_stale "$SERVER_DIR/etc/nginx/snippets" /etc/nginx/snippets
   report_stale "$SERVER_DIR/etc/fail2ban/jail.d" /etc/fail2ban/jail.d
   report_stale "$SERVER_DIR/etc/ssh/sshd_config.d" /etc/ssh/sshd_config.d
+
+  # Clean up decommissioned transmission configurations
+  for stale in /etc/nginx/conf.d/transmission.conf /etc/systemd/system/transmission.service.d /etc/systemd/system/transmission-daemon.service.d; do
+    if [ -e "$stale" ]; then
+      echo "Removing decommissioned transmission config: $stale"
+      sudo rm -rf "$stale"
+      if [[ "$stale" == /etc/nginx/* ]]; then
+        nginx_changed=1
+      fi
+    fi
+  done
 fi
 {{ else -}}
 # These paths were previously in the common tree. Report them rather than
