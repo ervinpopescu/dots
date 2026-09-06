@@ -10,3 +10,7 @@
   - If `gpt-5.6-sol` or `gpt-5.6-luna` reaches usage limits, rate limits, or is unavailable, immediately fall back to `google/gemini-3.8-flash` (thinking: `high`).
   - For the main session: switch planning to `gemini-3.8-flash:high` (or prompt `/model gemini-3.8-flash:high`).
   - For subagents: use `google/gemini-3.8-flash:high` as the automatic fallback model so execution continues without interruption.
+- **Git Worktree Policy**:
+  - All non-main / feature branches must reside in their own dedicated git worktree (e.g. `.worktrees/<branch-name>`).
+  - Keep the primary repository directory clean on the default branch (`main` or `master`).
+  - Never develop or switch feature branches directly inside the primary repository directory.
