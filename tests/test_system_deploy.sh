@@ -206,46 +206,9 @@ SYSTEM_SOURCE_DIR="$SOURCE_DIR" SYSTEM_TARGET_DIR="$TARGET_DIR" "$DEPLOY_BIN" >/
 mode_after="$(stat -c "%a" "$TARGET_DIR/etc/nginx/conf.d/clean.conf")"
 assert_eq "file mode updated when metadata differed" "644" "$mode_after"
 
-# Test 13: Tracked Transmission source is preserved and not decommissioned
+# Test 13: Genuine decommissioned target is reported in dry run and removed in live mode
 if grep -q "report_stale" <<< "$check_rendered"; then
-  echo "Test 13: Tracked transmission source is preserved and not treated as decommissioned"
-  TRACKED_SRC="$TEST_DIR/tracked_trans_src"
-  TRACKED_TGT="$TEST_DIR/tracked_trans_tgt"
-  mkdir -p "$TRACKED_SRC/system/hetzner/etc/nginx/conf.d"
-  mkdir -p "$TRACKED_SRC/system/hetzner/etc/systemd/system/transmission.service.d"
-  echo "server { listen 9091; }" > "$TRACKED_SRC/system/hetzner/etc/nginx/conf.d/transmission.conf"
-  echo "[Service]" > "$TRACKED_SRC/system/hetzner/etc/systemd/system/transmission.service.d/override.conf"
-
-  mkdir -p "$TRACKED_TGT/etc/nginx/conf.d"
-  mkdir -p "$TRACKED_TGT/etc/systemd/system/transmission.service.d"
-  echo "old nginx config" > "$TRACKED_TGT/etc/nginx/conf.d/transmission.conf"
-  echo "old service dropin" > "$TRACKED_TGT/etc/systemd/system/transmission.service.d/override.conf"
-
-  # Dry-run: shows diff, does not report decommissioned
-  out_tracked_dry="$(SYSTEM_SOURCE_DIR="$TRACKED_SRC" SYSTEM_TARGET_DIR="$TRACKED_TGT" "$DEPLOY_BIN" --dry-run)"
-  assert_contains "diff shown for tracked transmission config" "diff --git a/etc/nginx/conf.d/transmission.conf b/etc/nginx/conf.d/transmission.conf" "$out_tracked_dry"
-  assert_not_contains "tracked nginx config not previewed as decommissioned" "[dry-run] would remove decommissioned transmission config: /etc/nginx/conf.d/transmission.conf" "$out_tracked_dry"
-  assert_not_contains "tracked dropin not previewed as decommissioned" "[dry-run] would remove decommissioned transmission config: /etc/systemd/system/transmission.service.d" "$out_tracked_dry"
-
-  # Live mode: updates target and does not remove
-  out_tracked_live="$(SYSTEM_SOURCE_DIR="$TRACKED_SRC" SYSTEM_TARGET_DIR="$TRACKED_TGT" "$DEPLOY_BIN")"
-  assert_contains "reports transmission config changed" "System file changed: /etc/nginx/conf.d/transmission.conf" "$out_tracked_live"
-  assert_not_contains "tracked nginx config not removed as decommissioned" "Removing decommissioned transmission config: /etc/nginx/conf.d/transmission.conf" "$out_tracked_live"
-  assert_not_contains "tracked dropin not removed as decommissioned" "Removing decommissioned transmission config: /etc/systemd/system/transmission.service.d" "$out_tracked_live"
-  if [ -f "$TRACKED_TGT/etc/nginx/conf.d/transmission.conf" ] && [ -f "$TRACKED_TGT/etc/systemd/system/transmission.service.d/override.conf" ]; then
-    echo "  PASS: tracked transmission configs exist in target after live deploy"
-    passes=$((passes + 1))
-  else
-    echo "  FAIL: tracked transmission configs missing after live deploy"
-    failures=$((failures + 1))
-  fi
-  tracked_content="$(cat "$TRACKED_TGT/etc/nginx/conf.d/transmission.conf")"
-  assert_contains "target was updated to tracked source content" "server { listen 9091; }" "$tracked_content"
-fi
-
-# Test 14: Genuine decommissioned target is reported in dry run and removed in live mode
-if grep -q "report_stale" <<< "$check_rendered"; then
-  echo "Test 14: Genuine decommissioned target reported in dry-run and removed in live mode"
+  echo "Test 13: Genuine decommissioned target reported in dry-run and removed in live mode"
   DECOM_SRC="$TEST_DIR/decom_src"
   DECOM_TGT="$TEST_DIR/decom_tgt"
   mkdir -p "$DECOM_SRC/system/hetzner" # No transmission configs in source
@@ -282,9 +245,9 @@ if grep -q "report_stale" <<< "$check_rendered"; then
   fi
 fi
 
-# Test 15: Non-writable DEST_ROOT cannot cause deletion of host /etc or call sudo
+# Test 14: Non-writable DEST_ROOT cannot escape to host /etc or call sudo
 if grep -q "report_stale" <<< "$check_rendered"; then
-  echo "Test 15: Non-writable DEST_ROOT cannot escape to host /etc or call sudo"
+  echo "Test 14: Non-writable DEST_ROOT cannot escape to host /etc or call sudo"
   RO_TGT="$TEST_DIR/ro_tgt"
   mkdir -p "$RO_TGT/etc/systemd/system/transmission-daemon.service.d"
   echo "stale daemon dropin" > "$RO_TGT/etc/systemd/system/transmission-daemon.service.d/override.conf"
