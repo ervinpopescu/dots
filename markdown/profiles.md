@@ -15,7 +15,7 @@ stored in `.machine`; it is separate from the hostname in some cases.
 
 `is_arch` is derived from the host operating system, not hardcoded to a
 profile. The `hetzner` profile enables the Aslan-only `system/hetzner/` tree,
-including Nginx, monitoring, security, systemd, and Transmission configuration.
+including Nginx, monitoring, security, and systemd configuration.
 The `system/arch/` tree (`pacman.conf`, `reflector.conf`) is applied only when
 `is_arch` is true.
 
@@ -59,5 +59,4 @@ do not infer server behavior from `is_linux`.
 - Wayland Qtile files are included only for `lenovo`.
 - GUI-heavy desktop configuration is excluded for `macbook` and `hetzner`.
 - Cloudtop receives the HiDPI/X11 settings and Apigee-related Neovim LSP setup.
-- Aslan receives the `system/hetzner/` runtime configuration and the private
-  Transmission settings template.
+- Aslan receives the `system/hetzner/` runtime configuration.
