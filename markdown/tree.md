@@ -62,6 +62,7 @@ dots/                              # chezmoi source directory
 │   ├── profiles.md                # Machine profile matrix and detection
 │   ├── keybinds.md
 │   ├── tree.md                    # This file
+│   ├── solux-migration.md         # Solux static hosting migration runbook
 │   └── archinstall.md             # Arch Linux installation guide
 │
 └── pkgs                           # Full list of installed packages
