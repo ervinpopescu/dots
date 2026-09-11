@@ -303,21 +303,21 @@ if [ -d "$SERVER_DIR" ]; then
   report_stale "$SERVER_DIR/etc/fail2ban/jail.d" /etc/fail2ban/jail.d
   report_stale "$SERVER_DIR/etc/ssh/sshd_config.d" /etc/ssh/sshd_config.d
 
-  # Clean up decommissioned transmission configurations only when absent from source
-  for stale in /etc/nginx/conf.d/transmission.conf /etc/systemd/system/transmission.service.d /etc/systemd/system/transmission-daemon.service.d; do
+  # Clean up decommissioned server configurations only when absent from source
+  for stale in /etc/nginx/conf.d/transmission.conf /etc/nginx/conf.d/cloudflare-realip.conf /etc/nginx/conf.d/laura-web.conf /etc/nginx/conf.d/laura-gallery-aslan-api.conf /etc/systemd/system/transmission.service.d /etc/systemd/system/transmission-daemon.service.d; do
     if [ -e "$SERVER_DIR$stale" ]; then
       continue
     fi
     target_stale="$DEST_ROOT$stale"
     if target_exists "$target_stale"; then
       if [ "$dry_run" -eq 1 ]; then
-        echo "[dry-run] would remove decommissioned transmission config: $stale"
+        echo "[dry-run] would remove decommissioned server config: $stale"
         changed_files=$((changed_files + 1))
         if [[ "$stale" == /etc/nginx/* ]]; then
           nginx_changed=1
         fi
       else
-        echo "Removing decommissioned transmission config: $stale"
+        echo "Removing decommissioned server config: $stale"
         if [ -n "$DEST_ROOT" ]; then
           rm -rf "$target_stale" || echo "WARN: failed to remove $target_stale"
         else
