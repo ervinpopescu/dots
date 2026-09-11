@@ -51,6 +51,12 @@ bin/send_cmd_tmux.py
 .config/alacritty/**
 {{ end }}
 
+{{ if .is_macbook }}
+bin/chezmoi-dry-apply
+bin/system-deploy.sh
+bin/systemd-notify-failure.sh
+{{ end }}
+
 {{ if or .is_macbook .is_server }}
 .config/Code/**
 .config/Code - OSS/**
