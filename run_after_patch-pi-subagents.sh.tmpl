@@ -1,0 +1,37 @@
+#!/bin/bash
+set -euo pipefail
+
+SUBAGENTS_DIR="$HOME/.pi/agent/npm/node_modules/pi-subagents"
+[ -d "$SUBAGENTS_DIR" ] || exit 0
+
+PLUGINS_FILE="$SUBAGENTS_DIR/src/inspectors/plugins.ts"
+TMUX_DIR="$SUBAGENTS_DIR/src/inspectors/tmux"
+SOURCE_PATCH_DIR="{{ .chezmoi.sourceDir }}/patches/pi-subagents/tmux"
+
+[ -d "$SOURCE_PATCH_DIR" ] || exit 0
+
+# 1. Copy tmux inspector actions and plugin definitions
+mkdir -p "$TMUX_DIR"
+cp "$SOURCE_PATCH_DIR/actions.ts" "$TMUX_DIR/actions.ts"
+cp "$SOURCE_PATCH_DIR/plugin.ts" "$TMUX_DIR/plugin.ts"
+
+# 2. Patch plugins.ts to register createTmuxInspectorPlugin if not already present
+if [ -f "$PLUGINS_FILE" ] && ! grep -q "createTmuxInspectorPlugin" "$PLUGINS_FILE"; then
+  node -e '
+    const fs = require("fs");
+    const file = process.argv[1];
+    let content = fs.readFileSync(file, "utf8");
+    if (!content.includes("createTmuxInspectorPlugin")) {
+      content = content.replace(
+        `import { createGhosttyInspectorPlugin } from "./ghostty/plugin.ts";`,
+        `import { createTmuxInspectorPlugin } from "./tmux/plugin.ts";\nimport { createGhosttyInspectorPlugin } from "./ghostty/plugin.ts";`
+      );
+      content = content.replace(
+        `return [createHerdrInspectorPlugin(), createGhosttyInspectorPlugin()];`,
+        `return [createHerdrInspectorPlugin(), createTmuxInspectorPlugin(), createGhosttyInspectorPlugin()];`
+      );
+      fs.writeFileSync(file, content, "utf8");
+      console.log("Patched " + file + " with createTmuxInspectorPlugin");
+    }
+  ' "$PLUGINS_FILE"
+fi
