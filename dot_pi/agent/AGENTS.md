@@ -7,7 +7,13 @@
   - The main session does not perform direct implementation or write code/tests. It designs the plan, frames the requirements, evaluates trade-offs, and delegates work.
 - **Subagents (Implementation & Work)**:
   - Role: Execution and Workers.
-  - All file changes, coding, test execution, debugging, and mechanical tasks are carried out by subagents running on `gpt-5.6-luna:high`.
+  - All file changes, coding, test execution, debugging, and mechanical tasks are carried out by worker subagents using `openai-codex/gpt-5.6-luna:high` until Luna reaches its usage limit; then use the configured `google/gemini-3.8-flash:high` fallback.
+
+## Subagent Launch Policy
+
+- Prefer async/background subagent execution.
+- When a direct single-child async launch is unavailable or fails, wrap that one worker in an async workflow using `workflowScript` with one `runs.run` call, and launch the workflow with `async: true`; this preserves background execution even for one worker.
+- Only fall back to foreground execution with fork context if both the direct async launch and the single-worker async workflow approach fail or are unavailable.
 
 ## Fallback Policy
 
