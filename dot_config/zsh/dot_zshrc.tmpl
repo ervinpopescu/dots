@@ -68,3 +68,9 @@ source "$ZDOTDIR/rc/misc.zsh"
 {{ if ne .machine "cloudtop" -}}
 source "$ZDOTDIR/rc/hooks.zsh"
 {{ end -}}
+
+# Ensure zsh-abbr keybindings remain active after all modules/plugins load
+if (( $+widgets[abbr-expand-and-insert] )); then
+    bindkey ' ' abbr-expand-and-insert
+    bindkey '^ ' magic-space
+fi
