@@ -10,7 +10,12 @@ lfcd() {
 }
 
 bindkey -e                                     # emacs key bindings
-bindkey ' ' magic-space                        # do history expansion on space
+if (( $+widgets[abbr-expand-and-insert] )); then
+    bindkey ' ' abbr-expand-and-insert
+    bindkey '^ ' magic-space
+else
+    bindkey ' ' magic-space
+fi
 bindkey '^[[3;5~' kill-word                    # ctrl + Supr
 bindkey '^[[3~' delete-char                    # delete
 bindkey '^[[1;5C' forward-word                 # ctrl + ->
@@ -56,7 +61,12 @@ lfcd () {
 
 # configure key keybindings
 bindkey -e                                        # emacs key bindings
-bindkey ' ' magic-space                           # do history expansion on space
+if (( $+widgets[abbr-expand-and-insert] )); then
+    bindkey ' ' abbr-expand-and-insert
+    bindkey '^ ' magic-space
+else
+    bindkey ' ' magic-space
+fi
 {{ if eq .chezmoi.os "darwin" -}}
 bindkey '^[[3~' backward-delete-word              # delete
 bindkey '^[[4~' forward-word                      # fn + ->
