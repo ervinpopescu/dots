@@ -1,0 +1,16 @@
+[Unit]
+Description=Info TB Live Vehicle Map
+# Networking may not be ready at user-manager startup; the poller retries.
+
+[Service]
+Type=simple
+WorkingDirectory=%h/prjs/InfoTB
+EnvironmentFile=-%h/.config/infotb/environment
+ExecStart=/usr/bin/node %h/prjs/InfoTB/server/dist/index.js
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=default.target
