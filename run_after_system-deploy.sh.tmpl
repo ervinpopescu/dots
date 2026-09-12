@@ -271,40 +271,17 @@ fi
 if [ -d "$SERVER_DIR" ]; then
   deploy_tree "$SERVER_DIR"
 
-  # Report files from managed server directories that are no longer in this
-  # source tree. They are intentionally not removed automatically because some
-  # may have been installed by the distribution or another service.
-  report_stale() {
-    local source_dir="$1" target_dir="$2"
-    local full_target="$DEST_ROOT$target_dir"
-    [ -d "$full_target" ] || return 0
-    while IFS= read -r -d '' dest; do
-      local rel="${dest#"$full_target/"}"
-      # This is an Arch-provided baseline, not a repository-managed file.
-      if [ "$target_dir" = "/etc/ssh/sshd_config.d" ] && [ "$rel" = "99-archlinux.conf" ]; then
-        continue
-      fi
-      if [ ! -f "$source_dir/$rel" ]; then
-        echo "WARN: stale unmanaged server file remains: ${dest#"$DEST_ROOT"}"
-      fi
-    done < <(
-      if [ -n "$DEST_ROOT" ]; then
-        find "$full_target" -type f -print0 2>/dev/null
-      elif [ "$dry_run" -eq 1 ]; then
-        sudo -n find "$full_target" -type f -print0 2>/dev/null || find "$full_target" -type f -print0 2>/dev/null || true
-      else
-        sudo find "$full_target" -type f -print0 2>/dev/null
-      fi
-    )
-  }
-
-  report_stale "$SERVER_DIR/etc/nginx/conf.d" /etc/nginx/conf.d
-  report_stale "$SERVER_DIR/etc/nginx/snippets" /etc/nginx/snippets
-  report_stale "$SERVER_DIR/etc/fail2ban/jail.d" /etc/fail2ban/jail.d
-  report_stale "$SERVER_DIR/etc/ssh/sshd_config.d" /etc/ssh/sshd_config.d
-
   # Clean up decommissioned server configurations only when absent from source
-  for stale in /etc/nginx/conf.d/transmission.conf /etc/nginx/conf.d/cloudflare-realip.conf /etc/nginx/conf.d/laura-web.conf /etc/nginx/conf.d/laura-gallery-aslan-api.conf /etc/systemd/system/transmission.service.d /etc/systemd/system/transmission-daemon.service.d; do
+  decommissioned_configs=(
+    /etc/nginx/conf.d/transmission.conf
+    /etc/nginx/conf.d/cloudflare-realip.conf
+    /etc/nginx/conf.d/laura-web.conf
+    /etc/nginx/conf.d/laura-gallery-aslan-api.conf
+    /etc/systemd/system/transmission.service.d
+    /etc/systemd/system/transmission-daemon.service.d
+  )
+
+  for stale in "${decommissioned_configs[@]}"; do
     if [ -e "$SERVER_DIR$stale" ]; then
       continue
     fi
@@ -329,6 +306,44 @@ if [ -d "$SERVER_DIR" ]; then
       fi
     fi
   done
+
+  # Report files from managed server directories that are no longer in this
+  # source tree. They are intentionally not removed automatically because some
+  # may have been installed by the distribution or another service.
+  report_stale() {
+    local source_dir="$1" target_dir="$2"
+    local full_target="$DEST_ROOT$target_dir"
+    [ -d "$full_target" ] || return 0
+    while IFS= read -r -d '' dest; do
+      local rel="${dest#"$full_target/"}"
+      # This is an Arch-provided baseline, not a repository-managed file.
+      if [ "$target_dir" = "/etc/ssh/sshd_config.d" ] && [ "$rel" = "99-archlinux.conf" ]; then
+        continue
+      fi
+      local clean_dest="${dest#"$DEST_ROOT"}"
+      for dec in "${decommissioned_configs[@]}"; do
+        if [ "$clean_dest" = "$dec" ] || [[ "$clean_dest" == "$dec/"* ]]; then
+          continue 2
+        fi
+      done
+      if [ ! -f "$source_dir/$rel" ]; then
+        echo "WARN: stale unmanaged server file remains: $clean_dest"
+      fi
+    done < <(
+      if [ -n "$DEST_ROOT" ]; then
+        find "$full_target" -type f -print0 2>/dev/null
+      elif [ "$dry_run" -eq 1 ]; then
+        sudo -n find "$full_target" -type f -print0 2>/dev/null || find "$full_target" -type f -print0 2>/dev/null || true
+      else
+        sudo find "$full_target" -type f -print0 2>/dev/null
+      fi
+    )
+  }
+
+  report_stale "$SERVER_DIR/etc/nginx/conf.d" /etc/nginx/conf.d
+  report_stale "$SERVER_DIR/etc/nginx/snippets" /etc/nginx/snippets
+  report_stale "$SERVER_DIR/etc/fail2ban/jail.d" /etc/fail2ban/jail.d
+  report_stale "$SERVER_DIR/etc/ssh/sshd_config.d" /etc/ssh/sshd_config.d
 fi
 {{ else -}}
 # These paths were previously in the common tree. Report them rather than
