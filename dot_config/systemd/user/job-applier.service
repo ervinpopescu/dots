@@ -9,6 +9,7 @@ ExecStart=/home/ervin/.local/bin/uv run python src/job_applier/cli/web_app.py --
 Restart=on-failure
 Environment=PATH=/home/ervin/.local/bin:/usr/local/bin:/usr/bin:/bin
 Environment=PYTHONUNBUFFERED=1
+Environment=JOB_APPLIER_DB_PATH=/home/ervin/prjs/job-applier/data/job_applier.db
 
 [Install]
 WantedBy=default.target
