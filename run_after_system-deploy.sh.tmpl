@@ -340,6 +340,7 @@ if [ -d "$SERVER_DIR" ]; then
   }
 
   report_stale "$SERVER_DIR/etc/nginx/conf.d" /etc/nginx/conf.d
+  report_stale "$SERVER_DIR/etc/nginx/vhosts.d" /etc/nginx/vhosts.d
   report_stale "$SERVER_DIR/etc/nginx/snippets" /etc/nginx/snippets
   report_stale "$SERVER_DIR/etc/fail2ban/jail.d" /etc/fail2ban/jail.d
   report_stale "$SERVER_DIR/etc/ssh/sshd_config.d" /etc/ssh/sshd_config.d
