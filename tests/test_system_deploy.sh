@@ -219,8 +219,8 @@ if grep -q "report_stale" <<< "$check_rendered"; then
 
   # Dry-run
   out_decom_dry="$(SYSTEM_SOURCE_DIR="$DECOM_SRC" SYSTEM_TARGET_DIR="$DECOM_TGT" "$DEPLOY_BIN" --dry-run)"
-  assert_contains "previews transmission nginx removal" "[dry-run] would remove decommissioned transmission config: /etc/nginx/conf.d/transmission.conf" "$out_decom_dry"
-  assert_contains "previews transmission daemon dropin removal" "[dry-run] would remove decommissioned transmission config: /etc/systemd/system/transmission-daemon.service.d" "$out_decom_dry"
+  assert_contains "previews transmission nginx removal" "[dry-run] would remove decommissioned server config: /etc/nginx/conf.d/transmission.conf" "$out_decom_dry"
+  assert_contains "previews transmission daemon dropin removal" "[dry-run] would remove decommissioned server config: /etc/systemd/system/transmission-daemon.service.d" "$out_decom_dry"
   assert_contains "reports nginx reload skipped" "[dry-run] Nginx configuration changed; service reload skipped" "$out_decom_dry"
 
   # Target files must NOT be deleted in dry-run
@@ -234,8 +234,8 @@ if grep -q "report_stale" <<< "$check_rendered"; then
 
   # Live mode: files are deleted
   out_decom_live="$(SYSTEM_SOURCE_DIR="$DECOM_SRC" SYSTEM_TARGET_DIR="$DECOM_TGT" "$DEPLOY_BIN")"
-  assert_contains "reports live removal of nginx config" "Removing decommissioned transmission config: /etc/nginx/conf.d/transmission.conf" "$out_decom_live"
-  assert_contains "reports live removal of daemon dropin" "Removing decommissioned transmission config: /etc/systemd/system/transmission-daemon.service.d" "$out_decom_live"
+  assert_contains "reports live removal of nginx config" "Removing decommissioned server config: /etc/nginx/conf.d/transmission.conf" "$out_decom_live"
+  assert_contains "reports live removal of daemon dropin" "Removing decommissioned server config: /etc/systemd/system/transmission-daemon.service.d" "$out_decom_live"
   if [ ! -e "$DECOM_TGT/etc/nginx/conf.d/transmission.conf" ] && [ ! -e "$DECOM_TGT/etc/systemd/system/transmission-daemon.service.d" ]; then
     echo "  PASS: transmission configs removed during live deploy"
     passes=$((passes + 1))
