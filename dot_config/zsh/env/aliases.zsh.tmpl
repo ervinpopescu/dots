@@ -5,7 +5,7 @@ alias sudo='sudo '
 alias birthday="birthday -f ~/.local/share/birthdays -W 7"
 alias calc="noglob calculator"
 alias cat="batcat -p"
-alias clear="clear; tmux server-info &>/dev/null; [ $? == 1 ] && tmux clearhist"
+alias clear="clear; tmux server-info &>/dev/null; [[ $? -eq 1 ]] && tmux clearhist"
 alias csv2json="mlr --c2j cat | jq"
 # alias cd=z
 alias cp="cp -v"
