@@ -1,0 +1,35 @@
+#!/bin/bash
+# ==============================================================================
+# no-mistakes Active Pipeline Watcher
+# ==============================================================================
+# This script monitors the status of no-mistakes active runs across all git
+# worktrees in the digital-sme project.
+
+# Check that we are inside a git repository
+if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  echo "Error: Must be run inside a git repository." >&2
+  exit 1
+fi
+
+# Find the main repository root
+REPO_ROOT=$(git -C "$(pwd)" rev-parse --show-toplevel)
+
+# Execute the watch loop
+watch -n5 -tc "for wk in \$(git -C \"$REPO_ROOT\" worktree list | rg -v main | awk '{print \$1}'); do
+  cd \"\$wk\" 2>/dev/null || continue;
+  curr_branch=\$(git branch --show-current);
+  no-mistakes axi status 2>/dev/null | awk -v cb=\"\$curr_branch\" '
+    /^  branch:/ { b=\$2 }
+    /^  status:/ { s=\$2 }
+    /^outcome:/ { s=\$2 }
+    /^  awaiting_agent:/ { await=\"(AWAITING APPROVAL)\" }
+    /^  active_steps/ {
+      getline; split(\$1, a, \",\"); step=a[1]; step_status=a[2];
+      if (step_status == \"awaiting_approval\" || step_status == \"fix_review\") await=\"(AWAITING APPROVAL)\"
+    }
+    END {
+      if (b == cb) {
+        if (step != \"\") print b, s, step, await; else print b, s
+      }
+    }';
+done | column -t -o '      ' | rg -v 'completed|passed|failed|cancelled'"
