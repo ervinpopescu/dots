@@ -545,11 +545,31 @@ class StateManager:
         failed_step: Optional[str] = None,
         exit_code: int = 0,
         steps: Optional[List[Dict[str, Any]]] = None,
+        deployment_status: Optional[str] = None,
+        testing_status: Optional[str] = None,
+        deployed_commit: Optional[str] = None,
+        deployed_at: Optional[str] = None,
+        tested_at: Optional[str] = None,
     ) -> None:
         data = self.load()
         if self.repo_name and not data.get("repo"):
             data["repo"] = self.repo_name
         data["last_updated"] = get_iso_timestamp()
+
+        existing = data.get("branches", {}).get(branch, {})
+        final_dep_status = (
+            deployment_status
+            if deployment_status is not None
+            else existing.get("deployment_status")
+        )
+        final_test_status = (
+            testing_status if testing_status is not None else existing.get("testing_status")
+        )
+        final_dep_commit = (
+            deployed_commit if deployed_commit is not None else existing.get("deployed_commit")
+        )
+        final_dep_at = deployed_at if deployed_at is not None else existing.get("deployed_at")
+        final_tested_at = tested_at if tested_at is not None else existing.get("tested_at")
 
         record = {
             "status": status,
@@ -562,6 +582,11 @@ class StateManager:
             "failed_step": failed_step if failed_step else None,
             "exit_code": int(exit_code),
             "steps": steps or [],
+            "deployment_status": final_dep_status,
+            "testing_status": final_test_status,
+            "deployed_commit": final_dep_commit,
+            "deployed_at": final_dep_at,
+            "tested_at": final_tested_at,
         }
         data["branches"][branch] = record
         self.save(data)
@@ -591,6 +616,32 @@ def ansi_ljust(s: str, width: int) -> str:
     return s + (" " * pad)
 
 
+def is_branch_deployed(b_info: Optional[Dict[str, Any]], current_commit: str) -> bool:
+    if not b_info or not current_commit:
+        return False
+    dep_commit = b_info.get("deployed_commit") or (
+        b_info.get("commit")
+        if b_info.get("status") in ("passed", "deployed", "deployed_untested")
+        else None
+    )
+    if not dep_commit or dep_commit != current_commit:
+        return False
+    if b_info.get("deployment_status") == "passed":
+        return True
+    return b_info.get("status") in ("passed", "deployed", "deployed_untested")
+
+
+def is_branch_untested(b_info: Optional[Dict[str, Any]], current_commit: str) -> bool:
+    if not is_branch_deployed(b_info, current_commit):
+        return False
+    t_status = b_info.get("testing_status")
+    if t_status == "completed":
+        return False
+    if b_info.get("status") in ("passed", "deployed") and t_status is None:
+        return False  # backward compatibility for legacy passed records
+    return True
+
+
 def print_status_table(
     state_manager: StateManager,
     main_repo: str,
@@ -603,6 +654,7 @@ def print_status_table(
     status_map = {
         "passed": f"{Colors.GREEN}✓ PASSED{Colors.RESET}",
         "deployed": f"{Colors.GREEN}✓ PASSED{Colors.RESET}",
+        "deployed_untested": f"{Colors.YELLOW}🟡 DEPLOYED (UNTESTED){Colors.RESET}",
         "failed": f"{Colors.RED}❌ FAILED{Colors.RESET}",
         "skipped": f"{Colors.YELLOW}⚠ SKIPPED{Colors.RESET}",
         "in_progress": f"{Colors.CYAN}⏳ RUNNING{Colors.RESET}",
@@ -633,11 +685,12 @@ def print_status_table(
         "DETAIL",
     )
     print(
-        f"  {Colors.BOLD}{h_branch:<44} {h_status:<14} {h_commit:<10} {h_sync:<13} {h_time:<19} {h_detail}{Colors.RESET}"
+        f"  {Colors.BOLD}{h_branch:<38} {h_status:<24} {h_commit:<10} {h_sync:<13} {h_time:<19} {h_detail}{Colors.RESET}"
     )
-    print("  " + "-" * 102)
+    print("  " + "-" * 106)
 
     t_passed = 0
+    t_untested = 0
     t_failed = 0
     t_skipped = 0
     t_pending = 0
@@ -654,26 +707,33 @@ def print_status_table(
             raw_time = b_info.get("timestamp", "-")
             time_str = raw_time.replace("T", " ")[:16] if "T" in raw_time else raw_time[:16]
             failed_step = b_info.get("failed_step", "")
-            detail = (
-                failed_step
-                if failed_step
-                else (
-                    f"{b_info.get('duration_seconds', 0)}s"
-                    if raw_status in ("passed", "deployed")
-                    else ""
-                )
-            )
 
-            if raw_status in ("passed", "deployed"):
+            is_untested = is_branch_untested(b_info, current_commit)
+            if is_untested:
+                disp_status = f"{Colors.YELLOW}🟡 DEPLOYED (UNTESTED){Colors.RESET}"
+                t_untested += 1
+                detail = "testing pending"
+            elif raw_status in ("passed", "deployed"):
+                disp_status = status_map["passed"]
                 t_passed += 1
+                detail = (
+                    f"{b_info.get('duration_seconds', 0)}s" if not failed_step else failed_step
+                )
             elif raw_status == "failed":
+                disp_status = status_map["failed"]
                 t_failed += 1
+                detail = failed_step
             elif raw_status == "skipped":
+                disp_status = status_map["skipped"]
                 t_skipped += 1
+                detail = ""
             else:
+                disp_status = status_map.get(
+                    raw_status, f"{Colors.DIM}{raw_status}{Colors.RESET}"
+                )
                 t_pending += 1
+                detail = ""
 
-            disp_status = status_map.get(raw_status, f"{Colors.DIM}{raw_status}{Colors.RESET}")
             sync_stat = get_commit_difference(w["worktree"], saved_commit, current_commit)
             if sync_stat == "synced":
                 disp_sync = f"{Colors.GREEN}synced{Colors.RESET}"
@@ -695,19 +755,20 @@ def print_status_table(
                 if tp:
                     detail = f"{Colors.DIM}plan: {tp[0]}{Colors.RESET}"
 
-        disp_branch = branch if len(branch) <= 44 else branch[:41] + "..."
-        col_branch = ansi_ljust(disp_branch, 44)
-        col_status = ansi_ljust(disp_status, 14)
+        disp_branch = branch if len(branch) <= 38 else branch[:35] + "..."
+        col_branch = ansi_ljust(disp_branch, 38)
+        col_status = ansi_ljust(disp_status, 24)
         col_commit = ansi_ljust(current_short, 10)
         col_sync = ansi_ljust(disp_sync, 13)
         col_time = ansi_ljust(time_str, 19)
 
         print(f"  {col_branch} {col_status} {col_commit} {col_sync} {col_time} {detail}")
 
-    print("  " + "-" * 102)
+    print("  " + "-" * 106)
     print(
         f"  {Colors.BOLD}Total Worktrees: {len(worktrees)}{Colors.RESET} | "
         f"{Colors.GREEN}Passed: {t_passed}{Colors.RESET} | "
+        f"{Colors.YELLOW}Untested: {t_untested}{Colors.RESET} | "
         f"{Colors.RED}Failed: {t_failed}{Colors.RESET} | "
         f"{Colors.YELLOW}Skipped: {t_skipped}{Colors.RESET} | "
         f"{Colors.DIM}Pending: {t_pending}{Colors.RESET}\n"
@@ -801,18 +862,38 @@ class CycleDeployer:
     def _handle_interrupt(self, signum: int, frame: Any) -> None:
         if self.current_branch:
             dur = int(time.time() - self.current_start_time)
-            self.state_manager.update_branch(
-                branch=self.current_branch,
-                status="skipped",
-                commit=self.current_commit,
-                commit_short=self.current_short,
-                commit_msg=self.current_msg,
-                worktree=self.current_worktree or "",
-                duration_seconds=dur,
-                failed_step="Interrupted by user",
-                exit_code=130,
-                steps=self.current_steps_recorded,
-            )
+            curr_state = self.state_manager.get_branch_state(self.current_branch)
+            if (
+                curr_state.get("deployment_status") == "passed"
+                and curr_state.get("deployed_commit") == self.current_commit
+            ):
+                self.state_manager.update_branch(
+                    branch=self.current_branch,
+                    status="deployed_untested",
+                    commit=self.current_commit,
+                    commit_short=self.current_short,
+                    commit_msg=self.current_msg,
+                    worktree=self.current_worktree or "",
+                    duration_seconds=dur,
+                    steps=self.current_steps_recorded or curr_state.get("steps", []),
+                    deployment_status="passed",
+                    testing_status="pending",
+                    deployed_commit=self.current_commit,
+                    deployed_at=curr_state.get("deployed_at") or get_iso_timestamp(),
+                )
+            else:
+                self.state_manager.update_branch(
+                    branch=self.current_branch,
+                    status="skipped",
+                    commit=self.current_commit,
+                    commit_short=self.current_short,
+                    commit_msg=self.current_msg,
+                    worktree=self.current_worktree or "",
+                    duration_seconds=dur,
+                    failed_step="Interrupted by user",
+                    exit_code=130,
+                    steps=self.current_steps_recorded,
+                )
             self.skipped_branches.append(self.current_branch)
 
         self.print_summary()
@@ -908,13 +989,19 @@ class CycleDeployer:
         targets: List[Dict[str, Any]] = []
         for w in self.worktrees:
             b_name = w.get("branch", "")
+            commit = w.get("commit", "")
             if self.args.branch and b_name != self.args.branch:
                 continue
 
+            b_state = self.state_manager.get_branch_state(b_name)
+
             if self.args.only_failed:
-                b_state = self.state_manager.get_branch_state(b_name)
                 saved_st = b_state.get("status", "")
                 if saved_st in ("passed", "deployed"):
+                    continue
+
+            if self.args.only_untested:
+                if not is_branch_untested(b_state, commit):
                     continue
 
             targets.append(w)
@@ -925,6 +1012,11 @@ class CycleDeployer:
                     f"{Colors.RED}Branch '{self.args.branch}' not found among non-main worktrees.{Colors.RESET}"
                 )
                 return 1
+            if self.args.only_untested:
+                print(
+                    f"{Colors.GREEN}No deployed branches are pending testing! Nothing to do.{Colors.RESET}"
+                )
+                return 0
             if self.args.only_failed:
                 print(
                     f"{Colors.GREEN}All non-main branches have passed deployment! Nothing to do.{Colors.RESET}"
@@ -992,7 +1084,14 @@ class CycleDeployer:
         print(f"{Colors.DIM} Commit:   {commit_short} - {commit_msg}{Colors.RESET}")
 
         is_unchanged_passed = False
-        if prev_status in ("passed", "deployed"):
+        is_deployed_untested = False
+
+        if is_branch_untested(b_state, commit):
+            is_deployed_untested = True
+            print(
+                f"{Colors.YELLOW} Last State: ⚡ DEPLOYED at commit {commit_short} on {prev_time} (Testing incomplete){Colors.RESET}"
+            )
+        elif prev_status in ("passed", "deployed"):
             if prev_commit == commit:
                 print(
                     f"{Colors.GREEN} Last State: ✓ PASSED on {prev_time} ({commit_short} - UNCHANGED){Colors.RESET}"
@@ -1024,6 +1123,14 @@ class CycleDeployer:
             self.show_dry_run(config, branch, worktree)
             return "continue"
 
+        # Check --skip-deployed
+        if self.args.skip_deployed and is_branch_deployed(b_state, commit):
+            print(
+                f"{Colors.CYAN}Auto-skipping branch '{branch}' (already deployed at commit {commit_short})...{Colors.RESET}"
+            )
+            self.skipped_branches.append(branch)
+            return "continue"
+
         # Check --skip-passed
         if self.args.skip_passed and is_unchanged_passed:
             print(
@@ -1033,7 +1140,37 @@ class CycleDeployer:
             return "continue"
 
         # User prompt
-        if is_unchanged_passed:
+        skip_deploy_steps = False
+
+        if is_deployed_untested:
+            print(
+                f"\n{Colors.YELLOW}Branch is already deployed at current commit ({commit_short}), but testing was not completed.{Colors.RESET}"
+            )
+            print("  [t] / [Enter] : Resume TESTING phase (skip redeploying) [default]")
+            print("  [r]           : Force full REDEPLOY from scratch (build & deploy again)")
+            print("  [s]           : Skip this branch")
+            print("  [q]           : Quit script")
+            try:
+                choice = input("Select action [T/r/s/q]: ").strip()
+            except EOFError:
+                choice = "t"
+
+            if choice == "" or choice.lower().startswith("t"):
+                print(
+                    f"{Colors.CYAN}Resuming testing phase for '{branch}' (skipping deployment)...{Colors.RESET}"
+                )
+                skip_deploy_steps = True
+            elif choice.lower().startswith("r"):
+                print(f"{Colors.YELLOW}Forcing full redeploy for '{branch}'...{Colors.RESET}")
+                skip_deploy_steps = False
+            elif choice.lower().startswith("q"):
+                print(f"{Colors.RED}Stopping cycle deploy on user request.{Colors.RESET}")
+                return "quit"
+            else:
+                print(f"{Colors.YELLOW}Skipping branch '{branch}'...{Colors.RESET}")
+                self.skipped_branches.append(branch)
+                return "continue"
+        elif is_unchanged_passed:
             print(
                 f"\n{Colors.YELLOW}Branch was already successfully deployed at current commit ({commit_short}).{Colors.RESET}"
             )
@@ -1047,7 +1184,7 @@ class CycleDeployer:
                 choice = "n"
 
             if choice.lower().startswith("y"):
-                pass
+                skip_deploy_steps = False
             elif choice.lower().startswith("q"):
                 print(f"{Colors.RED}Stopping cycle deploy on user request.{Colors.RESET}")
                 return "quit"
@@ -1062,6 +1199,9 @@ class CycleDeployer:
                     commit_msg=commit_msg,
                     worktree=worktree,
                     duration_seconds=0,
+                    deployment_status="passed",
+                    testing_status="completed",
+                    deployed_commit=commit,
                 )
                 return "continue"
         else:
@@ -1091,66 +1231,87 @@ class CycleDeployer:
                 print(f"{Colors.RED}Stopping cycle deploy on user request.{Colors.RESET}")
                 return "quit"
 
-        # Mark in_progress
-        self.state_manager.update_branch(
-            branch=branch,
-            status="in_progress",
-            commit=commit,
-            commit_short=commit_short,
-            commit_msg=commit_msg,
-            worktree=worktree,
-            duration_seconds=0,
-        )
+        # Mark in_progress only if running deploy
+        if not skip_deploy_steps:
+            self.state_manager.update_branch(
+                branch=branch,
+                status="in_progress",
+                commit=commit,
+                commit_short=commit_short,
+                commit_msg=commit_msg,
+                worktree=worktree,
+                duration_seconds=0,
+                deployment_status="in_progress",
+            )
 
         # Deployment loop (supports redeploy)
         while True:
-            # Sync files
-            self.sync_files(config, worktree)
+            if not skip_deploy_steps:
+                # Sync files
+                self.sync_files(config, worktree)
 
-            # Build environment
-            env = config.build_env()
+                # Build environment
+                env = config.build_env()
 
-            # Execute steps
-            all_steps = config.steps + config.post_deploy
-            step_failed = False
-            failed_step_name = ""
-            failed_step_exit = 1
+                # Execute steps
+                all_steps = config.steps + config.post_deploy
+                step_failed = False
+                failed_step_name = ""
+                failed_step_exit = 1
 
-            for s in all_steps:
-                st_name = s["name"]
-                st_cmd = s["command"]
-                st_opt = s.get("optional", False)
-                st_cond = s.get("condition", "")
+                for s in all_steps:
+                    st_name = s["name"]
+                    st_cmd = s["command"]
+                    st_opt = s.get("optional", False)
+                    st_cond = s.get("condition", "")
 
-                if st_cond:
-                    cond_eval = expand_template(st_cond, env)
-                    cond_res = subprocess.run(
-                        cond_eval,
-                        shell=True,
-                        cwd=worktree,
-                        env=env,
-                        stdout=subprocess.DEVNULL,
-                        stderr=subprocess.DEVNULL,
-                    )
-                    if cond_res.returncode != 0:
-                        print(
-                            f"{Colors.DIM}---> Skipping step '{st_name}' (condition not met).{Colors.RESET}"
+                    if st_cond:
+                        cond_eval = expand_template(st_cond, env)
+                        cond_res = subprocess.run(
+                            cond_eval,
+                            shell=True,
+                            cwd=worktree,
+                            env=env,
+                            stdout=subprocess.DEVNULL,
+                            stderr=subprocess.DEVNULL,
                         )
+                        if cond_res.returncode != 0:
+                            print(
+                                f"{Colors.DIM}---> Skipping step '{st_name}' (condition not met).{Colors.RESET}"
+                            )
+                            continue
+
+                    cmd_eval = expand_template(st_cmd, env)
+                    step_res, dur, code = self.run_step(
+                        st_name, cmd_eval, st_opt, branch, worktree, env
+                    )
+
+                    if step_res == "retry":
                         continue
+                    elif step_res == "skip":
+                        step_failed = True
+                        failed_step_name = st_name
+                        failed_step_exit = code
+                        break
+                    elif step_res == "quit":
+                        dur_total = int(time.time() - self.current_start_time)
+                        self.state_manager.update_branch(
+                            branch=branch,
+                            status="failed",
+                            commit=commit,
+                            commit_short=commit_short,
+                            commit_msg=commit_msg,
+                            worktree=worktree,
+                            duration_seconds=dur_total,
+                            failed_step=st_name,
+                            exit_code=code,
+                            steps=self.current_steps_recorded,
+                            deployment_status="failed",
+                        )
+                        self.failed_branches.append(branch)
+                        return "quit"
 
-                cmd_eval = expand_template(st_cmd, env)
-                step_res, dur, code = self.run_step(
-                    st_name, cmd_eval, st_opt, branch, worktree, env
-                )
-
-                if step_res == "retry":
-                    continue
-                elif step_res == "skip":
-                    step_failed = True
-                    failed_step_name = st_name
-                    failed_step_exit = code
-                    break
-                elif step_res == "quit":
+                if step_failed:
                     dur_total = int(time.time() - self.current_start_time)
                     self.state_manager.update_branch(
                         branch=branch,
@@ -1160,29 +1321,15 @@ class CycleDeployer:
                         commit_msg=commit_msg,
                         worktree=worktree,
                         duration_seconds=dur_total,
-                        failed_step=st_name,
-                        exit_code=code,
+                        failed_step=failed_step_name,
+                        exit_code=failed_step_exit,
                         steps=self.current_steps_recorded,
+                        deployment_status="failed",
                     )
                     self.failed_branches.append(branch)
-                    return "quit"
-
-            if step_failed:
-                dur_total = int(time.time() - self.current_start_time)
-                self.state_manager.update_branch(
-                    branch=branch,
-                    status="failed",
-                    commit=commit,
-                    commit_short=commit_short,
-                    commit_msg=commit_msg,
-                    worktree=worktree,
-                    duration_seconds=dur_total,
-                    failed_step=failed_step_name,
-                    exit_code=failed_step_exit,
-                    steps=self.current_steps_recorded,
-                )
-                self.failed_branches.append(branch)
-                break
+                    break
+            else:
+                env = config.build_env()
 
             # Manual testing phase
             mt = config.manual_test
@@ -1201,17 +1348,44 @@ class CycleDeployer:
                     worktree=worktree,
                     duration_seconds=dur_total,
                     steps=self.current_steps_recorded,
+                    deployment_status="passed",
+                    testing_status="completed",
+                    deployed_commit=commit,
+                    deployed_at=get_iso_timestamp(),
+                    tested_at=get_iso_timestamp(),
                 )
                 self.deployed_branches.append(branch)
                 break
 
+            prev_b_state = self.state_manager.get_branch_state(branch)
+            dep_at_val = prev_b_state.get("deployed_at") or get_iso_timestamp()
+
+            # Save deployed_untested immediately upon steps completion!
+            self.state_manager.update_branch(
+                branch=branch,
+                status="deployed_untested",
+                commit=commit,
+                commit_short=commit_short,
+                commit_msg=commit_msg,
+                worktree=worktree,
+                duration_seconds=dur_total,
+                steps=self.current_steps_recorded or prev_b_state.get("steps", []),
+                deployment_status="passed",
+                testing_status="pending",
+                deployed_commit=commit,
+                deployed_at=dep_at_val,
+            )
+
             mt_title = mt.get("title", "Manual Testing Phase")
+            header_text = (
+                f"🎉 RESUMING TESTING: {branch} [{idx}/{total}]"
+                if skip_deploy_steps
+                else f"🎉 DEPLOYMENT READY: {branch} [{idx}/{total}]"
+            )
             print(
                 f"\n{Colors.BOLD}{Colors.GREEN}================================================================{Colors.RESET}"
             )
-            print(
-                f"{Colors.BOLD}{Colors.GREEN} 🎉 DEPLOYMENT READY: {branch} [{idx}/{total}]{Colors.RESET}"
-            )
+            print(f"{Colors.BOLD}{Colors.GREEN} {header_text}{Colors.RESET}")
             for info_line in mt.get("info", []):
                 print(f"{Colors.GREEN} {expand_template(info_line, env)}{Colors.RESET}")
             print(
@@ -1257,6 +1431,7 @@ class CycleDeployer:
 
             if act.lower().startswith("r"):
                 print(f"{Colors.YELLOW}Redeploying branch '{branch}'...{Colors.RESET}")
+                skip_deploy_steps = False
                 self.current_steps_recorded = []
                 continue
             elif act.lower().startswith("s"):
@@ -1268,22 +1443,16 @@ class CycleDeployer:
                     commit_msg=commit_msg,
                     worktree=worktree,
                     duration_seconds=dur_total,
-                    steps=self.current_steps_recorded,
+                    steps=self.current_steps_recorded or prev_b_state.get("steps", []),
+                    deployment_status="passed",
+                    testing_status="skipped",
+                    deployed_commit=commit,
+                    deployed_at=dep_at_val,
                 )
                 self.skipped_branches.append(branch)
                 break
             elif act.lower().startswith("q"):
-                self.state_manager.update_branch(
-                    branch=branch,
-                    status="passed",
-                    commit=commit,
-                    commit_short=commit_short,
-                    commit_msg=commit_msg,
-                    worktree=worktree,
-                    duration_seconds=dur_total,
-                    steps=self.current_steps_recorded,
-                )
-                self.deployed_branches.append(branch)
+                print(f"{Colors.RED}Stopping cycle deploy on user request.{Colors.RESET}")
                 return "quit"
             else:
                 self.state_manager.update_branch(
@@ -1294,7 +1463,12 @@ class CycleDeployer:
                     commit_msg=commit_msg,
                     worktree=worktree,
                     duration_seconds=dur_total,
-                    steps=self.current_steps_recorded,
+                    steps=self.current_steps_recorded or prev_b_state.get("steps", []),
+                    deployment_status="passed",
+                    testing_status="completed",
+                    deployed_commit=commit,
+                    deployed_at=dep_at_val,
+                    tested_at=get_iso_timestamp(),
                 )
                 self.deployed_branches.append(branch)
                 break
@@ -1492,9 +1666,19 @@ def create_parser() -> argparse.ArgumentParser:
         help="Only cycle through branches whose last deployment failed or is unrecorded",
     )
     parser.add_argument(
+        "--only-untested",
+        action="store_true",
+        help="Only cycle through branches that are already deployed but have testing pending",
+    )
+    parser.add_argument(
         "--skip-passed",
         action="store_true",
         help="Automatically skip branches already marked as passed at the current commit",
+    )
+    parser.add_argument(
+        "--skip-deployed",
+        action="store_true",
+        help="Automatically skip branches already deployed at the current commit (regardless of testing status)",
     )
     parser.add_argument(
         "-b",
