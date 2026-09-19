@@ -59,7 +59,9 @@ assert_contains "help contains usage" "cycle-deploy-branches [OPTIONS]" "$help_o
 assert_contains "help contains --status" "--status" "$help_out"
 assert_contains "help contains --dry-run" "--dry-run" "$help_out"
 assert_contains "help contains --only-failed" "--only-failed" "$help_out"
+assert_contains "help contains --only-untested" "--only-untested" "$help_out"
 assert_contains "help contains --skip-passed" "--skip-passed" "$help_out"
+assert_contains "help contains --skip-deployed" "--skip-deployed" "$help_out"
 assert_contains "help contains example config" ".cycle-deploy.json" "$help_out"
 
 # ------------------------------------------------------------------------------
@@ -358,6 +360,110 @@ assert_contains "feat3 shows generic instructions" "Generic test instruction" "$
 status_tp_out="$("$CYCLE_BIN" --status)"
 assert_contains "status table shows plan indicator for feat1" "plan: PR_MESSAGE.md" "$status_tp_out"
 assert_contains "status table shows plan indicator for feat2" "plan: TESTING.md" "$status_tp_out"
+
+# ------------------------------------------------------------------------------
+# Test 13: Immediate state persistence as deployed_untested upon steps completion
+# ------------------------------------------------------------------------------
+echo "Test 13: Immediate deployed_untested state recording"
+
+# Create a clean deployment step for feature/three
+cat > "$WT_DIR/feat3/.cycle-deploy.json" << 'EOF'
+{
+  "name": "mock-app",
+  "steps": [
+    { "name": "Build", "command": "echo 'build success'" }
+  ],
+  "manual_test": {
+    "enabled": true,
+    "instructions": ["Verify feature 3"]
+  }
+}
+EOF
+
+# Run with 'y' to deploy, then 'q' at the manual test prompt
+printf "y\nq\n" | "$CYCLE_BIN" --branch feature/three >/dev/null 2>&1
+
+b3_untested_state="$("$CYCLE_BIN" --json)"
+assert_contains "status is deployed_untested" '"status": "deployed_untested"' "$b3_untested_state"
+assert_contains "deployment_status is passed" '"deployment_status": "passed"' "$b3_untested_state"
+assert_contains "testing_status is pending" '"testing_status": "pending"' "$b3_untested_state"
+
+status_untested_out="$("$CYCLE_BIN" --status)"
+assert_contains "status table shows DEPLOYED (UNTESTED)" "DEPLOYED (UNTESTED)" "$status_untested_out"
+assert_contains "status table shows Untested: 1" "Untested: 1" "$status_untested_out"
+
+# ------------------------------------------------------------------------------
+# Test 14: Re-running prompts to resume testing and skips redeployment
+# ------------------------------------------------------------------------------
+echo "Test 14: Resume testing without redeploying"
+
+# Add a marker file command to steps
+cat > "$WT_DIR/feat3/.cycle-deploy.json" << 'EOF'
+{
+  "name": "mock-app",
+  "steps": [
+    { "name": "Deploy Marker", "command": "touch marker_redeploy.txt" }
+  ],
+  "manual_test": {
+    "enabled": true,
+    "instructions": ["Verify feature 3"]
+  }
+}
+EOF
+rm -f "$WT_DIR/feat3/marker_redeploy.txt"
+
+# Run: 't' to resume testing directly (skipping deploy), then Enter to confirm test passed
+printf "t\n\n" | "$CYCLE_BIN" --branch feature/three >/dev/null 2>&1
+
+# Verify the deploy step was SKIPPED (marker_redeploy.txt was not created)
+if [ -f "$WT_DIR/feat3/marker_redeploy.txt" ]; then
+  echo "  FAIL: redeployed branch instead of skipping steps"
+  failures=$((failures + 1))
+else
+  echo "  PASS: deployment steps were skipped when resuming testing"
+  passes=$((passes + 1))
+fi
+
+b3_passed_state="$("$CYCLE_BIN" --json)"
+assert_contains "feature/three status transitioned to passed" '"status": "passed"' "$b3_passed_state"
+assert_contains "feature/three testing_status is completed" '"testing_status": "completed"' "$b3_passed_state"
+
+# ------------------------------------------------------------------------------
+# Test 15: --only-untested flag filters to deployed untested branches
+# ------------------------------------------------------------------------------
+echo "Test 15: --only-untested flag"
+
+# Mark feature/two as deployed_untested (deploy then quit at test prompt)
+cat > "$WT_DIR/feat2/.cycle-deploy.json" << 'EOF'
+{
+  "name": "mock-app",
+  "steps": [
+    { "name": "Quick Step", "command": "true" }
+  ],
+  "manual_test": {
+    "enabled": true
+  }
+}
+EOF
+printf "y\nq\n" | "$CYCLE_BIN" --branch feature/two >/dev/null 2>&1
+
+only_untested_out="$("$CYCLE_BIN" --only-untested --dry-run)"
+assert_contains "feature/two included in only-untested" "Dry-run completed for feature/two" "$only_untested_out"
+assert_not_contains "feature/one excluded from only-untested" "Dry-run completed for feature/one" "$only_untested_out"
+assert_not_contains "feature/three excluded from only-untested" "Dry-run completed for feature/three" "$only_untested_out"
+
+# ------------------------------------------------------------------------------
+# Test 16: --skip-deployed flag skips branches deployed at current commit
+# ------------------------------------------------------------------------------
+echo "Test 16: --skip-deployed flag"
+
+# feature/three is deployed and passed (from test 14)
+skip_dep1="$("$CYCLE_BIN" --skip-deployed --branch feature/three)"
+assert_contains "feature/three (passed) skipped as deployed" "already deployed at commit" "$skip_dep1"
+
+# feature/two is deployed and untested (from test 15)
+skip_dep2="$("$CYCLE_BIN" --skip-deployed --branch feature/two)"
+assert_contains "feature/two (untested) skipped as deployed" "already deployed at commit" "$skip_dep2"
 
 # ------------------------------------------------------------------------------
 # Summary
