@@ -1,0 +1,1530 @@
+#!/usr/bin/env python3
+"""cycle-deploy-branches - Repo-agnostic worktree cycle deployer with local state tracking.
+
+Cycles through all git worktrees (excluding main), runs configured deployment
+and verification steps, and manages local persistent state.
+"""
+
+from __future__ import annotations
+
+import argparse
+import datetime
+import json
+import os
+import re
+import shutil
+import signal
+import subprocess
+import sys
+import tempfile
+import time
+from typing import Any, Dict, List, Optional, Tuple
+
+
+# ==============================================================================
+# ANSI Color & Formatting Utilities
+# ==============================================================================
+class Colors:
+    RESET = "\033[0m"
+    BOLD = "\033[1m"
+    DIM = "\033[2m"
+    CYAN = "\033[1;36m"
+    GREEN = "\033[1;32m"
+    RED = "\033[1;31m"
+    YELLOW = "\033[1;33m"
+    MAGENTA = "\033[1;35m"
+
+    @classmethod
+    def disable(cls) -> None:
+        cls.RESET = ""
+        cls.BOLD = ""
+        cls.DIM = ""
+        cls.CYAN = ""
+        cls.GREEN = ""
+        cls.RED = ""
+        cls.YELLOW = ""
+        cls.MAGENTA = ""
+
+
+if not sys.stdout.isatty():
+    Colors.disable()
+
+
+# ==============================================================================
+# Git Helpers
+# ==============================================================================
+def get_git_output(cmd: List[str], cwd: Optional[str] = None) -> str:
+    try:
+        return subprocess.check_output(cmd, cwd=cwd, text=True, stderr=subprocess.DEVNULL).strip()
+    except Exception:
+        return ""
+
+
+def get_main_repo() -> Optional[str]:
+    is_tree = get_git_output(["git", "rev-parse", "--is-inside-work-tree"])
+    if not is_tree:
+        return None
+
+    common = get_git_output(["git", "rev-parse", "--git-common-dir"])
+    if common:
+        candidate = os.path.realpath(os.path.join(common, ".."))
+        if os.path.isdir(candidate):
+            return candidate
+
+    toplevel = get_git_output(["git", "rev-parse", "--show-toplevel"])
+    if toplevel:
+        return os.path.realpath(toplevel)
+
+    return None
+
+
+def get_git_common_dir(main_repo: str) -> Optional[str]:
+    common = get_git_output(["git", "-C", main_repo, "rev-parse", "--git-common-dir"])
+    if common:
+        if os.path.isabs(common):
+            return os.path.realpath(common)
+        return os.path.realpath(os.path.join(main_repo, common))
+
+    git_dir = get_git_output(["git", "-C", main_repo, "rev-parse", "--git-dir"])
+    if git_dir:
+        if os.path.isabs(git_dir):
+            return os.path.realpath(git_dir)
+        return os.path.realpath(os.path.join(main_repo, git_dir))
+
+    return None
+
+
+def list_worktrees(main_repo: str) -> List[Dict[str, Any]]:
+    out = get_git_output(["git", "-C", main_repo, "worktree", "list", "--porcelain"])
+    if not out:
+        return []
+
+    worktrees: List[Dict[str, Any]] = []
+    curr: Dict[str, Any] = {}
+    main_canonical = os.path.realpath(main_repo)
+
+    for line in out.strip().split("\n"):
+        if not line:
+            if curr:
+                worktrees.append(curr)
+                curr = {}
+            continue
+        parts = line.split(" ", 1)
+        k = parts[0]
+        v = parts[1] if len(parts) > 1 else ""
+        if k == "worktree":
+            curr["worktree"] = os.path.realpath(v)
+        elif k == "HEAD":
+            curr["commit"] = v
+            curr["commit_short"] = v[:8]
+        elif k == "branch":
+            curr["branch"] = v.replace("refs/heads/", "")
+
+    if curr:
+        worktrees.append(curr)
+
+    # Exclude primary main repo worktree
+    filtered = [w for w in worktrees if w.get("worktree") != main_canonical]
+
+    for w in filtered:
+        commit = w.get("commit", "")
+        msg = get_git_output(["git", "-C", w["worktree"], "log", "-1", "--format=%s", commit])
+        w["commit_msg"] = msg
+
+    return filtered
+
+
+def get_commit_difference(worktree: str, saved_commit: str, current_commit: str) -> str:
+    if not saved_commit:
+        return "-"
+    if saved_commit == current_commit:
+        return "synced"
+    try:
+        count = subprocess.check_output(
+            ["git", "-C", worktree, "rev-list", "--count", f"{saved_commit}..{current_commit}"],
+            text=True,
+            stderr=subprocess.DEVNULL,
+        ).strip()
+        return f"+{count} commits" if count != "0" else "synced"
+    except Exception:
+        return "diff"
+
+
+# ==============================================================================
+# Environment & String Expansion
+# ==============================================================================
+def expand_template(template: str, env: Dict[str, str]) -> str:
+    """Expands ${VAR:-default}, ${VAR}, and $VAR against env dictionary."""
+
+    def replace_braced(match: re.Match) -> str:
+        var_name = match.group(1)
+        has_default = match.group(2) is not None
+        default_val = match.group(3) if has_default else ""
+        val = env.get(var_name, "")
+        if not val:
+            return default_val if has_default else ""
+        return val
+
+    # Expand ${VAR:-default} or ${VAR}
+    s = re.sub(r"\$\{([A-Za-z0-9_]+)(:-([^}]*))?\}", replace_braced, template)
+
+    # Expand remaining $VAR using os.path.expandvars with current env
+    old_environ = os.environ.copy()
+    try:
+        os.environ.update(env)
+        s = os.path.expandvars(s)
+    finally:
+        os.environ.clear()
+        os.environ.update(old_environ)
+
+    return s
+
+
+# ==============================================================================
+# Configuration Management
+# ==============================================================================
+def find_config_file(
+    main_repo: str,
+    worktree: Optional[str] = None,
+    custom_path: Optional[str] = None,
+) -> Optional[str]:
+    candidates: List[str] = []
+    if custom_path:
+        candidates.append(os.path.abspath(custom_path))
+    if worktree:
+        candidates.append(os.path.join(worktree, ".cycle-deploy.json"))
+        candidates.append(os.path.join(worktree, ".cycle-deploy.sh"))
+    if main_repo:
+        candidates.append(os.path.join(main_repo, ".cycle-deploy.json"))
+        candidates.append(os.path.join(main_repo, ".cycle-deploy.sh"))
+
+    for c in candidates:
+        if os.path.isfile(c):
+            return c
+    return None
+
+
+class Config:
+
+    def __init__(self, raw: Dict[str, Any], config_path: str, main_repo: str) -> None:
+        self.config_path = config_path
+        self.main_repo = main_repo
+        self.name: str = raw.get("name", os.path.basename(main_repo) if main_repo else "project")
+        self.raw_env: Dict[str, str] = (
+            raw.get("env", {}) if isinstance(raw.get("env"), dict) else {}
+        )
+        self.sync: List[Dict[str, str]] = []
+        self._parse_sync(raw.get("sync", []))
+        self.steps: List[Dict[str, Any]] = self._parse_steps(raw.get("steps", []))
+        self.post_deploy: List[Dict[str, Any]] = self._parse_steps(raw.get("post_deploy", []))
+        self.manual_test: Dict[str, Any] = self._parse_manual_test(raw.get("manual_test", {}))
+        self.test_plan: Dict[str, Any] = self._parse_test_plan(raw.get("test_plan"))
+        self.state_file: str = raw.get("state_file", "")
+
+    def _parse_sync(self, raw_sync: Any) -> None:
+        if isinstance(raw_sync, list):
+            for item in raw_sync:
+                if isinstance(item, str):
+                    self.sync.append({"src": item, "dest": item})
+                elif isinstance(item, dict):
+                    src = item.get("src") or item.get("from") or ""
+                    dest = item.get("dest") or item.get("to") or src
+                    if src:
+                        self.sync.append({"src": src, "dest": dest})
+
+    @staticmethod
+    def _parse_steps(raw_steps: Any) -> List[Dict[str, Any]]:
+        steps: List[Dict[str, Any]] = []
+        if isinstance(raw_steps, list):
+            for s in raw_steps:
+                if isinstance(s, dict) and "command" in s:
+                    steps.append(
+                        {
+                            "name": s.get("name", s["command"]),
+                            "command": s["command"],
+                            "optional": bool(s.get("optional", False)),
+                            "condition": s.get("condition", ""),
+                        }
+                    )
+                elif isinstance(s, str):
+                    steps.append(
+                        {
+                            "name": s,
+                            "command": s,
+                            "optional": False,
+                            "condition": "",
+                        }
+                    )
+        return steps
+
+    @staticmethod
+    def _parse_manual_test(raw_mt: Any) -> Dict[str, Any]:
+        if isinstance(raw_mt, dict):
+            return {
+                "enabled": bool(raw_mt.get("enabled", True)),
+                "title": raw_mt.get("title", "Manual Testing Phase"),
+                "info": raw_mt.get("info", []) if isinstance(raw_mt.get("info"), list) else [],
+                "instructions": (
+                    raw_mt.get("instructions", [])
+                    if isinstance(raw_mt.get("instructions"), list)
+                    else []
+                ),
+            }
+        return {
+            "enabled": True,
+            "title": "Manual Testing Phase",
+            "info": [],
+            "instructions": [],
+        }
+
+    @staticmethod
+    def _parse_test_plan(raw_tp: Any) -> Dict[str, Any]:
+        default_files = [
+            "PR_MESSAGE.md",
+            "TEST_PLAN.md",
+            "TESTING.md",
+            "docs/TEST_PLAN.md",
+            "docs/TESTING.md",
+            "docs/test_plan.md",
+        ]
+        if isinstance(raw_tp, dict):
+            files = raw_tp.get("files")
+            if isinstance(files, str):
+                files_list = [files]
+            elif isinstance(files, list):
+                files_list = [str(f) for f in files if f]
+            else:
+                files_list = default_files
+            section = raw_tp.get("section")
+            return {
+                "files": files_list,
+                "section": str(section).strip() if section else "",
+            }
+        elif isinstance(raw_tp, list):
+            return {
+                "files": [str(f) for f in raw_tp if f],
+                "section": "",
+            }
+        elif isinstance(raw_tp, str) and raw_tp.strip():
+            return {
+                "files": [raw_tp.strip()],
+                "section": "",
+            }
+        return {
+            "files": default_files,
+            "section": "",
+        }
+
+    def build_env(self, base_env: Optional[Dict[str, str]] = None) -> Dict[str, str]:
+        env = dict(os.environ)
+        if base_env:
+            env.update(base_env)
+
+        for k, v in self.raw_env.items():
+            env[k] = expand_template(str(v), env)
+        return env
+
+
+def load_config(config_path: str, main_repo: str) -> Config:
+    if not os.path.isfile(config_path):
+        sys.stderr.write(f"❌ Error: Config file not found: {config_path}\n")
+        sys.exit(1)
+
+    if config_path.endswith(".sh"):
+        return Config(
+            {
+                "name": os.path.basename(main_repo) if main_repo else "project",
+                "env": {},
+                "sync": [],
+                "steps": [],
+                "post_deploy": [],
+                "manual_test": {
+                    "enabled": True,
+                    "title": "Manual Testing Phase",
+                    "info": [],
+                    "instructions": [],
+                },
+                "test_plan": {
+                    "files": [
+                        "PR_MESSAGE.md",
+                        "TEST_PLAN.md",
+                        "TESTING.md",
+                        "docs/TEST_PLAN.md",
+                        "docs/TESTING.md",
+                        "docs/test_plan.md",
+                    ],
+                    "section": "",
+                },
+                "state_file": "",
+            },
+            config_path,
+            main_repo,
+        )
+
+    try:
+        with open(config_path, "r", encoding="utf-8") as f:
+            raw = json.load(f)
+    except Exception as e:
+        sys.stderr.write(f"❌ Error: Failed to parse configuration JSON '{config_path}': {e}\n")
+        sys.exit(1)
+
+    if not isinstance(raw, dict):
+        sys.stderr.write(f"❌ Error: Config file '{config_path}' root must be a JSON object.\n")
+        sys.exit(1)
+
+    return Config(raw, config_path, main_repo)
+
+
+def extract_branch_test_plan(
+    worktree: str, test_plan_config: Dict[str, Any]
+) -> Optional[Tuple[str, str]]:
+    """Extract a branch-specific testing plan from candidate files in the worktree.
+
+    Returns (relative_file_path, plan_content) or None.
+    Uses purely Python standard library operations (zero subprocesses).
+    """
+    candidate_files = test_plan_config.get("files") or [
+        "PR_MESSAGE.md",
+        "TEST_PLAN.md",
+        "TESTING.md",
+        "docs/TEST_PLAN.md",
+        "docs/TESTING.md",
+        "docs/test_plan.md",
+    ]
+    target_section = test_plan_config.get("section", "").strip()
+
+    default_heading_patterns = [
+        re.compile(
+            r"^(#{1,6})\s+(?:(?:\d+\.|\*|-)\s+)?(testing\s*plan|test\s*plan)\b",
+            re.IGNORECASE,
+        ),
+        re.compile(
+            r"^(#{1,6})\s+(?:(?:\d+\.|\*|-)\s+)?(manual\s*verif\w*)\b",
+            re.IGNORECASE,
+        ),
+        re.compile(
+            r"^(#{1,6})\s+(?:(?:\d+\.|\*|-)\s+)?(verif\w*|testing)\b",
+            re.IGNORECASE,
+        ),
+    ]
+
+    custom_pattern = None
+    if target_section:
+        escaped_section = re.escape(target_section)
+        custom_pattern = re.compile(
+            rf"^(#{{1,6}})\s+(?:(?:\d+\.|\*|-)\s+)?.*{escaped_section}.*",
+            re.IGNORECASE,
+        )
+
+    for rel_path in candidate_files:
+        full_path = os.path.join(worktree, rel_path)
+        if not os.path.isfile(full_path):
+            continue
+
+        try:
+            with open(full_path, "r", encoding="utf-8", errors="replace") as f:
+                content = f.read()
+        except Exception:
+            continue
+
+        lines = content.splitlines()
+
+        def find_section(pattern: re.Pattern) -> Optional[str]:
+            for idx, line in enumerate(lines):
+                m = pattern.match(line)
+                if m:
+                    heading_level = len(m.group(1))
+                    collected: List[str] = []
+                    for next_line in lines[idx + 1 :]:
+                        m_next = re.match(r"^(#{1,6})\s+", next_line)
+                        if m_next and len(m_next.group(1)) <= heading_level:
+                            break
+                        collected.append(next_line)
+                    res = "\n".join(collected).strip()
+                    if res:
+                        return res
+            return None
+
+        # 1. If custom section was requested, check it first
+        if custom_pattern:
+            plan = find_section(custom_pattern)
+            if plan:
+                return (rel_path, plan)
+
+        # 2. Check default heading patterns
+        for pat in default_heading_patterns:
+            plan = find_section(pat)
+            if plan:
+                return (rel_path, plan)
+
+        # 3. If file is specifically a dedicated test plan document, use full content
+        base_lower = os.path.basename(rel_path).lower()
+        if base_lower in (
+            "test_plan.md",
+            "testplan.md",
+            "testing.md",
+            "test-plan.md",
+            "tests.md",
+        ):
+            cleaned = content.strip()
+            if cleaned:
+                return (rel_path, cleaned)
+
+    return None
+
+
+# ==============================================================================
+# State File Management
+# ==============================================================================
+def resolve_state_file_path(
+    main_repo: str,
+    git_common_dir: Optional[str],
+    cfg_state_file: Optional[str],
+) -> str:
+    if cfg_state_file:
+        if os.path.isabs(cfg_state_file):
+            return cfg_state_file
+        return os.path.abspath(os.path.join(main_repo, cfg_state_file))
+
+    if git_common_dir and os.path.isdir(git_common_dir):
+        return os.path.join(git_common_dir, "cycle-deploy-state.json")
+
+    return os.path.join(main_repo, ".cycle-deploy-state.json")
+
+
+def get_iso_timestamp() -> str:
+    return (
+        datetime.datetime.now(datetime.timezone.utc)
+        .isoformat(timespec="seconds")
+        .replace("+00:00", "Z")
+    )
+
+
+class StateManager:
+
+    def __init__(self, state_file_path: str, repo_name: str) -> None:
+        self.state_file_path = state_file_path
+        self.repo_name = repo_name
+
+    def load(self) -> Dict[str, Any]:
+        if not os.path.isfile(self.state_file_path):
+            return {"repo": self.repo_name, "last_updated": "", "branches": {}}
+        try:
+            with open(self.state_file_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                if not isinstance(data, dict):
+                    return {"repo": self.repo_name, "last_updated": "", "branches": {}}
+                if "branches" not in data or not isinstance(data["branches"], dict):
+                    data["branches"] = {}
+                return data
+        except Exception:
+            return {"repo": self.repo_name, "last_updated": "", "branches": {}}
+
+    def save(self, data: Dict[str, Any]) -> None:
+        dir_name = os.path.dirname(os.path.abspath(self.state_file_path))
+        os.makedirs(dir_name, exist_ok=True)
+        with tempfile.NamedTemporaryFile("w", dir=dir_name, delete=False, encoding="utf-8") as tf:
+            json.dump(data, tf, indent=2)
+            tf.write("\n")
+            temp_name = tf.name
+        os.replace(temp_name, self.state_file_path)
+
+    def get_branch_state(self, branch: str) -> Dict[str, Any]:
+        data = self.load()
+        return data.get("branches", {}).get(branch, {})
+
+    def update_branch(
+        self,
+        branch: str,
+        status: str,
+        commit: str,
+        commit_short: str,
+        commit_msg: str,
+        worktree: str,
+        duration_seconds: int = 0,
+        failed_step: Optional[str] = None,
+        exit_code: int = 0,
+        steps: Optional[List[Dict[str, Any]]] = None,
+    ) -> None:
+        data = self.load()
+        if self.repo_name and not data.get("repo"):
+            data["repo"] = self.repo_name
+        data["last_updated"] = get_iso_timestamp()
+
+        record = {
+            "status": status,
+            "commit": commit,
+            "commit_short": commit_short,
+            "commit_msg": commit_msg,
+            "timestamp": get_iso_timestamp(),
+            "worktree": worktree,
+            "duration_seconds": int(duration_seconds),
+            "failed_step": failed_step if failed_step else None,
+            "exit_code": int(exit_code),
+            "steps": steps or [],
+        }
+        data["branches"][branch] = record
+        self.save(data)
+
+    def clear(self) -> None:
+        data = {
+            "repo": self.repo_name,
+            "last_updated": get_iso_timestamp(),
+            "branches": {},
+        }
+        self.save(data)
+
+
+# ==============================================================================
+# Overview Status Display
+# ==============================================================================
+ANSI_REGEX = re.compile(r"\x1b\[[0-9;]*m")
+
+
+def visible_len(s: str) -> int:
+    return len(ANSI_REGEX.sub("", s))
+
+
+def ansi_ljust(s: str, width: int) -> str:
+    vlen = visible_len(s)
+    pad = max(0, width - vlen)
+    return s + (" " * pad)
+
+
+def print_status_table(
+    state_manager: StateManager,
+    main_repo: str,
+    worktrees: List[Dict[str, Any]],
+    test_plan_config: Optional[Dict[str, Any]] = None,
+) -> None:
+    state_data = state_manager.load()
+    branches_state = state_data.get("branches", {})
+
+    status_map = {
+        "passed": f"{Colors.GREEN}✓ PASSED{Colors.RESET}",
+        "deployed": f"{Colors.GREEN}✓ PASSED{Colors.RESET}",
+        "failed": f"{Colors.RED}❌ FAILED{Colors.RESET}",
+        "skipped": f"{Colors.YELLOW}⚠ SKIPPED{Colors.RESET}",
+        "in_progress": f"{Colors.CYAN}⏳ RUNNING{Colors.RESET}",
+        "pending": f"{Colors.DIM}⚪ PENDING{Colors.RESET}",
+    }
+
+    print(
+        f"\n{Colors.BOLD}{Colors.CYAN}========================================================================================================{Colors.RESET}"
+    )
+    print(
+        f"{Colors.BOLD}                                      DEPLOYMENT STATUS OVERVIEW                                        {Colors.RESET}"
+    )
+    print(
+        f"{Colors.BOLD}{Colors.CYAN}========================================================================================================{Colors.RESET}"
+    )
+    print(f"{Colors.DIM}Repository:  {main_repo}{Colors.RESET}")
+    print(f"{Colors.DIM}State File:  {state_manager.state_file_path}{Colors.RESET}")
+    if state_data.get("last_updated"):
+        print(f"{Colors.DIM}Last Update: {state_data['last_updated']}{Colors.RESET}")
+    print("")
+
+    h_branch, h_status, h_commit, h_sync, h_time, h_detail = (
+        "BRANCH",
+        "STATUS",
+        "COMMIT",
+        "SYNC",
+        "LAST RUN",
+        "DETAIL",
+    )
+    print(
+        f"  {Colors.BOLD}{h_branch:<44} {h_status:<14} {h_commit:<10} {h_sync:<13} {h_time:<19} {h_detail}{Colors.RESET}"
+    )
+    print("  " + "-" * 102)
+
+    t_passed = 0
+    t_failed = 0
+    t_skipped = 0
+    t_pending = 0
+
+    for w in worktrees:
+        branch = w.get("branch", "")
+        current_commit = w.get("commit", "")
+        current_short = w.get("commit_short", "")
+        b_info = branches_state.get(branch, None)
+
+        if b_info:
+            raw_status = b_info.get("status", "pending")
+            saved_commit = b_info.get("commit", "")
+            raw_time = b_info.get("timestamp", "-")
+            time_str = raw_time.replace("T", " ")[:16] if "T" in raw_time else raw_time[:16]
+            failed_step = b_info.get("failed_step", "")
+            detail = (
+                failed_step
+                if failed_step
+                else (
+                    f"{b_info.get('duration_seconds', 0)}s"
+                    if raw_status in ("passed", "deployed")
+                    else ""
+                )
+            )
+
+            if raw_status in ("passed", "deployed"):
+                t_passed += 1
+            elif raw_status == "failed":
+                t_failed += 1
+            elif raw_status == "skipped":
+                t_skipped += 1
+            else:
+                t_pending += 1
+
+            disp_status = status_map.get(raw_status, f"{Colors.DIM}{raw_status}{Colors.RESET}")
+            sync_stat = get_commit_difference(w["worktree"], saved_commit, current_commit)
+            if sync_stat == "synced":
+                disp_sync = f"{Colors.GREEN}synced{Colors.RESET}"
+            elif sync_stat.startswith("+"):
+                disp_sync = f"{Colors.YELLOW}{sync_stat}{Colors.RESET}"
+            else:
+                disp_sync = sync_stat
+        else:
+            t_pending += 1
+            disp_status = status_map["pending"]
+            disp_sync = "-"
+            time_str = "-"
+            detail = ""
+
+        if not detail and test_plan_config:
+            wt_path = w.get("worktree", "")
+            if wt_path:
+                tp = extract_branch_test_plan(wt_path, test_plan_config)
+                if tp:
+                    detail = f"{Colors.DIM}plan: {tp[0]}{Colors.RESET}"
+
+        disp_branch = branch if len(branch) <= 44 else branch[:41] + "..."
+        col_branch = ansi_ljust(disp_branch, 44)
+        col_status = ansi_ljust(disp_status, 14)
+        col_commit = ansi_ljust(current_short, 10)
+        col_sync = ansi_ljust(disp_sync, 13)
+        col_time = ansi_ljust(time_str, 19)
+
+        print(f"  {col_branch} {col_status} {col_commit} {col_sync} {col_time} {detail}")
+
+    print("  " + "-" * 102)
+    print(
+        f"  {Colors.BOLD}Total Worktrees: {len(worktrees)}{Colors.RESET} | "
+        f"{Colors.GREEN}Passed: {t_passed}{Colors.RESET} | "
+        f"{Colors.RED}Failed: {t_failed}{Colors.RESET} | "
+        f"{Colors.YELLOW}Skipped: {t_skipped}{Colors.RESET} | "
+        f"{Colors.DIM}Pending: {t_pending}{Colors.RESET}\n"
+    )
+
+
+# ==============================================================================
+# Helper for Example Configuration Template
+# ==============================================================================
+EXAMPLE_CONFIG_TEMPLATE = """{
+  "name": "my-project",
+  "env": {
+    "DEPLOY_ENV": "${ENV:-dev}",
+    "TEST_CMD": "make test"
+  },
+  "sync": [
+    ".env",
+    "terraform/"
+  ],
+  "steps": [
+    { "name": "Lint", "command": "make lint" },
+    { "name": "Test", "command": "eval \\"$TEST_CMD\\"" },
+    { "name": "Deploy", "command": "make deploy ENV=\\"$DEPLOY_ENV\\"" }
+  ],
+  "test_plan": {
+    "files": ["PR_MESSAGE.md", "TEST_PLAN.md", "TESTING.md"],
+    "section": "Testing Plan"
+  },
+  "manual_test": {
+    "enabled": true,
+    "instructions": [
+      "1. Open staging URL",
+      "2. Verify deployment"
+    ]
+  }
+}"""
+
+
+# ==============================================================================
+# Execution Engine & Orchestrator
+# ==============================================================================
+class CycleDeployer:
+
+    def __init__(self, args: argparse.Namespace) -> None:
+        self.args = args
+        self.main_repo = get_main_repo()
+        if not self.main_repo:
+            sys.stderr.write(
+                f"{Colors.RED}❌ Error: Not inside a git repository or worktree.{Colors.RESET}\n"
+            )
+            sys.exit(1)
+
+        self.git_common_dir = get_git_common_dir(self.main_repo)
+        self.worktrees = list_worktrees(self.main_repo)
+
+        # Initial config probe
+        self.config_path = find_config_file(self.main_repo, custom_path=self.args.config)
+        cfg_state_override = None
+        self.project_name = os.path.basename(self.main_repo)
+
+        if self.config_path:
+            try:
+                base_cfg = load_config(self.config_path, self.main_repo)
+                cfg_state_override = base_cfg.state_file
+                self.project_name = base_cfg.name
+            except Exception:
+                pass
+
+        self.state_file_path = resolve_state_file_path(
+            self.main_repo, self.git_common_dir, cfg_state_override
+        )
+        self.state_manager = StateManager(self.state_file_path, self.project_name)
+
+        # Summary tracking
+        self.deployed_branches: List[str] = []
+        self.skipped_branches: List[str] = []
+        self.failed_branches: List[str] = []
+
+        # Current active branch info for signal trap
+        self.current_branch: Optional[str] = None
+        self.current_worktree: Optional[str] = None
+        self.current_commit: str = ""
+        self.current_short: str = ""
+        self.current_msg: str = ""
+        self.current_start_time: float = 0.0
+        self.current_steps_recorded: List[Dict[str, Any]] = []
+
+        signal.signal(signal.SIGINT, self._handle_interrupt)
+        signal.signal(signal.SIGTERM, self._handle_interrupt)
+
+    def _handle_interrupt(self, signum: int, frame: Any) -> None:
+        if self.current_branch:
+            dur = int(time.time() - self.current_start_time)
+            self.state_manager.update_branch(
+                branch=self.current_branch,
+                status="skipped",
+                commit=self.current_commit,
+                commit_short=self.current_short,
+                commit_msg=self.current_msg,
+                worktree=self.current_worktree or "",
+                duration_seconds=dur,
+                failed_step="Interrupted by user",
+                exit_code=130,
+                steps=self.current_steps_recorded,
+            )
+            self.skipped_branches.append(self.current_branch)
+
+        self.print_summary()
+        sys.exit(130)
+
+    def print_summary(self) -> None:
+        dep_str = " ".join(self.deployed_branches) if self.deployed_branches else "None"
+        skip_str = " ".join(self.skipped_branches) if self.skipped_branches else "None"
+        fail_str = " ".join(self.failed_branches) if self.failed_branches else "None"
+
+        print(
+            f"\n{Colors.BOLD}================================================================{Colors.RESET}"
+        )
+        print(
+            f"{Colors.BOLD}                      DEPLOYMENT SUMMARY                        {Colors.RESET}"
+        )
+        print(
+            f"{Colors.BOLD}================================================================{Colors.RESET}"
+        )
+        print(
+            f"{Colors.GREEN}✓ Deployed ({len(self.deployed_branches)}):{Colors.RESET} {dep_str}"
+        )
+        print(
+            f"{Colors.YELLOW}⚠ Skipped  ({len(self.skipped_branches)}):{Colors.RESET} {skip_str}"
+        )
+        print(f"{Colors.RED}✗ Failed   ({len(self.failed_branches)}):{Colors.RESET} {fail_str}")
+        print(
+            f"{Colors.BOLD}================================================================{Colors.RESET}"
+        )
+        print(f"{Colors.DIM}State file: {self.state_file_path}{Colors.RESET}\n")
+
+    def run(self) -> int:
+        # Quick action flags
+        if self.args.state_file:
+            print(self.state_file_path)
+            return 0
+
+        if self.args.json:
+            if os.path.isfile(self.state_file_path):
+                with open(self.state_file_path, "r", encoding="utf-8") as f:
+                    sys.stdout.write(f.read())
+            else:
+                print(
+                    json.dumps(
+                        {"repo": self.project_name, "last_updated": "", "branches": {}}, indent=2
+                    )
+                )
+            return 0
+
+        if self.args.clear_state:
+            self.state_manager.clear()
+            print(
+                f"{Colors.GREEN}✓ Cleared deployment state file:{Colors.RESET} {self.state_file_path}"
+            )
+            return 0
+
+        if self.args.status:
+            test_plan_cfg = None
+            if self.config_path:
+                try:
+                    cfg = load_config(self.config_path, self.main_repo)
+                    test_plan_cfg = cfg.test_plan
+                except Exception:
+                    pass
+            print_status_table(
+                self.state_manager,
+                self.main_repo,
+                self.worktrees,
+                test_plan_config=test_plan_cfg,
+            )
+            return 0
+
+        # If no config is found for deployment execution, show clean error message and template
+        if not self.config_path:
+            print(
+                f"\n{Colors.RED}❌ Error: No cycle-deploy configuration found in {self.main_repo}.{Colors.RESET}"
+            )
+            print(
+                f"Please create a {Colors.CYAN}.cycle-deploy.json{Colors.RESET} configuration file in the root of your repository."
+            )
+            print(f"\n{Colors.BOLD}Example .cycle-deploy.json:{Colors.RESET}")
+            print(EXAMPLE_CONFIG_TEMPLATE)
+            print("")
+            return 1
+
+        if not self.worktrees:
+            print(
+                f"{Colors.YELLOW}No non-main worktrees found in {self.main_repo}.{Colors.RESET}"
+            )
+            return 0
+
+        # Filter worktrees
+        targets: List[Dict[str, Any]] = []
+        for w in self.worktrees:
+            b_name = w.get("branch", "")
+            if self.args.branch and b_name != self.args.branch:
+                continue
+
+            if self.args.only_failed:
+                b_state = self.state_manager.get_branch_state(b_name)
+                saved_st = b_state.get("status", "")
+                if saved_st in ("passed", "deployed"):
+                    continue
+
+            targets.append(w)
+
+        if not targets:
+            if self.args.branch:
+                print(
+                    f"{Colors.RED}Branch '{self.args.branch}' not found among non-main worktrees.{Colors.RESET}"
+                )
+                return 1
+            if self.args.only_failed:
+                print(
+                    f"{Colors.GREEN}All non-main branches have passed deployment! Nothing to do.{Colors.RESET}"
+                )
+                return 0
+            print(f"{Colors.YELLOW}No matching worktrees to cycle through.{Colors.RESET}")
+            return 0
+
+        print(
+            f"{Colors.CYAN}Found {len(targets)} worktrees in {self.main_repo} matching criteria.{Colors.RESET}"
+        )
+
+        total_targets = len(targets)
+        for idx, w in enumerate(targets, 1):
+            res = self.process_worktree(w, idx, total_targets)
+            if res == "quit":
+                break
+
+        self.print_summary()
+        return 0
+
+    def process_worktree(self, w: Dict[str, Any], idx: int, total: int) -> str:
+        branch = w.get("branch", "")
+        worktree = w.get("worktree", "")
+        commit = w.get("commit", "")
+        commit_short = w.get("commit_short", "")
+        commit_msg = w.get("commit_msg", "")
+
+        if not os.path.isdir(worktree):
+            return "continue"
+
+        self.current_branch = branch
+        self.current_worktree = worktree
+        self.current_commit = commit
+        self.current_short = commit_short
+        self.current_msg = commit_msg
+        self.current_start_time = time.time()
+        self.current_steps_recorded = []
+
+        # Find and load config for this worktree
+        wt_config_path = find_config_file(
+            self.main_repo, worktree=worktree, custom_path=self.args.config
+        )
+        if not wt_config_path:
+            wt_config_path = self.config_path or ""
+        config = load_config(wt_config_path, self.main_repo)
+
+        # Check previous deployment state
+        b_state = self.state_manager.get_branch_state(branch)
+        prev_status = b_state.get("status", "")
+        prev_commit = b_state.get("commit", "")
+        prev_time = b_state.get("timestamp", "")
+        prev_step = b_state.get("failed_step", "")
+        prev_exit = b_state.get("exit_code", 0)
+
+        # Clear screen on TTY
+        if sys.stdout.isatty():
+            os.system("clear")
+
+        print(
+            f"{Colors.BOLD}{Colors.MAGENTA}================================================================{Colors.RESET}"
+        )
+        print(f"{Colors.BOLD}{Colors.MAGENTA} [{idx}/{total}] Branch: {branch} {Colors.RESET}")
+        print(f"{Colors.DIM} Worktree: {worktree}{Colors.RESET}")
+        print(f"{Colors.DIM} Commit:   {commit_short} - {commit_msg}{Colors.RESET}")
+
+        is_unchanged_passed = False
+        if prev_status in ("passed", "deployed"):
+            if prev_commit == commit:
+                print(
+                    f"{Colors.GREEN} Last State: ✓ PASSED on {prev_time} ({commit_short} - UNCHANGED){Colors.RESET}"
+                )
+                is_unchanged_passed = True
+            else:
+                ahead = get_git_output(
+                    ["git", "-C", worktree, "rev-list", "--count", f"{prev_commit}..{commit}"]
+                )
+                ahead_str = f"{ahead} ahead" if ahead else "new"
+                print(
+                    f"{Colors.YELLOW} Last State: ✓ PASSED on {prev_time} (NEW COMMITS: {ahead_str}){Colors.RESET}"
+                )
+        elif prev_status == "failed":
+            print(
+                f"{Colors.RED} Last State: ❌ FAILED on step '{prev_step}' (exit code {prev_exit}) at {prev_time}{Colors.RESET}"
+            )
+        elif prev_status == "skipped":
+            print(f"{Colors.YELLOW} Last State: ⚠ SKIPPED at {prev_time}{Colors.RESET}")
+        else:
+            print(f"{Colors.DIM} Last State: [No previous deployment recorded]{Colors.RESET}")
+
+        print(
+            f"{Colors.BOLD}{Colors.MAGENTA}================================================================{Colors.RESET}"
+        )
+
+        # Dry-run handling
+        if self.args.dry_run:
+            self.show_dry_run(config, branch, worktree)
+            return "continue"
+
+        # Check --skip-passed
+        if self.args.skip_passed and is_unchanged_passed:
+            print(
+                f"{Colors.CYAN}Auto-skipping branch '{branch}' (already passed at commit {commit_short})...{Colors.RESET}"
+            )
+            self.skipped_branches.append(branch)
+            return "continue"
+
+        # User prompt
+        if is_unchanged_passed:
+            print(
+                f"\n{Colors.YELLOW}Branch was already successfully deployed at current commit ({commit_short}).{Colors.RESET}"
+            )
+            print("  [y]           : Redeploy this branch")
+            print("  [n] / [Enter] : Skip to next branch (default)")
+            print("  [s]           : Mark as skipped")
+            print("  [q]           : Quit script")
+            try:
+                choice = input(f"Redeploy branch '{branch}'? [y/N/s/q]: ").strip()
+            except EOFError:
+                choice = "n"
+
+            if choice.lower().startswith("y"):
+                pass
+            elif choice.lower().startswith("q"):
+                print(f"{Colors.RED}Stopping cycle deploy on user request.{Colors.RESET}")
+                return "quit"
+            else:
+                print(f"{Colors.YELLOW}Skipping branch '{branch}'...{Colors.RESET}")
+                self.skipped_branches.append(branch)
+                self.state_manager.update_branch(
+                    branch=branch,
+                    status="skipped",
+                    commit=commit,
+                    commit_short=commit_short,
+                    commit_msg=commit_msg,
+                    worktree=worktree,
+                    duration_seconds=0,
+                )
+                return "continue"
+        else:
+            print(f"\n{Colors.YELLOW}Do you want to deploy branch '{branch}'?{Colors.RESET}")
+            print("  [y] / [Enter] : Yes, proceed with deployment (default)")
+            print("  [n] / [s]     : No, skip to next branch")
+            print("  [q]           : Quit script")
+            try:
+                choice = input("Deploy this branch? [Y/n/s/q]: ").strip()
+            except EOFError:
+                choice = "y"
+
+            if choice.lower().startswith(("n", "s")):
+                print(f"{Colors.YELLOW}Skipping branch '{branch}'...{Colors.RESET}")
+                self.skipped_branches.append(branch)
+                self.state_manager.update_branch(
+                    branch=branch,
+                    status="skipped",
+                    commit=commit,
+                    commit_short=commit_short,
+                    commit_msg=commit_msg,
+                    worktree=worktree,
+                    duration_seconds=0,
+                )
+                return "continue"
+            elif choice.lower().startswith("q"):
+                print(f"{Colors.RED}Stopping cycle deploy on user request.{Colors.RESET}")
+                return "quit"
+
+        # Mark in_progress
+        self.state_manager.update_branch(
+            branch=branch,
+            status="in_progress",
+            commit=commit,
+            commit_short=commit_short,
+            commit_msg=commit_msg,
+            worktree=worktree,
+            duration_seconds=0,
+        )
+
+        # Deployment loop (supports redeploy)
+        while True:
+            # Sync files
+            self.sync_files(config, worktree)
+
+            # Build environment
+            env = config.build_env()
+
+            # Execute steps
+            all_steps = config.steps + config.post_deploy
+            step_failed = False
+            failed_step_name = ""
+            failed_step_exit = 1
+
+            for s in all_steps:
+                st_name = s["name"]
+                st_cmd = s["command"]
+                st_opt = s.get("optional", False)
+                st_cond = s.get("condition", "")
+
+                if st_cond:
+                    cond_eval = expand_template(st_cond, env)
+                    cond_res = subprocess.run(
+                        cond_eval,
+                        shell=True,
+                        cwd=worktree,
+                        env=env,
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL,
+                    )
+                    if cond_res.returncode != 0:
+                        print(
+                            f"{Colors.DIM}---> Skipping step '{st_name}' (condition not met).{Colors.RESET}"
+                        )
+                        continue
+
+                cmd_eval = expand_template(st_cmd, env)
+                step_res, dur, code = self.run_step(
+                    st_name, cmd_eval, st_opt, branch, worktree, env
+                )
+
+                if step_res == "retry":
+                    continue
+                elif step_res == "skip":
+                    step_failed = True
+                    failed_step_name = st_name
+                    failed_step_exit = code
+                    break
+                elif step_res == "quit":
+                    dur_total = int(time.time() - self.current_start_time)
+                    self.state_manager.update_branch(
+                        branch=branch,
+                        status="failed",
+                        commit=commit,
+                        commit_short=commit_short,
+                        commit_msg=commit_msg,
+                        worktree=worktree,
+                        duration_seconds=dur_total,
+                        failed_step=st_name,
+                        exit_code=code,
+                        steps=self.current_steps_recorded,
+                    )
+                    self.failed_branches.append(branch)
+                    return "quit"
+
+            if step_failed:
+                dur_total = int(time.time() - self.current_start_time)
+                self.state_manager.update_branch(
+                    branch=branch,
+                    status="failed",
+                    commit=commit,
+                    commit_short=commit_short,
+                    commit_msg=commit_msg,
+                    worktree=worktree,
+                    duration_seconds=dur_total,
+                    failed_step=failed_step_name,
+                    exit_code=failed_step_exit,
+                    steps=self.current_steps_recorded,
+                )
+                self.failed_branches.append(branch)
+                break
+
+            # Manual testing phase
+            mt = config.manual_test
+            dur_total = int(time.time() - self.current_start_time)
+
+            if not mt.get("enabled", True):
+                print(
+                    f"\n{Colors.GREEN}✓ All deployment steps completed successfully for branch '{branch}'.{Colors.RESET}"
+                )
+                self.state_manager.update_branch(
+                    branch=branch,
+                    status="passed",
+                    commit=commit,
+                    commit_short=commit_short,
+                    commit_msg=commit_msg,
+                    worktree=worktree,
+                    duration_seconds=dur_total,
+                    steps=self.current_steps_recorded,
+                )
+                self.deployed_branches.append(branch)
+                break
+
+            mt_title = mt.get("title", "Manual Testing Phase")
+            print(
+                f"\n{Colors.BOLD}{Colors.GREEN}================================================================{Colors.RESET}"
+            )
+            print(
+                f"{Colors.BOLD}{Colors.GREEN} 🎉 DEPLOYMENT READY: {branch} [{idx}/{total}]{Colors.RESET}"
+            )
+            for info_line in mt.get("info", []):
+                print(f"{Colors.GREEN} {expand_template(info_line, env)}{Colors.RESET}")
+            print(
+                f"{Colors.BOLD}{Colors.GREEN}================================================================{Colors.RESET}"
+            )
+
+            # Check for branch-specific test plan
+            plan_info = extract_branch_test_plan(worktree, config.test_plan)
+            if plan_info:
+                src_file, plan_content = plan_info
+                print(
+                    f"\n{Colors.BOLD}{Colors.CYAN}📋 Branch Testing Plan (from {src_file}):{Colors.RESET}"
+                )
+                print(
+                    f"{Colors.DIM}----------------------------------------------------------------{Colors.RESET}"
+                )
+                for line in plan_content.splitlines():
+                    print(f"  {line}")
+                print(
+                    f"{Colors.DIM}----------------------------------------------------------------{Colors.RESET}"
+                )
+
+            instrs = mt.get("instructions", [])
+            if instrs:
+                print(f"\n{Colors.YELLOW}👉 {mt_title}:{Colors.RESET}")
+                for instr in instrs:
+                    print(f"   {expand_template(instr, env)}")
+            elif not plan_info:
+                print(f"\n{Colors.YELLOW}👉 {mt_title}:{Colors.RESET}")
+                print("   Perform manual verification of changes.")
+
+            print("")
+            print(f"{Colors.BOLD}Next action:{Colors.RESET}")
+            print("  [Enter] / [c] : Done testing, continue to NEXT branch")
+            print("  [r]           : Redeploy this branch")
+            print("  [s]           : Mark as skipped and continue")
+            print("  [q]           : Finish and quit testing session")
+
+            try:
+                act = input("Select [Enter/r/s/q]: ").strip()
+            except EOFError:
+                act = "c"
+
+            if act.lower().startswith("r"):
+                print(f"{Colors.YELLOW}Redeploying branch '{branch}'...{Colors.RESET}")
+                self.current_steps_recorded = []
+                continue
+            elif act.lower().startswith("s"):
+                self.state_manager.update_branch(
+                    branch=branch,
+                    status="skipped",
+                    commit=commit,
+                    commit_short=commit_short,
+                    commit_msg=commit_msg,
+                    worktree=worktree,
+                    duration_seconds=dur_total,
+                    steps=self.current_steps_recorded,
+                )
+                self.skipped_branches.append(branch)
+                break
+            elif act.lower().startswith("q"):
+                self.state_manager.update_branch(
+                    branch=branch,
+                    status="passed",
+                    commit=commit,
+                    commit_short=commit_short,
+                    commit_msg=commit_msg,
+                    worktree=worktree,
+                    duration_seconds=dur_total,
+                    steps=self.current_steps_recorded,
+                )
+                self.deployed_branches.append(branch)
+                return "quit"
+            else:
+                self.state_manager.update_branch(
+                    branch=branch,
+                    status="passed",
+                    commit=commit,
+                    commit_short=commit_short,
+                    commit_msg=commit_msg,
+                    worktree=worktree,
+                    duration_seconds=dur_total,
+                    steps=self.current_steps_recorded,
+                )
+                self.deployed_branches.append(branch)
+                break
+
+        self.current_branch = None
+        return "continue"
+
+    def sync_files(self, config: Config, worktree: str) -> None:
+        if not config.sync:
+            return
+        print(f"{Colors.CYAN}---> Syncing files from {self.main_repo}...{Colors.RESET}")
+        for item in config.sync:
+            src = os.path.join(self.main_repo, item["src"])
+            dest = os.path.join(worktree, item["dest"])
+            if os.path.isdir(src):
+                os.makedirs(dest, exist_ok=True)
+                # Copy contents into dest
+                for root, dirs, files in os.walk(src):
+                    rel = os.path.relpath(root, src)
+                    target_dir = os.path.join(dest, rel) if rel != "." else dest
+                    os.makedirs(target_dir, exist_ok=True)
+                    for f in files:
+                        shutil.copy2(os.path.join(root, f), os.path.join(target_dir, f))
+            elif os.path.isfile(src):
+                os.makedirs(os.path.dirname(dest), exist_ok=True)
+                shutil.copy2(src, dest)
+
+    def run_step(
+        self,
+        name: str,
+        cmd: str,
+        optional: bool,
+        branch: str,
+        worktree: str,
+        env: Dict[str, str],
+    ) -> Tuple[str, int, int]:
+        while True:
+            print(f"\n{Colors.CYAN}---> [STEP] {name}...{Colors.RESET}")
+            t_start = time.time()
+            proc = subprocess.run(cmd, shell=True, cwd=worktree, env=env)
+            t_end = time.time()
+            dur = int(t_end - t_start)
+            exit_code = proc.returncode
+
+            if exit_code == 0:
+                print(f"{Colors.GREEN}✓ {name} passed ({dur}s).{Colors.RESET}")
+                self.current_steps_recorded.append(
+                    {
+                        "name": name,
+                        "status": "passed",
+                        "duration_seconds": dur,
+                        "exit_code": 0,
+                    }
+                )
+                return "ok", dur, 0
+
+            if optional:
+                print(
+                    f"{Colors.YELLOW}⚠ Step '{name}' failed (exit code {exit_code}) but is marked optional. Continuing...{Colors.RESET}"
+                )
+                self.current_steps_recorded.append(
+                    {
+                        "name": name,
+                        "status": "skipped",
+                        "duration_seconds": dur,
+                        "exit_code": exit_code,
+                    }
+                )
+                return "ok", dur, exit_code
+
+            print(
+                f"\n{Colors.RED}❌ FAILED (exit code {exit_code}): {name} on branch '{branch}'{Colors.RESET}"
+            )
+            print(f"{Colors.YELLOW}What would you like to do?{Colors.RESET}")
+            print("  [r] Retry this step (after investigating / fixing in another terminal)")
+            print("  [s] Skip this branch and proceed to next")
+            print("  [q] Quit script")
+
+            try:
+                choice = input("Select [r/s/q] (default: r): ").strip()
+            except EOFError:
+                choice = "r"
+
+            if choice.lower().startswith("s"):
+                print(f"{Colors.YELLOW}Skipping branch '{branch}'...{Colors.RESET}")
+                self.current_steps_recorded.append(
+                    {
+                        "name": name,
+                        "status": "failed",
+                        "duration_seconds": dur,
+                        "exit_code": exit_code,
+                    }
+                )
+                return "skip", dur, exit_code
+            elif choice.lower().startswith("q"):
+                print(f"{Colors.RED}Stopping cycle deploy.{Colors.RESET}")
+                self.current_steps_recorded.append(
+                    {
+                        "name": name,
+                        "status": "failed",
+                        "duration_seconds": dur,
+                        "exit_code": exit_code,
+                    }
+                )
+                return "quit", dur, exit_code
+            else:
+                print(f"{Colors.YELLOW}Retrying: {name}...{Colors.RESET}")
+
+    def show_dry_run(self, config: Config, branch: str, worktree: str) -> None:
+        print(f"\n{Colors.BOLD}{Colors.CYAN}[DRY-RUN PREVIEW]{Colors.RESET}")
+        print(f"{Colors.BOLD}Environment Variables:{Colors.RESET}")
+        for k, v in config.raw_env.items():
+            print(f"  export {k}={v}")
+
+        print(f"{Colors.BOLD}Files to Sync from {self.main_repo}:{Colors.RESET}")
+        for s in config.sync:
+            print(f"  {s['src']} -> {s['dest']}")
+
+        print(f"{Colors.BOLD}Steps to Execute:{Colors.RESET}")
+        all_steps = config.steps + config.post_deploy
+        for i, s in enumerate(all_steps, 1):
+            opt = " (optional)" if s.get("optional") else ""
+            cond = f" [if: {s['condition']}]" if s.get("condition") else ""
+            print(f"  {i}. {s['name']}{opt}{cond}: {s['command']}")
+
+        plan_info = extract_branch_test_plan(worktree, config.test_plan)
+        if plan_info:
+            src_file, plan_content = plan_info
+            print(
+                f"\n{Colors.BOLD}{Colors.CYAN}📋 Branch Testing Plan (from {src_file}):{Colors.RESET}"
+            )
+            print(
+                f"{Colors.DIM}----------------------------------------------------------------{Colors.RESET}"
+            )
+            for line in plan_content.splitlines():
+                print(f"  {line}")
+            print(
+                f"{Colors.DIM}----------------------------------------------------------------{Colors.RESET}"
+            )
+        else:
+            print(f"\n{Colors.DIM}(No branch-specific test plan found in worktree){Colors.RESET}")
+
+        mt = config.manual_test
+        if mt.get("enabled", True):
+            instrs = mt.get("instructions", [])
+            if instrs:
+                print("Manual Testing Instructions:")
+                for instr in instrs:
+                    print(f"  {instr}")
+        else:
+            print("Manual Testing: disabled (automatic pass)")
+
+        print(f"{Colors.GREEN}✓ Dry-run completed for {branch}.{Colors.RESET}\n")
+
+
+# ==============================================================================
+# Argument Parsing & Entrypoint
+# ==============================================================================
+def create_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="cycle-deploy-branches",
+        description="Repo-agnostic worktree cycle deployer with local state tracking.",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=f"""{Colors.BOLD}CONFIGURATION (.cycle-deploy.json):{Colors.RESET}
+  Place a {Colors.CYAN}.cycle-deploy.json{Colors.RESET} file in the root of your repository (or worktree):
+{EXAMPLE_CONFIG_TEMPLATE}
+""",
+    )
+    parser.usage = "cycle-deploy-branches [OPTIONS]"
+
+    parser.add_argument(
+        "-s",
+        "--status",
+        action="store_true",
+        help="Display deployment status overview of all worktrees and exit",
+    )
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Dump the raw JSON contents of the deployment state file and exit",
+    )
+    parser.add_argument(
+        "--state-file",
+        action="store_true",
+        help="Print the path to the deployment state file and exit",
+    )
+    parser.add_argument(
+        "--clear-state",
+        action="store_true",
+        help="Clear/reset saved deployment state for the repository and exit",
+    )
+    parser.add_argument(
+        "--only-failed",
+        action="store_true",
+        help="Only cycle through branches whose last deployment failed or is unrecorded",
+    )
+    parser.add_argument(
+        "--skip-passed",
+        action="store_true",
+        help="Automatically skip branches already marked as passed at the current commit",
+    )
+    parser.add_argument(
+        "-b",
+        "--branch",
+        metavar="<name>",
+        help="Deploy only the specified branch worktree",
+    )
+    parser.add_argument(
+        "-d",
+        "--dry-run",
+        action="store_true",
+        help="Preview environment, sync, and steps without executing commands",
+    )
+    parser.add_argument(
+        "-c",
+        "--config",
+        metavar="<file>",
+        help="Specify a custom path to .cycle-deploy.json or .cycle-deploy.sh",
+    )
+
+    return parser
+
+
+def main() -> int:
+    parser = create_parser()
+    args = parser.parse_args()
+
+    deployer = CycleDeployer(args)
+    return deployer.run()
+
+
+if __name__ == "__main__":
+    sys.exit(main())
