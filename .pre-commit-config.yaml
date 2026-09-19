@@ -69,7 +69,7 @@ repos:
     rev: v0.10.0.1
     hooks:
       - id: shellcheck
-        exclude: (^system/|\.zsh$|\.tmpl$)
+        exclude: (^system/|\.zsh$|\.tmpl$|^bin/executable_cycle-deploy-branches$)
         args: [--severity=warning]
 
   - repo: https://github.com/scop/pre-commit-shfmt
