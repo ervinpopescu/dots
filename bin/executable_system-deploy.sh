@@ -107,4 +107,8 @@ if [ "$dry_run" -eq 1 ]; then
   fi
 fi
 
-bash -s -- "${passthrough_args[@]}" <<< "$rendered"
+if [ "${#passthrough_args[@]}" -gt 0 ]; then
+  bash -s -- "${passthrough_args[@]}" <<< "$rendered"
+else
+  bash -s -- <<< "$rendered"
+fi

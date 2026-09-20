@@ -1,0 +1,13 @@
+export ZDOTDIR="$HOME/.config/zsh"
+# XDG Base Directory specification
+export XDG_CACHE_HOME="$HOME"/.cache
+export XDG_CONFIG_HOME="$HOME"/.config
+export XDG_DATA_HOME="$HOME"/.local/share
+export XDG_STATE_HOME="$HOME"/.local/state
+export XDG_RUNTIME_DIR="${TMPDIR:-/tmp}/xdg-runtime-$UID"
+if [[ ! -d "$XDG_RUNTIME_DIR" ]]; then
+  mkdir -m 700 -p "$XDG_RUNTIME_DIR"
+fi
+mkdir -m 700 -p "$XDG_STATE_HOME/zsh" "$XDG_STATE_HOME/less" "$XDG_STATE_HOME/vim"
+export _JAVA_OPTIONS=-Djava.util.prefs.userRoot="$XDG_CONFIG_HOME"/java
+export MATLAB_LOG_DIR="$XDG_CACHE_HOME/matlab"

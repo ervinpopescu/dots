@@ -1,12 +1,14 @@
-{{ if .is_linux -}}
+{{ if or .is_linux .is_macbook -}}
 #!/bin/bash
 # SYSTEM_DEPLOY_CAPABILITIES: dry-run,unified-diff
 set -euo pipefail
 
 CHEZMOI_SOURCE="${SYSTEM_SOURCE_DIR:-{{ .chezmoi.sourceDir }}}"
 SYSTEM_DIR="$CHEZMOI_SOURCE/system"
+{{ if .is_linux -}}
 SERVER_DIR="$SYSTEM_DIR/hetzner"
 ARCH_DIR="$SYSTEM_DIR/arch"
+{{ end -}}
 DEST_ROOT="${SYSTEM_TARGET_DIR:-}"
 
 nginx_changed=0
@@ -35,16 +37,16 @@ while [ $# -gt 0 ]; do
       fi
       CHEZMOI_SOURCE="$2"
       SYSTEM_DIR="$CHEZMOI_SOURCE/system"
-      SERVER_DIR="$SYSTEM_DIR/hetzner"
+{{ if .is_linux }}      SERVER_DIR="$SYSTEM_DIR/hetzner"
       ARCH_DIR="$SYSTEM_DIR/arch"
-      shift 2
+{{ end }}      shift 2
       ;;
     --source=*)
       CHEZMOI_SOURCE="${1#*=}"
       SYSTEM_DIR="$CHEZMOI_SOURCE/system"
-      SERVER_DIR="$SYSTEM_DIR/hetzner"
+{{ if .is_linux }}      SERVER_DIR="$SYSTEM_DIR/hetzner"
       ARCH_DIR="$SYSTEM_DIR/arch"
-      shift
+{{ end }}      shift
       ;;
     -h|--help)
       echo "Usage: $script_name [OPTIONS]"
@@ -93,11 +95,19 @@ content_matches() {
 
 get_metadata() {
   local target="$1"
+{{ if .is_macbook -}}
+  if [ -n "$DEST_ROOT" ]; then
+    stat -f "%Lp %Su %Sg" "$target" 2>/dev/null || echo ""
+  else
+    stat -f "%Lp %Su %Sg" "$target" 2>/dev/null || sudo -n stat -f "%Lp %Su %Sg" "$target" 2>/dev/null || echo ""
+  fi
+{{ else }}
   if [ -n "$DEST_ROOT" ]; then
     stat -c "%a %U %G" "$target" 2>/dev/null || echo ""
   else
     stat -c "%a %U %G" "$target" 2>/dev/null || sudo -n stat -c "%a %U %G" "$target" 2>/dev/null || echo ""
   fi
+{{ end }}
 }
 
 print_diff() {
@@ -122,6 +132,9 @@ print_diff() {
 
 install_file() {
   local src="$1" rel_dest="$2" mode=644 owner=root group=root
+{{ if .is_macbook -}}
+  group=wheel
+{{ end }}
   local dest="$DEST_ROOT$rel_dest"
   local display_path="$rel_dest"
 
@@ -257,6 +270,11 @@ deploy_tree() {
   done < <(find "${find_args[@]}" -print0)
 }
 
+{{ if .is_macbook -}}
+# macOS reads /etc/zshenv as its global zsh startup file.
+MAC_SYSTEM_DIR="$SYSTEM_DIR/macos"
+install_file "$MAC_SYSTEM_DIR/etc/zshenv" /etc/zshenv
+{{ else -}}
 # Common system files are always deployed. Subtrees for specific hosts/distros
 # (hetzner, arch) are excluded from this pass.
 deploy_tree "$SYSTEM_DIR" "$SERVER_DIR" "$ARCH_DIR"
@@ -351,6 +369,7 @@ fi
 for stale in /etc/nginx/conf.d/solux.conf /www/data/index.html /www/data/index.css; do
   [ -e "$DEST_ROOT$stale" ] && echo "WARN: stale server file remains on non-hetzner host: $stale"
 done
+{{ end -}}
 {{ end -}}
 
 if [ "$nginx_changed" -eq 1 ]; then
