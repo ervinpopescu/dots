@@ -64,6 +64,22 @@ ISOLATED_SYS_TARGET="$TEST_DIR/sys_target"
 
 mkdir -p "$ISOLATED_SOURCE" "$ISOLATED_DEST" "$ISOLATED_SYS_TARGET/etc/nginx/conf.d"
 
+profile_is_macbook="$(chezmoi -S "$REPO_ROOT" execute-template '{{ .is_macbook }}')"
+if [ "$profile_is_macbook" = "true" ]; then
+  echo "Test: macOS XDG environment renders tool configuration"
+  macos_vars="$(chezmoi -S "$REPO_ROOT" execute-template '{{ includeTemplate "dot_config/zsh/env/vars.zsh.tmpl" . }}')"
+  assert_contains "Docker uses XDG config" "export DOCKER_CONFIG=\"\$XDG_CONFIG_HOME\"/docker" "$macos_vars"
+  assert_contains "Vim uses XDG config" 'export VIMINIT=' "$macos_vars"
+
+  system_source_file="$ISOLATED_SOURCE/system/macos/etc/zshenv"
+  system_target_file="$ISOLATED_SYS_TARGET/etc/zshenv"
+  system_diff_header="diff --git a/etc/zshenv b/etc/zshenv"
+else
+  system_source_file="$ISOLATED_SOURCE/system/etc/nginx/conf.d/test.conf"
+  system_target_file="$ISOLATED_SYS_TARGET/etc/nginx/conf.d/test.conf"
+  system_diff_header="diff --git a/etc/nginx/conf.d/test.conf b/etc/nginx/conf.d/test.conf"
+fi
+
 # Configure minimal chezmoi source with both a user dotfile and system deploy template
 cat << 'EOF' > "$ISOLATED_SOURCE/.chezmoiignore"
 system/**
@@ -77,9 +93,9 @@ echo "original-dotfile" > "$ISOLATED_DEST/.config/testapp/config.txt"
 echo "modified-dotfile" > "$ISOLATED_SOURCE/dot_config/testapp/config.txt"
 
 # System file managed by system/ tree
-mkdir -p "$ISOLATED_SOURCE/system/etc/nginx/conf.d"
-echo "original-sys" > "$ISOLATED_SYS_TARGET/etc/nginx/conf.d/test.conf"
-echo "modified-sys" > "$ISOLATED_SOURCE/system/etc/nginx/conf.d/test.conf"
+mkdir -p "$(dirname "$system_source_file")" "$(dirname "$system_target_file")"
+echo "original-sys" > "$system_target_file"
+echo "modified-sys" > "$system_source_file"
 
 # Copy system-deploy template into isolated source
 cp "$REPO_ROOT/run_after_system-deploy.sh.tmpl" "$ISOLATED_SOURCE/run_after_system-deploy.sh.tmpl"
@@ -93,7 +109,7 @@ out="$(SYSTEM_TARGET_DIR="$ISOLATED_SYS_TARGET" "$DRY_APPLY_BIN" -S "$ISOLATED_S
 
 assert_contains "shows dotfile diff header" "diff --git a/.config/testapp/config.txt b/.config/testapp/config.txt" "$out"
 assert_contains "shows dotfile diff addition" "+modified-dotfile" "$out"
-assert_contains "shows system diff header" "diff --git a/etc/nginx/conf.d/test.conf b/etc/nginx/conf.d/test.conf" "$out"
+assert_contains "shows system diff header" "$system_diff_header" "$out"
 assert_contains "shows system diff addition" "+modified-sys" "$out"
 assert_contains "shows system dry-run summary" "[dry-run] 1 system file(s) would be changed. No system changes applied." "$out"
 
@@ -101,13 +117,13 @@ assert_contains "shows system dry-run summary" "[dry-run] 1 system file(s) would
 dest_content="$(cat "$ISOLATED_DEST/.config/testapp/config.txt")"
 assert_eq "user target not modified" "original-dotfile" "$dest_content"
 
-sys_content="$(cat "$ISOLATED_SYS_TARGET/etc/nginx/conf.d/test.conf")"
+sys_content="$(cat "$system_target_file")"
 assert_eq "system target not modified" "original-sys" "$sys_content"
 
 # Test 4: When clean, system deploy reports no changes
 echo "Test 4: Clean state reports no changes"
 echo "modified-dotfile" > "$ISOLATED_DEST/.config/testapp/config.txt"
-echo "modified-sys" > "$ISOLATED_SYS_TARGET/etc/nginx/conf.d/test.conf"
+echo "modified-sys" > "$system_target_file"
 
 clean_out="$(SYSTEM_TARGET_DIR="$ISOLATED_SYS_TARGET" "$DRY_APPLY_BIN" -S "$ISOLATED_SOURCE" -D "$ISOLATED_DEST")"
 assert_contains "reports no system file changes" "No system file changes detected." "$clean_out"

@@ -74,6 +74,45 @@ if [ -z "$(echo "$check_rendered" | tr -d '[:space:]')" ]; then
   exit 0
 fi
 
+profile_is_macbook="$(chezmoi -S "$REPO_ROOT" execute-template '{{ .is_macbook }}')"
+if [ "$profile_is_macbook" = "true" ]; then
+  # macOS deploys only the global zshenv; Linux system-tree fixtures do not apply.
+  TEST_DIR="$(mktemp -d)"
+  trap 'chmod -R 777 "$TEST_DIR" 2>/dev/null || true; rm -rf "$TEST_DIR"' EXIT
+  SOURCE_DIR="$TEST_DIR/source"
+  TARGET_DIR="$TEST_DIR/target"
+  mkdir -p "$SOURCE_DIR/system/macos/etc" "$TARGET_DIR/etc"
+  echo "same" > "$SOURCE_DIR/system/macos/etc/zshenv"
+  cp "$SOURCE_DIR/system/macos/etc/zshenv" "$TARGET_DIR/etc/zshenv"
+
+  echo "Test 3: macOS identical zshenv reports no changes"
+  out="$(SYSTEM_SOURCE_DIR="$SOURCE_DIR" SYSTEM_TARGET_DIR="$TARGET_DIR" "$DEPLOY_BIN" --dry-run)"
+  assert_contains "clean reports no changes" "No system file changes detected." "$out"
+
+  echo "Test 4: macOS zshenv changes are previewed without mutation"
+  echo "modified" > "$SOURCE_DIR/system/macos/etc/zshenv"
+  out="$(SYSTEM_SOURCE_DIR="$SOURCE_DIR" SYSTEM_TARGET_DIR="$TARGET_DIR" "$DEPLOY_BIN" --dry-run)"
+  assert_contains "shows macOS zshenv diff" "diff --git a/etc/zshenv b/etc/zshenv" "$out"
+  assert_contains "shows macOS zshenv addition" "+modified" "$out"
+  assert_contains "reports dry-run summary" "[dry-run] 1 system file(s) would be changed. No system changes applied." "$out"
+  target_content="$(cat "$TARGET_DIR/etc/zshenv")"
+  assert_eq "target remains unchanged" "same" "$target_content"
+  assert_not_contains "does not deploy Linux nginx files" "/etc/nginx/" "$out"
+
+  echo "Test 5: macOS live deployment updates zshenv"
+  out="$(SYSTEM_SOURCE_DIR="$SOURCE_DIR" SYSTEM_TARGET_DIR="$TARGET_DIR" "$DEPLOY_BIN")"
+  assert_contains "reports zshenv changed" "System file changed: /etc/zshenv" "$out"
+  target_content="$(cat "$TARGET_DIR/etc/zshenv")"
+  assert_eq "target receives zshenv" "modified" "$target_content"
+
+  echo ""
+  echo "Test results: $passes passed, $failures failed"
+  if [ "$failures" -gt 0 ]; then
+    exit 1
+  fi
+  exit 0
+fi
+
 # Setup isolated test environment for subsequent tests
 TEST_DIR="$(mktemp -d)"
 trap 'chmod -R 777 "$TEST_DIR" 2>/dev/null || true; rm -rf "$TEST_DIR"' EXIT
