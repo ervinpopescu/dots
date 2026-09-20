@@ -32,4 +32,4 @@ watch -n5 -tc "for wk in \$(git -C \"$REPO_ROOT\" worktree list | rg -v main | a
         if (step != \"\") print b, s, step, await; else print b, s
       }
     }';
-done | column -t -o '      ' | rg -v 'completed|passed|failed|cancelled'"
+done | column -t | rg -v 'completed|passed|failed|cancelled'"
