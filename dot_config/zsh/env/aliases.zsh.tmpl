@@ -86,6 +86,7 @@ fi
 alias sudo='sudo '
 {{ if .is_macbook -}}
 alias svn="svn --config-dir $XDG_CONFIG_HOME/subversion"
+alias wt='cd $(command wt)'
 {{ end -}}
 
 # misc
