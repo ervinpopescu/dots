@@ -5,9 +5,34 @@
 # Asks for a repository directory, then continuously prompts to select a worktree
 # and runs `no-mistakes` in the chosen worktree.
 
-# 1. Ask for repository directory using fzf
-echo "Searching for git repositories..."
-REPO_DIR=$(find ~/ -maxdepth 4 -name .git -type d -prune 2>/dev/null | sed 's/\/.git$//' | fzf --prompt="Select repository > ")
+usage() {
+  echo "Usage: wt-nm [REPOSITORY]" >&2
+}
+
+if [ "$#" -gt 1 ]; then
+  usage
+  exit 2
+fi
+
+# 1. Resolve the repository directory, falling back to fzf only when needed.
+if [ "$#" -eq 1 ]; then
+  SELECTED_DIR=$1
+
+  if [ ! -d "$SELECTED_DIR" ]; then
+    echo "Selected repository directory does not exist: $SELECTED_DIR"
+    exit 1
+  fi
+
+  if ! REPO_DIR=$(git -C "$SELECTED_DIR" rev-parse --show-toplevel 2>/dev/null); then
+    echo "Selected directory is not a git repository: $SELECTED_DIR"
+    exit 1
+  fi
+elif REPO_DIR=$(git rev-parse --show-toplevel 2>/dev/null); then
+  :
+else
+  echo "Searching for git repositories..."
+  REPO_DIR=$(find ~/ -maxdepth 4 -name .git -type d -prune 2>/dev/null | sed 's/\/.git$//' | fzf --prompt="Select repository > ")
+fi
 
 if [ -z "$REPO_DIR" ]; then
   echo "No repository selected. Exiting."
