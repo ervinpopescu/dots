@@ -84,6 +84,9 @@ if [[ "$(tty | sed -e 's:/dev/::;s/[0-9]//')" == "tty" ]]; then
 fi
 {{ else -}}
 alias sudo='sudo '
+{{ if .is_macbook -}}
+alias svn="svn --config-dir $XDG_CONFIG_HOME/subversion"
+{{ end -}}
 
 # misc
 alias adb='HOME="$XDG_DATA_HOME"/android adb'
