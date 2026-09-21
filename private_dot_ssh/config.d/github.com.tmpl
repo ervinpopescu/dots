@@ -1,6 +1,7 @@
 Host github.com
-  Hostname ssh.github.com
+  Hostname github.com
   Port 443
+  ProxyCommand /usr/bin/nc ssh.github.com 443
 {{- if .is_hetzner }}
   IdentityFile ~/.ssh/github
 {{- end }}
