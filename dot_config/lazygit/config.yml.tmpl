@@ -3,7 +3,6 @@ os:
 git:
   overrideGpg: true
 
-{{- if .is_cloudtop }}
 gui:
   wrapLinesInStagingView: true
 customCommands:
@@ -44,4 +43,3 @@ customCommands:
         read -n 1 -s -r -p "Push failed. Press any key to return to lazygit..." || true;
         exit 1;
       fi'
-{{- end }}
