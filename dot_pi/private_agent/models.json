@@ -1,15 +1,12 @@
 {
   "providers": {
-    "openai-codex": {
+    "google": {
       "modelOverrides": {
-        "gpt-5.6-luna": {
-          "contextWindow": 1050000
+        "gemini-3.1-pro-preview": {
+          "contextWindow": 500000
         },
-        "gpt-5.6-sol": {
-          "contextWindow": 1050000
-        },
-        "gpt-5.6-terra": {
-          "contextWindow": 1050000
+        "gemini-3.8-flash": {
+          "contextWindow": 272000
         }
       }
     }
