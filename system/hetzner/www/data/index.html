@@ -73,14 +73,14 @@
                 z-index: 1;
                 width: min(100% - 3rem, 70rem);
                 margin: 0 auto;
-                padding: 1.5rem 0 2rem;
+                padding: 0.75rem 0 1.25rem;
             }
 
             .topbar {
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
-                padding: 0.25rem 0 1.4rem;
+                padding: 0.15rem 0 0.65rem;
                 border-bottom: 1px solid var(--line);
             }
 
@@ -124,11 +124,11 @@
             .hero {
                 position: relative;
                 display: flex;
-                min-height: 18rem;
+                min-height: 0;
                 align-items: center;
                 justify-content: space-between;
-                gap: 2rem;
-                padding: clamp(2.7rem, 7vw, 5.2rem) 0 3.5rem;
+                gap: 1.25rem;
+                padding: 1.15rem 0 1rem;
                 border-bottom: 1px solid var(--line);
             }
 
@@ -163,9 +163,9 @@
             }
 
             h1 {
-                max-width: 12ch;
-                margin-bottom: 1rem;
-                font-size: clamp(3rem, 8vw, 6.1rem);
+                max-width: none;
+                margin-bottom: 0.4rem;
+                font-size: clamp(2rem, 4.5vw, 3.5rem);
                 font-weight: 760;
                 letter-spacing: -0.075em;
                 line-height: 0.93;
@@ -177,20 +177,20 @@
             }
 
             .intro {
-                max-width: 34rem;
+                max-width: 38rem;
                 margin-bottom: 0;
                 color: var(--muted);
-                font-size: clamp(1rem, 2vw, 1.13rem);
+                font-size: 0.94rem;
             }
 
             .hero-art {
                 position: relative;
                 display: grid;
-                flex: 0 0 12rem;
-                width: 12rem;
-                height: 12rem;
+                flex: 0 0 6rem;
+                width: 6rem;
+                height: 6rem;
                 place-items: center;
-                margin-right: 2rem;
+                margin-right: 1rem;
                 border: 1px solid rgba(183, 160, 255, 0.12);
                 border-radius: 50%;
                 background: radial-gradient(circle, rgba(129, 105, 231, 0.13), transparent 67%);
@@ -218,14 +218,14 @@
             }
 
             .service-section {
-                padding-top: 2.6rem;
+                padding-top: 0.85rem;
             }
 
             .section-heading {
                 display: flex;
                 align-items: baseline;
                 gap: 0.8rem;
-                margin-bottom: 1rem;
+                margin-bottom: 0.55rem;
             }
 
             h2 {
@@ -243,18 +243,18 @@
 
             .service-grid {
                 display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(min(100%, 17.5rem), 1fr));
-                gap: 0.8rem;
+                grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+                gap: 0.55rem;
             }
 
             .service-card {
                 position: relative;
                 display: flex;
-                min-height: 6.6rem;
+                min-height: 4rem;
                 align-items: center;
-                gap: 1rem;
+                gap: 0.75rem;
                 overflow: hidden;
-                padding: 1rem 1.1rem;
+                padding: 0.55rem 0.75rem;
                 border: 1px solid var(--line);
                 border-radius: 0.9rem;
                 background: var(--panel);
@@ -372,8 +372,8 @@
                 align-items: center;
                 justify-content: space-between;
                 gap: 1rem;
-                margin-top: 3.5rem;
-                padding-top: 1rem;
+                margin-top: 0.9rem;
+                padding-top: 0.65rem;
                 border-top: 1px solid var(--line);
                 color: var(--quiet);
                 font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
@@ -393,12 +393,26 @@
 
             @media (max-width: 42rem) {
                 .site-shell {
-                    width: min(100% - 1.5rem, 70rem);
+                    width: min(100% - 1.25rem, 70rem);
+                }
+
+                .topbar-note {
+                    font-size: 0.6rem;
+                    letter-spacing: 0.04em;
                 }
 
                 .hero {
                     min-height: 0;
-                    padding: 3.5rem 0 2.6rem;
+                    padding: 0.95rem 0 0.75rem;
+                }
+
+                h1 {
+                    font-size: clamp(1.9rem, 9vw, 2.8rem);
+                }
+
+                .intro {
+                    font-size: 0.85rem;
+                    line-height: 1.4;
                 }
 
                 .hero-art {
@@ -406,11 +420,40 @@
                 }
 
                 .service-section {
-                    padding-top: 2rem;
+                    padding-top: 0.7rem;
+                }
+
+                .service-grid {
+                    gap: 0.4rem;
+                }
+
+                .service-card {
+                    min-height: 3.6rem;
+                    gap: 0.6rem;
+                    padding: 0.4rem 0.6rem;
+                }
+
+                .service-icon {
+                    flex-basis: 2.4rem;
+                    width: 2.4rem;
+                    height: 2.4rem;
+                }
+
+                .service-name {
+                    font-size: 0.9rem;
+                }
+
+                .service-description {
+                    font-size: 0.74rem;
+                    line-height: 1.3;
+                }
+
+                .service-tag {
+                    font-size: 0.52rem;
                 }
 
                 .site-footer {
-                    margin-top: 2.5rem;
+                    margin-top: 0.75rem;
                 }
             }
         </style>
@@ -428,7 +471,7 @@
             <section class="hero" aria-labelledby="page-title">
                 <div class="hero-copy">
                     <p class="eyebrow">Self-hosted · made personal</p>
-                    <h1 id="page-title">Your own<br /><span class="hero-accent">little orbit.</span></h1>
+                    <h1 id="page-title">Your own <span class="hero-accent">little orbit.</span></h1>
                     <p class="intro">
                         A launchpad for the media, dashboards, and tools running on this server.
                         Pick a destination and make yourself at home.
