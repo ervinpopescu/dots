@@ -7,38 +7,60 @@
             name="description"
             content="Quick access to services hosted on the archnet server."
         />
-        <title>archnet services</title>
+        <meta name="theme-color" content="#090b14" />
+        <title>archnet — home node</title>
         <link rel="stylesheet" href="index.css" />
         <style>
             :root {
                 color-scheme: dark;
-                --bg: #11111b;
-                --surface: rgba(30, 30, 46, 0.78);
-                --surface-hover: rgba(49, 50, 68, 0.92);
-                --text: #cdd6f4;
-                --muted: #a6adc8;
-                --accent: #cba6f7;
-                --accent-soft: rgba(203, 166, 247, 0.16);
-                --border: rgba(186, 194, 222, 0.18);
+                --ink: #f4f4fb;
+                --muted: #9a9caf;
+                --quiet: #696d81;
+                --panel: rgba(19, 22, 35, 0.82);
+                --line: rgba(194, 200, 227, 0.12);
+                --violet: #b7a0ff;
+                --mint: #9af2d3;
+                --glow: rgba(138, 115, 255, 0.2);
             }
 
-            * {
+            *,
+            *::before,
+            *::after {
                 box-sizing: border-box;
+            }
+
+            html {
+                min-width: 320px;
+                background: #090b14;
             }
 
             body {
                 min-height: 100vh;
                 margin: 0;
+                overflow-x: hidden;
                 background:
-                    radial-gradient(circle at 15% 0%, #30234d 0, transparent 34rem),
-                    radial-gradient(circle at 100% 100%, #19364a 0, transparent 30rem),
-                    var(--bg);
-                color: var(--text);
+                    radial-gradient(ellipse at 16% 4%, rgba(85, 59, 147, 0.32), transparent 31rem),
+                    radial-gradient(ellipse at 92% 44%, rgba(20, 116, 115, 0.14), transparent 34rem),
+                    linear-gradient(155deg, #0b0d18 0%, #0b0d15 52%, #0d1118 100%);
+                color: var(--ink);
                 font-family:
                     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
                     "Segoe UI", sans-serif;
                 font-size: 16px;
                 line-height: 1.5;
+            }
+
+            body::before {
+                position: fixed;
+                z-index: 0;
+                background-image:
+                    linear-gradient(rgba(180, 188, 220, 0.027) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(180, 188, 220, 0.027) 1px, transparent 1px);
+                background-size: 48px 48px;
+                content: "";
+                inset: 0;
+                mask-image: linear-gradient(to bottom, black, transparent 82%);
+                pointer-events: none;
             }
 
             a {
@@ -47,23 +69,91 @@
             }
 
             .site-shell {
-                width: min(100% - 2rem, 68rem);
+                position: relative;
+                z-index: 1;
+                width: min(100% - 3rem, 70rem);
                 margin: 0 auto;
-                padding: clamp(3rem, 9vw, 7rem) 0 3rem;
+                padding: 1.5rem 0 2rem;
             }
 
-            .site-header {
-                max-width: 44rem;
-                margin-bottom: 3rem;
+            .topbar {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 0.25rem 0 1.4rem;
+                border-bottom: 1px solid var(--line);
+            }
+
+            .brand {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.7rem;
+                font-size: 0.8rem;
+                font-weight: 750;
+                letter-spacing: 0.11em;
+                text-transform: uppercase;
+            }
+
+            .brand-mark {
+                display: grid;
+                width: 2rem;
+                height: 2rem;
+                place-items: center;
+                border: 1px solid rgba(183, 160, 255, 0.42);
+                border-radius: 0.65rem;
+                background: linear-gradient(145deg, rgba(183, 160, 255, 0.2), rgba(154, 242, 211, 0.08));
+                color: var(--violet);
+                font-size: 1rem;
+                box-shadow: 0 0 1.4rem var(--glow);
+            }
+
+            .topbar-note,
+            .eyebrow,
+            .section-index,
+            .service-tag {
+                font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            }
+
+            .topbar-note {
+                color: var(--quiet);
+                font-size: 0.7rem;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+            }
+
+            .hero {
+                position: relative;
+                display: flex;
+                min-height: 18rem;
+                align-items: center;
+                justify-content: space-between;
+                gap: 2rem;
+                padding: clamp(2.7rem, 7vw, 5.2rem) 0 3.5rem;
+                border-bottom: 1px solid var(--line);
+            }
+
+            .hero-copy {
+                max-width: 42rem;
             }
 
             .eyebrow {
-                margin: 0 0 0.75rem;
-                color: var(--accent);
-                font-size: 0.78rem;
-                font-weight: 700;
-                letter-spacing: 0.14em;
+                display: inline-flex;
+                align-items: center;
+                gap: 0.6rem;
+                margin: 0 0 1rem;
+                color: var(--mint);
+                font-size: 0.72rem;
+                letter-spacing: 0.13em;
                 text-transform: uppercase;
+            }
+
+            .eyebrow::before {
+                width: 0.4rem;
+                height: 0.4rem;
+                border-radius: 50%;
+                background: var(--mint);
+                box-shadow: 0 0 0.8rem rgba(154, 242, 211, 0.75);
+                content: "";
             }
 
             h1,
@@ -73,177 +163,322 @@
             }
 
             h1 {
-                margin-bottom: 0.75rem;
-                color: #f5e0ff;
-                font-size: clamp(2.5rem, 7vw, 4.75rem);
-                letter-spacing: -0.055em;
-                line-height: 0.98;
+                max-width: 12ch;
+                margin-bottom: 1rem;
+                font-size: clamp(3rem, 8vw, 6.1rem);
+                font-weight: 760;
+                letter-spacing: -0.075em;
+                line-height: 0.93;
+            }
+
+            .hero-accent {
+                color: var(--violet);
+                text-shadow: 0 0 2.2rem rgba(183, 160, 255, 0.3);
             }
 
             .intro {
                 max-width: 34rem;
                 margin-bottom: 0;
                 color: var(--muted);
-                font-size: clamp(1rem, 2vw, 1.15rem);
+                font-size: clamp(1rem, 2vw, 1.13rem);
             }
 
-            .service-section + .service-section {
-                margin-top: 2.5rem;
+            .hero-art {
+                position: relative;
+                display: grid;
+                flex: 0 0 12rem;
+                width: 12rem;
+                height: 12rem;
+                place-items: center;
+                margin-right: 2rem;
+                border: 1px solid rgba(183, 160, 255, 0.12);
+                border-radius: 50%;
+                background: radial-gradient(circle, rgba(129, 105, 231, 0.13), transparent 67%);
+            }
+
+            .hero-art::before,
+            .hero-art::after {
+                position: absolute;
+                border: 1px solid rgba(183, 160, 255, 0.24);
+                border-radius: 50%;
+                content: "";
+                inset: 1rem;
+            }
+
+            .hero-art::after {
+                border-color: rgba(154, 242, 211, 0.2);
+                transform: rotateX(66deg) rotate(-26deg) scale(1.18);
+            }
+
+            .hero-glyph {
+                color: var(--violet);
+                font-size: 4.3rem;
+                line-height: 1;
+                text-shadow: 0 0 2rem rgba(183, 160, 255, 0.58);
+            }
+
+            .service-section {
+                padding-top: 2.6rem;
+            }
+
+            .section-heading {
+                display: flex;
+                align-items: baseline;
+                gap: 0.8rem;
+                margin-bottom: 1rem;
             }
 
             h2 {
-                margin-bottom: 0.9rem;
-                color: #f5e0ff;
+                margin-bottom: 0;
                 font-size: 1rem;
-                letter-spacing: 0.08em;
-                text-transform: uppercase;
+                font-weight: 700;
+                letter-spacing: -0.015em;
+            }
+
+            .section-index {
+                color: var(--quiet);
+                font-size: 0.7rem;
+                letter-spacing: 0.04em;
             }
 
             .service-grid {
                 display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
-                gap: 0.9rem;
+                grid-template-columns: repeat(auto-fit, minmax(min(100%, 17.5rem), 1fr));
+                gap: 0.8rem;
             }
 
             .service-card {
+                position: relative;
                 display: flex;
+                min-height: 6.6rem;
                 align-items: center;
-                min-height: 6.5rem;
                 gap: 1rem;
-                padding: 1.15rem 1.25rem;
-                border: 1px solid var(--border);
-                border-radius: 1rem;
-                background: var(--surface);
-                box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.14);
+                overflow: hidden;
+                padding: 1rem 1.1rem;
+                border: 1px solid var(--line);
+                border-radius: 0.9rem;
+                background: var(--panel);
+                box-shadow: 0 1.1rem 2.8rem rgba(0, 0, 0, 0.15);
+                backdrop-filter: blur(14px);
                 transition:
-                    background 160ms ease,
-                    border-color 160ms ease,
-                    transform 160ms ease;
+                    background 180ms ease,
+                    border-color 180ms ease,
+                    box-shadow 180ms ease,
+                    transform 180ms ease;
+            }
+
+            .service-card::before {
+                position: absolute;
+                width: 7rem;
+                height: 7rem;
+                border-radius: 50%;
+                background: var(--card-glow, rgba(183, 160, 255, 0.14));
+                content: "";
+                filter: blur(1.5rem);
+                opacity: 0;
+                pointer-events: none;
+                right: -3rem;
+                top: -3.5rem;
+                transition: opacity 180ms ease;
             }
 
             .service-card:hover {
-                border-color: rgba(203, 166, 247, 0.55);
-                background: var(--surface-hover);
-                transform: translateY(-2px);
+                transform: translateY(-3px);
+                border-color: rgba(183, 160, 255, 0.4);
+                background: rgba(26, 29, 46, 0.96);
+                box-shadow: 0 1.4rem 3rem rgba(0, 0, 0, 0.27), 0 0 1.8rem rgba(120, 99, 220, 0.1);
+            }
+
+            .service-card:hover::before {
+                opacity: 1;
             }
 
             .service-card:focus-visible {
-                outline: 3px solid var(--accent);
+                outline: 2px solid var(--mint);
                 outline-offset: 3px;
             }
 
             .service-icon {
+                position: relative;
+                z-index: 1;
                 display: grid;
-                flex: 0 0 2.75rem;
-                width: 2.75rem;
-                height: 2.75rem;
+                flex: 0 0 2.8rem;
+                width: 2.8rem;
+                height: 2.8rem;
                 place-items: center;
+                border: 1px solid rgba(183, 160, 255, 0.2);
                 border-radius: 0.8rem;
-                background: var(--accent-soft);
-                color: var(--accent);
-                font-size: 1.15rem;
+                background: linear-gradient(145deg, rgba(183, 160, 255, 0.16), rgba(183, 160, 255, 0.04));
+                color: var(--icon-color, var(--violet));
+                font-size: 1.2rem;
             }
 
             .service-copy {
+                position: relative;
+                z-index: 1;
                 display: grid;
-                gap: 0.2rem;
+                flex: 1;
+                gap: 0.16rem;
                 min-width: 0;
             }
 
             .service-name {
-                color: #f5e0ff;
-                font-size: 1.05rem;
+                font-size: 0.98rem;
                 font-weight: 700;
+                letter-spacing: -0.02em;
             }
 
             .service-description {
                 color: var(--muted);
-                font-size: 0.9rem;
+                font-size: 0.83rem;
+            }
+
+            .service-tag {
+                color: var(--quiet);
+                font-size: 0.58rem;
+                letter-spacing: 0.06em;
+                text-transform: uppercase;
             }
 
             .service-arrow {
+                position: relative;
+                z-index: 1;
                 margin-left: auto;
-                color: var(--muted);
-                font-size: 1.35rem;
-                transition: color 160ms ease, transform 160ms ease;
+                color: var(--quiet);
+                font-size: 1.2rem;
+                transition: color 180ms ease, transform 180ms ease;
             }
 
             .service-card:hover .service-arrow,
             .service-card:focus-visible .service-arrow {
-                color: var(--accent);
                 transform: translateX(0.2rem);
+                color: var(--mint);
+            }
+
+            .service-card--transmission {
+                --card-glow: rgba(154, 242, 211, 0.17);
+                --icon-color: var(--mint);
+                border-color: rgba(154, 242, 211, 0.22);
+                background: linear-gradient(115deg, rgba(18, 34, 39, 0.9), rgba(19, 22, 35, 0.8) 70%);
+            }
+
+            .service-card--transmission .service-icon {
+                border-color: rgba(154, 242, 211, 0.22);
+                background: linear-gradient(145deg, rgba(154, 242, 211, 0.16), rgba(154, 242, 211, 0.04));
             }
 
             .site-footer {
-                margin-top: 3rem;
-                color: var(--muted);
-                font-size: 0.82rem;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 1rem;
+                margin-top: 3.5rem;
+                padding-top: 1rem;
+                border-top: 1px solid var(--line);
+                color: var(--quiet);
+                font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+                font-size: 0.67rem;
+                letter-spacing: 0.06em;
+                text-transform: uppercase;
             }
 
             @media (prefers-reduced-motion: reduce) {
-                .service-card,
-                .service-arrow {
-                    transition: none;
+                *,
+                *::before,
+                *::after {
+                    scroll-behavior: auto !important;
+                    transition-duration: 0.01ms !important;
                 }
             }
 
-            @media (max-width: 32rem) {
+            @media (max-width: 42rem) {
                 .site-shell {
-                    width: min(100% - 1.25rem, 68rem);
-                    padding-top: 2.5rem;
+                    width: min(100% - 1.5rem, 70rem);
                 }
 
-                .service-card {
-                    min-height: 5.75rem;
-                    padding: 1rem;
+                .hero {
+                    min-height: 0;
+                    padding: 3.5rem 0 2.6rem;
+                }
+
+                .hero-art {
+                    display: none;
+                }
+
+                .service-section {
+                    padding-top: 2rem;
+                }
+
+                .site-footer {
+                    margin-top: 2.5rem;
                 }
             }
         </style>
     </head>
     <body>
         <div class="site-shell">
-            <header class="site-header">
-                <p class="eyebrow">archnet services</p>
-                <h1>Welcome home.</h1>
-                <p class="intro">
-                    A quick, quiet starting point for the media, monitoring, and tools hosted
-                    on this server.
-                </p>
+            <header class="topbar">
+                <a class="brand" href="/" aria-label="archnet home">
+                    <span class="brand-mark" aria-hidden="true">⌘</span>
+                    <span>archnet</span>
+                </a>
+                <span class="topbar-note">Personal network / Home node</span>
             </header>
 
-            <main>
+            <section class="hero" aria-labelledby="page-title">
+                <div class="hero-copy">
+                    <p class="eyebrow">Self-hosted · made personal</p>
+                    <h1 id="page-title">Your own<br /><span class="hero-accent">little orbit.</span></h1>
+                    <p class="intro">
+                        A launchpad for the media, dashboards, and tools running on this server.
+                        Pick a destination and make yourself at home.
+                    </p>
+                </div>
+                <div class="hero-art" aria-hidden="true"><span class="hero-glyph">⌘</span></div>
+            </section>
+
+            <main aria-label="Server services">
                 <section class="service-section" aria-labelledby="media-heading">
-                    <h2 id="media-heading">Media &amp; downloads</h2>
+                    <div class="section-heading">
+                        <h2 id="media-heading">Media &amp; downloads</h2>
+                        <span class="section-index">01 / 02</span>
+                    </div>
                     <div class="service-grid">
                         <a class="service-card" href="/jellyfin">
                             <span class="service-icon" aria-hidden="true">▶</span>
                             <span class="service-copy">
                                 <span class="service-name">Jellyfin</span>
                                 <span class="service-description">Movies and series</span>
+                                <span class="service-tag">Watch / stream</span>
                             </span>
-                            <span class="service-arrow" aria-hidden="true">→</span>
+                            <span class="service-arrow" aria-hidden="true">↗</span>
                         </a>
                         <a class="service-card" href="/calibre">
                             <span class="service-icon" aria-hidden="true">▤</span>
                             <span class="service-copy">
                                 <span class="service-name">Calibre</span>
                                 <span class="service-description">Books and reading library</span>
+                                <span class="service-tag">Browse / read</span>
                             </span>
-                            <span class="service-arrow" aria-hidden="true">→</span>
+                            <span class="service-arrow" aria-hidden="true">↗</span>
                         </a>
-                        <a class="service-card" href="/transmission">
+                        <a class="service-card service-card--transmission" href="/transmission">
                             <span class="service-icon" aria-hidden="true">↓</span>
                             <span class="service-copy">
                                 <span class="service-name">Transmission</span>
                                 <span class="service-description">Downloads and torrents</span>
+                                <span class="service-tag">Transfer / manage</span>
                             </span>
-                            <span class="service-arrow" aria-hidden="true">→</span>
+                            <span class="service-arrow" aria-hidden="true">↗</span>
                         </a>
                     </div>
                 </section>
 
                 <section class="service-section" aria-labelledby="tools-heading">
-                    <h2 id="tools-heading">Tools &amp; monitoring</h2>
+                    <div class="section-heading">
+                        <h2 id="tools-heading">Tools &amp; monitoring</h2>
+                        <span class="section-index">02 / 02</span>
+                    </div>
                     <div class="service-grid">
                         <a
                             class="service-card"
@@ -253,38 +488,45 @@
                             <span class="service-copy">
                                 <span class="service-name">Grafana</span>
                                 <span class="service-description">Server metrics and dashboards</span>
+                                <span class="service-tag">Observe / inspect</span>
                             </span>
-                            <span class="service-arrow" aria-hidden="true">→</span>
+                            <span class="service-arrow" aria-hidden="true">↗</span>
                         </a>
                         <a class="service-card" href="/solux/">
                             <span class="service-icon" aria-hidden="true">☼</span>
                             <span class="service-copy">
                                 <span class="service-name">Solux</span>
                                 <span class="service-description">Golden hour map</span>
+                                <span class="service-tag">Explore / outdoors</span>
                             </span>
-                            <span class="service-arrow" aria-hidden="true">→</span>
+                            <span class="service-arrow" aria-hidden="true">↗</span>
                         </a>
                         <a class="service-card" href="/job-applier/">
                             <span class="service-icon" aria-hidden="true">✦</span>
                             <span class="service-copy">
                                 <span class="service-name">Job Applier</span>
                                 <span class="service-description">AI-assisted applications</span>
+                                <span class="service-tag">Create / apply</span>
                             </span>
-                            <span class="service-arrow" aria-hidden="true">→</span>
+                            <span class="service-arrow" aria-hidden="true">↗</span>
                         </a>
                         <a class="service-card" href="/infotb/">
                             <span class="service-icon" aria-hidden="true">⇄</span>
                             <span class="service-copy">
                                 <span class="service-name">Info TB</span>
                                 <span class="service-description">Live transit map</span>
+                                <span class="service-tag">Navigate / live</span>
                             </span>
-                            <span class="service-arrow" aria-hidden="true">→</span>
+                            <span class="service-arrow" aria-hidden="true">↗</span>
                         </a>
                     </div>
                 </section>
             </main>
 
-            <footer class="site-footer">Private services · archnet</footer>
+            <footer class="site-footer">
+                <span>Private services · archnet</span>
+                <span>Independent by design</span>
+            </footer>
         </div>
     </body>
 </html>
