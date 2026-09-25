@@ -1,108 +1,290 @@
 <!doctype html>
-<html>
+<html lang="en">
     <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta
+            name="description"
+            content="Quick access to services hosted on the archnet server."
+        />
+        <title>archnet services</title>
         <link rel="stylesheet" href="index.css" />
+        <style>
+            :root {
+                color-scheme: dark;
+                --bg: #11111b;
+                --surface: rgba(30, 30, 46, 0.78);
+                --surface-hover: rgba(49, 50, 68, 0.92);
+                --text: #cdd6f4;
+                --muted: #a6adc8;
+                --accent: #cba6f7;
+                --accent-soft: rgba(203, 166, 247, 0.16);
+                --border: rgba(186, 194, 222, 0.18);
+            }
+
+            * {
+                box-sizing: border-box;
+            }
+
+            body {
+                min-height: 100vh;
+                margin: 0;
+                background:
+                    radial-gradient(circle at 15% 0%, #30234d 0, transparent 34rem),
+                    radial-gradient(circle at 100% 100%, #19364a 0, transparent 30rem),
+                    var(--bg);
+                color: var(--text);
+                font-family:
+                    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+                    "Segoe UI", sans-serif;
+                font-size: 16px;
+                line-height: 1.5;
+            }
+
+            a {
+                color: inherit;
+                text-decoration: none;
+            }
+
+            .site-shell {
+                width: min(100% - 2rem, 68rem);
+                margin: 0 auto;
+                padding: clamp(3rem, 9vw, 7rem) 0 3rem;
+            }
+
+            .site-header {
+                max-width: 44rem;
+                margin-bottom: 3rem;
+            }
+
+            .eyebrow {
+                margin: 0 0 0.75rem;
+                color: var(--accent);
+                font-size: 0.78rem;
+                font-weight: 700;
+                letter-spacing: 0.14em;
+                text-transform: uppercase;
+            }
+
+            h1,
+            h2,
+            p {
+                margin-top: 0;
+            }
+
+            h1 {
+                margin-bottom: 0.75rem;
+                color: #f5e0ff;
+                font-size: clamp(2.5rem, 7vw, 4.75rem);
+                letter-spacing: -0.055em;
+                line-height: 0.98;
+            }
+
+            .intro {
+                max-width: 34rem;
+                margin-bottom: 0;
+                color: var(--muted);
+                font-size: clamp(1rem, 2vw, 1.15rem);
+            }
+
+            .service-section + .service-section {
+                margin-top: 2.5rem;
+            }
+
+            h2 {
+                margin-bottom: 0.9rem;
+                color: #f5e0ff;
+                font-size: 1rem;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+            }
+
+            .service-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+                gap: 0.9rem;
+            }
+
+            .service-card {
+                display: flex;
+                align-items: center;
+                min-height: 6.5rem;
+                gap: 1rem;
+                padding: 1.15rem 1.25rem;
+                border: 1px solid var(--border);
+                border-radius: 1rem;
+                background: var(--surface);
+                box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.14);
+                transition:
+                    background 160ms ease,
+                    border-color 160ms ease,
+                    transform 160ms ease;
+            }
+
+            .service-card:hover {
+                border-color: rgba(203, 166, 247, 0.55);
+                background: var(--surface-hover);
+                transform: translateY(-2px);
+            }
+
+            .service-card:focus-visible {
+                outline: 3px solid var(--accent);
+                outline-offset: 3px;
+            }
+
+            .service-icon {
+                display: grid;
+                flex: 0 0 2.75rem;
+                width: 2.75rem;
+                height: 2.75rem;
+                place-items: center;
+                border-radius: 0.8rem;
+                background: var(--accent-soft);
+                color: var(--accent);
+                font-size: 1.15rem;
+            }
+
+            .service-copy {
+                display: grid;
+                gap: 0.2rem;
+                min-width: 0;
+            }
+
+            .service-name {
+                color: #f5e0ff;
+                font-size: 1.05rem;
+                font-weight: 700;
+            }
+
+            .service-description {
+                color: var(--muted);
+                font-size: 0.9rem;
+            }
+
+            .service-arrow {
+                margin-left: auto;
+                color: var(--muted);
+                font-size: 1.35rem;
+                transition: color 160ms ease, transform 160ms ease;
+            }
+
+            .service-card:hover .service-arrow,
+            .service-card:focus-visible .service-arrow {
+                color: var(--accent);
+                transform: translateX(0.2rem);
+            }
+
+            .site-footer {
+                margin-top: 3rem;
+                color: var(--muted);
+                font-size: 0.82rem;
+            }
+
+            @media (prefers-reduced-motion: reduce) {
+                .service-card,
+                .service-arrow {
+                    transition: none;
+                }
+            }
+
+            @media (max-width: 32rem) {
+                .site-shell {
+                    width: min(100% - 1.25rem, 68rem);
+                    padding-top: 2.5rem;
+                }
+
+                .service-card {
+                    min-height: 5.75rem;
+                    padding: 1rem;
+                }
+            }
+        </style>
     </head>
     <body>
-        <div class="container">
-            <div class="element">
-                <a href="/calibre"
-                    >Calibre (Books
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="icon"
-                        viewBox="0 0 448 512"
-                    >
-                        <!--!Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.-->
-                        <path
-                            d="M96 0C43 0 0 43 0 96L0 416c0 53 43 96 96 96l288 0 32 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l0-64c17.7 0 32-14.3 32-32l0-320c0-17.7-14.3-32-32-32L384 0 96 0zm0 384l256 0 0 64L96 448c-17.7 0-32-14.3-32-32s14.3-32 32-32zm32-240c0-8.8 7.2-16 16-16l192 0c8.8 0 16 7.2 16 16s-7.2 16-16 16l-192 0c-8.8 0-16-7.2-16-16zm16 48l192 0c8.8 0 16 7.2 16 16s-7.2 16-16 16l-192 0c-8.8 0-16-7.2-16-16s7.2-16 16-16z"
-                        /></svg
-                    >)
-                </a>
-            </div>
-            <div class="element">
-                <a href="/jellyfin"
-                    >Jellyfin (Movies/Series
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="icon"
-                        viewBox="0 0 512 512"
-                    >
-                        <!--!Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.-->
-                        <path
-                            d="M0 96C0 60.7 28.7 32 64 32l384 0c35.3 0 64 28.7 64 64l0 320c0 35.3-28.7 64-64 64L64 480c-35.3 0-64-28.7-64-64L0 96zM48 368l0 32c0 8.8 7.2 16 16 16l32 0c8.8 0 16-7.2 16-16l0-32c0-8.8-7.2-16-16-16l-32 0c-8.8 0-16 7.2-16 16zm368-16c-8.8 0-16 7.2-16 16l0 32c0 8.8 7.2 16 16 16l32 0c8.8 0 16-7.2 16-16l0-32c0-8.8-7.2-16-16-16l-32 0zM48 240l0 32c0 8.8 7.2 16 16 16l32 0c8.8 0 16-7.2 16-16l0-32c0-8.8-7.2-16-16-16l-32 0c-8.8 0-16 7.2-16 16zm368-16c-8.8 0-16 7.2-16 16l0 32c0 8.8 7.2 16 16 16l32 0c8.8 0 16-7.2 16-16l0-32c0-8.8-7.2-16-16-16l-32 0zM48 112l0 32c0 8.8 7.2 16 16 16l32 0c8.8 0 16-7.2 16-16l0-32c0-8.8-7.2-16-16-16L64 96c-8.8 0-16 7.2-16 16zM416 96c-8.8 0-16 7.2-16 16l0 32c0 8.8 7.2 16 16 16l32 0c8.8 0 16-7.2 16-16l0-32c0-8.8-7.2-16-16-16l-32 0zM160 128l0 64c0 17.7 14.3 32 32 32l128 0c17.7 0 32-14.3 32-32l0-64c0-17.7-14.3-32-32-32L192 96c-17.7 0-32 14.3-32 32zm32 160c-17.7 0-32 14.3-32 32l0 64c0 17.7 14.3 32 32 32l128 0c17.7 0 32-14.3 32-32l0-64c0-17.7-14.3-32-32-32l-128 0z"
-                        /></svg
-                    >)
-                </a>
-            </div>
-            <!-- <div class="element"> -->
-            <!--   <a href="/radarr" -->
-            <!--     >Radarr (Movies collection manager -->
-            <!--     <svg -->
-            <!--       xmlns="http://www.w3.org/2000/svg" -->
-            <!--       class="icon" -->
-            <!--       viewBox="0 0 512 512" -->
-            <!--     > -->
-            <!--       <!--!Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.-->
-            <!--       <path -->
-            <!--         d="M304 48a48 48 0 1 0 -96 0 48 48 0 1 0 96 0zm0 416a48 48 0 1 0 -96 0 48 48 0 1 0 96 0zM48 304a48 48 0 1 0 0-96 48 48 0 1 0 0 96zm464-48a48 48 0 1 0 -96 0 48 48 0 1 0 96 0zM142.9 437A48 48 0 1 0 75 369.1 48 48 0 1 0 142.9 437zm0-294.2A48 48 0 1 0 75 75a48 48 0 1 0 67.9 67.9zM369.1 437A48 48 0 1 0 437 369.1 48 48 0 1 0 369.1 437z" -->
-            <!--       /></svg -->
-            <!--     >) -->
-            <!--   </a> -->
-            <!-- </div> -->
-            <!-- <div class="element"> -->
-            <!--   <a href="/sonarr" -->
-            <!--     >Sonarr (Series collection manager -->
-            <!--     <svg -->
-            <!--       xmlns="http://www.w3.org/2000/svg" -->
-            <!--       class="icon" -->
-            <!--       viewBox="0 0 512 512" -->
-            <!--     > -->
-            <!--       <!--!Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.-->
-            <!--       <path -->
-            <!--         d="M448 160l-128 0 0-32 128 0 0 32zM48 64C21.5 64 0 85.5 0 112l0 64c0 26.5 21.5 48 48 48l416 0c26.5 0 48-21.5 48-48l0-64c0-26.5-21.5-48-48-48L48 64zM448 352l0 32-256 0 0-32 256 0zM48 288c-26.5 0-48 21.5-48 48l0 64c0 26.5 21.5 48 48 48l416 0c26.5 0 48-21.5 48-48l0-64c0-26.5-21.5-48-48-48L48 288z" -->
-            <!--       /></svg -->
-            <!--     >) -->
-            <!--   </a> -->
-            <!-- </div> -->
-            <div class="element">
-                <a
-                    href="/grafana/d/rYdddlPWk/linux?orgId=1&from=now-1h&to=now&timezone=browser&var-datasource=fef8popjmx340e&var-job=node&var-node=localhost:9100&var-diskdevices=%5Ba-z%5D%2B%7Cnvme%5B0-9%5D%2Bn%5B0-9%5D%2B%7Cmmcblk%5B0-9%5D%2B&kiosk=true"
-                    >Grafana
-                    <svg
-                        class="icon"
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 512 512"
-                    >
-                        <!--!Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.-->
-                        <path
-                            d="M64 64c0-17.7-14.3-32-32-32S0 46.3 0 64L0 400c0 44.2 35.8 80 80 80l400 0c17.7 0 32-14.3 32-32s-14.3-32-32-32L80 416c-8.8 0-16-7.2-16-16L64 64zm406.6 86.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L320 210.7l-57.4-57.4c-12.5-12.5-32.8-12.5-45.3 0l-112 112c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L240 221.3l57.4 57.4c12.5 12.5 32.8 12.5 45.3 0l128-128z"
-                        />
-                    </svg>
-                </a>
-            </div>
-            <div class="element">
-                <a href="/solux/"
-                    >Solux (Golden Hour Map
-                    <svg
-                        class="icon"
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 512 512"
-                    >
-                        <!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc. -->
-                        <path
-                            d="M361.5 1.2c5 2.1 8.6 6.6 9.6 11.9L391 121l107.9 19.8c5.3 1 9.8 4.6 11.9 9.6s1.5 10.7-1.6 15.2L446.9 256l62.3 90.3c3.1 4.5 3.7 10.2 1.6 15.2s-6.6 8.6-11.9 9.6L391 391 371.1 498.9c-1 5.3-4.6 9.8-9.6 11.9s-10.7 1.5-15.2-1.6L256 446.9l-90.3 62.3c-4.5 3.1-10.2 3.7-15.2 1.6s-8.6-6.6-9.6-11.9L121 391 13.1 371.1c-5.3-1-9.8-4.6-11.9-9.6s-1.5-10.7 1.6-15.2L65.1 256 2.8 165.7c-3.1-4.5-3.7-10.2-1.6-15.2s6.6-8.6 11.9-9.6L121 121 140.9 13.1c1-5.3 4.6-9.8 9.6-11.9s10.7-1.5 15.2 1.6L256 65.1 346.3 2.8c4.5-3.1 10.2-3.7 15.2-1.6zM160 256a96 96 0 1 1 192 0 96 96 0 1 1 -192 0zm224 0a128 128 0 1 0 -256 0 128 128 0 1 0 256 0z"
-                        />
-                    </svg>
-                    )
-                </a>
-            </div>
-            <div class="element">
-                <a href="/job-applier/">Job Applier (AI Applications)</a>
-            </div>
-            <div class="element">
-                <a href="/infotb/">Info TB (Live Transit Map)</a>
-            </div>
+        <div class="site-shell">
+            <header class="site-header">
+                <p class="eyebrow">archnet services</p>
+                <h1>Welcome home.</h1>
+                <p class="intro">
+                    A quick, quiet starting point for the media, monitoring, and tools hosted
+                    on this server.
+                </p>
+            </header>
+
+            <main>
+                <section class="service-section" aria-labelledby="media-heading">
+                    <h2 id="media-heading">Media &amp; downloads</h2>
+                    <div class="service-grid">
+                        <a class="service-card" href="/jellyfin">
+                            <span class="service-icon" aria-hidden="true">▶</span>
+                            <span class="service-copy">
+                                <span class="service-name">Jellyfin</span>
+                                <span class="service-description">Movies and series</span>
+                            </span>
+                            <span class="service-arrow" aria-hidden="true">→</span>
+                        </a>
+                        <a class="service-card" href="/calibre">
+                            <span class="service-icon" aria-hidden="true">▤</span>
+                            <span class="service-copy">
+                                <span class="service-name">Calibre</span>
+                                <span class="service-description">Books and reading library</span>
+                            </span>
+                            <span class="service-arrow" aria-hidden="true">→</span>
+                        </a>
+                        <a class="service-card" href="/transmission">
+                            <span class="service-icon" aria-hidden="true">↓</span>
+                            <span class="service-copy">
+                                <span class="service-name">Transmission</span>
+                                <span class="service-description">Downloads and torrents</span>
+                            </span>
+                            <span class="service-arrow" aria-hidden="true">→</span>
+                        </a>
+                    </div>
+                </section>
+
+                <section class="service-section" aria-labelledby="tools-heading">
+                    <h2 id="tools-heading">Tools &amp; monitoring</h2>
+                    <div class="service-grid">
+                        <a
+                            class="service-card"
+                            href="/grafana/d/rYdddlPWk/linux?orgId=1&amp;from=now-1h&amp;to=now&amp;timezone=browser&amp;var-datasource=fef8popjmx340e&amp;var-job=node&amp;var-node=localhost:9100&amp;var-diskdevices=%5Ba-z%5D%2B%7Cnvme%5B0-9%5D%2Bn%5B0-9%5D%2B%7Cmmcblk%5B0-9%5D%2B&amp;kiosk=true"
+                        >
+                            <span class="service-icon" aria-hidden="true">⌁</span>
+                            <span class="service-copy">
+                                <span class="service-name">Grafana</span>
+                                <span class="service-description">Server metrics and dashboards</span>
+                            </span>
+                            <span class="service-arrow" aria-hidden="true">→</span>
+                        </a>
+                        <a class="service-card" href="/solux/">
+                            <span class="service-icon" aria-hidden="true">☼</span>
+                            <span class="service-copy">
+                                <span class="service-name">Solux</span>
+                                <span class="service-description">Golden hour map</span>
+                            </span>
+                            <span class="service-arrow" aria-hidden="true">→</span>
+                        </a>
+                        <a class="service-card" href="/job-applier/">
+                            <span class="service-icon" aria-hidden="true">✦</span>
+                            <span class="service-copy">
+                                <span class="service-name">Job Applier</span>
+                                <span class="service-description">AI-assisted applications</span>
+                            </span>
+                            <span class="service-arrow" aria-hidden="true">→</span>
+                        </a>
+                        <a class="service-card" href="/infotb/">
+                            <span class="service-icon" aria-hidden="true">⇄</span>
+                            <span class="service-copy">
+                                <span class="service-name">Info TB</span>
+                                <span class="service-description">Live transit map</span>
+                            </span>
+                            <span class="service-arrow" aria-hidden="true">→</span>
+                        </a>
+                    </div>
+                </section>
+            </main>
+
+            <footer class="site-footer">Private services · archnet</footer>
         </div>
     </body>
 </html>
