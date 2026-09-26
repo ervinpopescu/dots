@@ -406,33 +406,21 @@ svg > path {
                 background: var(--quiet);
             }
 
-            .service-status--responding {
+            .service-status--okay {
                 color: var(--mint);
             }
 
-            .service-status--responding .service-status-dot {
+            .service-status--okay .service-status-dot {
                 background: #70e5a4;
                 box-shadow: 0 0 0.55rem rgba(112, 229, 164, 0.7);
                 animation: status-flicker 2.8s ease-in-out infinite;
             }
 
-            .service-status--degraded {
-                color: #f4bd63;
-            }
-
-            .service-status--degraded .service-status-dot {
-                background: #f2b84b;
-                box-shadow: 0 0 0.55rem rgba(242, 184, 75, 0.68);
-                animation: status-flicker 2.8s ease-in-out infinite;
-            }
-
-            .service-status--unavailable,
-            .service-status--restricted {
+            .service-status--unavailable {
                 color: #ff858d;
             }
 
-            .service-status--unavailable .service-status-dot,
-            .service-status--restricted .service-status-dot {
+            .service-status--unavailable .service-status-dot {
                 background: #ff6673;
                 box-shadow: 0 0 0.5rem rgba(255, 102, 115, 0.55);
                 animation: status-flicker 2.8s ease-in-out infinite reverse;
