@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="14" fill="#090b14"/>
+  <text x="32" y="45" fill="#b7a0ff" font-family="system-ui, sans-serif" font-size="46" font-weight="600" text-anchor="middle">⌘</text>
+</svg>
