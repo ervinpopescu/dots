@@ -185,7 +185,7 @@
                     const timeout = window.setTimeout(() => controller.abort(), 2500);
                     try {
                         const response = await fetch(checkUrl.href, {
-                            method: "GET",
+                            method: card.dataset.jsonHealth === "grafana" ? "GET" : "HEAD",
                             cache: "no-store",
                             credentials: "same-origin",
                             redirect: "manual",
