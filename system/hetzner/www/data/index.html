@@ -40,7 +40,7 @@
                         <span class="section-index">01 / 02</span>
                     </div>
                     <div class="service-grid">
-                        <a class="service-card" href="/jellyfin">
+                        <a class="service-card" href="/jellyfin" data-status-url="/health/jellyfin">
                             <span class="service-icon" aria-hidden="true">▶</span>
                             <span class="service-copy">
                                 <span class="service-name">Jellyfin</span>
@@ -52,9 +52,7 @@
                         <a
                             class="service-card"
                             href="https://aslan.archnet.lol/calibre/"
-                            data-status-url="https://aslan.archnet.lol/calibre/"
-                            data-restricted-status="403"
-                            data-restricted-on-fetch-error="true"
+                            data-status-url="/health/calibre"
                         >
                             <span class="service-icon" aria-hidden="true">▤</span>
                             <span class="service-copy">
@@ -67,8 +65,9 @@
                         <a
                             class="service-card service-card--transmission"
                             href="/transmission"
-                            data-status-url="/transmission/rpc"
+                            data-status-url="/health/transmission"
                             data-reachable-status="409"
+                            data-reachable-header="X-Transmission-Session-Id"
                         >
                             <span class="service-icon" aria-hidden="true">↓</span>
                             <span class="service-copy">
@@ -90,6 +89,8 @@
                         <a
                             class="service-card"
                             href="/grafana/d/rYdddlPWk/linux?orgId=1&amp;from=now-1h&amp;to=now&amp;timezone=browser&amp;var-datasource=fef8popjmx340e&amp;var-job=node&amp;var-node=localhost:9100&amp;var-diskdevices=%5Ba-z%5D%2B%7Cnvme%5B0-9%5D%2Bn%5B0-9%5D%2B%7Cmmcblk%5B0-9%5D%2B&amp;kiosk=true"
+                            data-status-url="/health/grafana"
+                            data-json-health="grafana"
                         >
                             <span class="service-icon" aria-hidden="true">⌁</span>
                             <span class="service-copy">
@@ -99,7 +100,7 @@
                             </span>
                             <span class="service-arrow" aria-hidden="true">↗</span>
                         </a>
-                        <a class="service-card" href="/solux/">
+                        <a class="service-card" href="/solux/" data-status-url="/health/solux">
                             <span class="service-icon" aria-hidden="true">☼</span>
                             <span class="service-copy">
                                 <span class="service-name">Solux</span>
@@ -111,7 +112,7 @@
                         <a
                             class="service-card"
                             href="/job-applier/"
-                            data-restricted-on-fetch-error="true"
+                            data-status-url="/health/job-applier"
                         >
                             <span class="service-icon" aria-hidden="true">✦</span>
                             <span class="service-copy">
@@ -121,7 +122,7 @@
                             </span>
                             <span class="service-arrow" aria-hidden="true">↗</span>
                         </a>
-                        <a class="service-card" href="/infotb/">
+                        <a class="service-card" href="/infotb/" data-status-url="/health/infotb">
                             <span class="service-icon" aria-hidden="true">⇄</span>
                             <span class="service-copy">
                                 <span class="service-name">Info TB</span>
@@ -167,6 +168,7 @@
                     status.classList.remove(
                         "service-status--responding",
                         "service-status--restricted",
+                        "service-status--degraded",
                         "service-status--unavailable",
                     );
                     if (state !== "checking") {
@@ -177,43 +179,63 @@
                             ? "Responding"
                             : state === "restricted"
                               ? "Restricted"
-                              : "Unavailable";
+                              : state === "degraded"
+                                ? "Degraded"
+                                : "Unavailable";
                 };
 
-                const checkUrl = new URL(card.dataset.statusUrl || card.href, location.href);
-                if (checkUrl.origin !== location.origin) {
+                const checkUrl = new URL(card.dataset.statusUrl, location.href);
+                if (checkUrl.origin !== location.origin || !checkUrl.pathname.startsWith("/health/")) {
                     updateStatus("restricted");
                     return;
                 }
 
+                let checking = false;
                 const checkReachability = async () => {
+                    if (checking) return;
+                    checking = true;
                     const controller = new AbortController();
-                    const timeout = window.setTimeout(() => controller.abort(), 5000);
+                    const timeout = window.setTimeout(() => controller.abort(), 2500);
                     try {
                         const response = await fetch(checkUrl.href, {
                             method: "GET",
                             cache: "no-store",
+                            credentials: "same-origin",
+                            redirect: "manual",
                             signal: controller.signal,
                         });
-                        const restricted =
-                            card.dataset.restrictedStatus === String(response.status);
-                        const responds =
-                            response.ok ||
-                            response.status === 401 ||
-                            response.status === 403 ||
-                            card.dataset.reachableStatus === String(response.status);
-                        response.body?.cancel().catch(() => {});
-                        updateStatus(
-                            restricted ? "restricted" : responds ? "responding" : "unavailable",
-                        );
+                        let state = "unavailable";
+                        if (response.status === 401 || response.status === 403) {
+                            state = "restricted";
+                            response.body?.cancel().catch(() => {});
+                        } else if (response.status === 429) {
+                            state = "degraded";
+                        } else if (
+                            response.status === Number(card.dataset.reachableStatus) &&
+                            (!card.dataset.reachableHeader ||
+                                response.headers.has(card.dataset.reachableHeader))
+                        ) {
+                            state = "responding";
+                            response.body?.cancel().catch(() => {});
+                        } else if (response.ok && card.dataset.jsonHealth === "grafana") {
+                            try {
+                                const health = await response.json();
+                                state = health.database === "ok" ? "responding" : "degraded";
+                            } catch {
+                                state = "degraded";
+                            }
+                        } else if (response.ok) {
+                            state = "responding";
+                            response.body?.cancel().catch(() => {});
+                        } else {
+                            response.body?.cancel().catch(() => {});
+                        }
+                        updateStatus(state);
                     } catch {
-                        updateStatus(
-                            card.dataset.restrictedOnFetchError === "true"
-                                ? "restricted"
-                                : "unavailable",
-                        );
+                        updateStatus("unavailable");
                     } finally {
                         window.clearTimeout(timeout);
+                        checking = false;
                     }
                 };
 
