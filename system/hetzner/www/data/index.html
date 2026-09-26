@@ -66,8 +66,6 @@
                             class="service-card service-card--transmission"
                             href="/transmission"
                             data-status-url="/health/transmission"
-                            data-reachable-status="409"
-                            data-reachable-header="X-Transmission-Session-Id"
                         >
                             <span class="service-icon" aria-hidden="true">↓</span>
                             <span class="service-copy">
@@ -165,28 +163,17 @@
                     if (status.dataset.state === state) return;
 
                     status.dataset.state = state;
-                    status.classList.remove(
-                        "service-status--responding",
-                        "service-status--restricted",
-                        "service-status--degraded",
-                        "service-status--unavailable",
-                    );
+                    status.classList.remove("service-status--okay", "service-status--unavailable");
                     if (state !== "checking") {
                         status.classList.add(`service-status--${state}`);
                     }
                     label.textContent =
-                        state === "responding"
-                            ? "Responding"
-                            : state === "restricted"
-                              ? "Restricted"
-                              : state === "degraded"
-                                ? "Degraded"
-                                : "Unavailable";
+                        state === "okay" ? "Okay" : state === "checking" ? "Checking" : "Unavailable";
                 };
 
                 const checkUrl = new URL(card.dataset.statusUrl, location.href);
                 if (checkUrl.origin !== location.origin || !checkUrl.pathname.startsWith("/health/")) {
-                    updateStatus("restricted");
+                    updateStatus("unavailable");
                     return;
                 }
 
@@ -205,27 +192,15 @@
                             signal: controller.signal,
                         });
                         let state = "unavailable";
-                        if (response.status === 401 || response.status === 403) {
-                            state = "restricted";
-                            response.body?.cancel().catch(() => {});
-                        } else if (response.status === 429) {
-                            state = "degraded";
-                        } else if (
-                            response.status === Number(card.dataset.reachableStatus) &&
-                            (!card.dataset.reachableHeader ||
-                                response.headers.has(card.dataset.reachableHeader))
-                        ) {
-                            state = "responding";
-                            response.body?.cancel().catch(() => {});
-                        } else if (response.ok && card.dataset.jsonHealth === "grafana") {
+                        if (response.ok && card.dataset.jsonHealth === "grafana") {
                             try {
                                 const health = await response.json();
-                                state = health.database === "ok" ? "responding" : "degraded";
+                                state = health.database === "ok" ? "okay" : "unavailable";
                             } catch {
-                                state = "degraded";
+                                state = "unavailable";
                             }
                         } else if (response.ok) {
-                            state = "responding";
+                            state = "okay";
                             response.body?.cancel().catch(() => {});
                         } else {
                             response.body?.cancel().catch(() => {});
