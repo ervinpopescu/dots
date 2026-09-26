@@ -11,466 +11,6 @@
         <link rel="icon" type="image/svg+xml" href="favicon.svg" />
         <title>archnet — home node</title>
         <link rel="stylesheet" href="index.css" />
-        <style>
-            :root {
-                color-scheme: dark;
-                --ink: #f4f4fb;
-                --muted: #9a9caf;
-                --quiet: #696d81;
-                --panel: rgba(19, 22, 35, 0.82);
-                --line: rgba(194, 200, 227, 0.12);
-                --violet: #b7a0ff;
-                --mint: #9af2d3;
-                --glow: rgba(138, 115, 255, 0.2);
-            }
-
-            *,
-            *::before,
-            *::after {
-                box-sizing: border-box;
-            }
-
-            html {
-                min-width: 320px;
-                background: #090b14;
-            }
-
-            body {
-                min-height: 100vh;
-                margin: 0;
-                overflow-x: hidden;
-                background:
-                    radial-gradient(ellipse at 16% 4%, rgba(85, 59, 147, 0.32), transparent 31rem),
-                    radial-gradient(ellipse at 92% 44%, rgba(20, 116, 115, 0.14), transparent 34rem),
-                    linear-gradient(155deg, #0b0d18 0%, #0b0d15 52%, #0d1118 100%);
-                color: var(--ink);
-                font-family:
-                    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-                    "Segoe UI", sans-serif;
-                font-size: 16px;
-                line-height: 1.5;
-            }
-
-            body::before {
-                position: fixed;
-                z-index: 0;
-                background-image:
-                    linear-gradient(rgba(180, 188, 220, 0.027) 1px, transparent 1px),
-                    linear-gradient(90deg, rgba(180, 188, 220, 0.027) 1px, transparent 1px);
-                background-size: 48px 48px;
-                content: "";
-                inset: 0;
-                mask-image: linear-gradient(to bottom, black, transparent 82%);
-                pointer-events: none;
-            }
-
-            a {
-                color: inherit;
-                text-decoration: none;
-            }
-
-            .site-shell {
-                position: relative;
-                z-index: 1;
-                display: flex;
-                width: min(100% - 3rem, 70rem);
-                min-height: 100vh;
-                min-height: 100svh;
-                flex-direction: column;
-                margin: 0 auto;
-                padding: 0.95rem 0 1rem;
-            }
-
-            .topbar {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                padding: 0.15rem 0 0.9rem;
-                border-bottom: 1px solid var(--line);
-            }
-
-            .brand {
-                display: inline-flex;
-                align-items: center;
-                gap: 0.7rem;
-                font-size: 0.8rem;
-                font-weight: 750;
-                letter-spacing: 0.11em;
-                text-transform: uppercase;
-            }
-
-            .brand-mark {
-                display: grid;
-                width: 2rem;
-                height: 2rem;
-                place-items: center;
-                border: 1px solid rgba(183, 160, 255, 0.42);
-                border-radius: 0.65rem;
-                background: linear-gradient(145deg, rgba(183, 160, 255, 0.2), rgba(154, 242, 211, 0.08));
-                color: var(--violet);
-                font-size: 1rem;
-                box-shadow: 0 0 1.4rem var(--glow);
-            }
-
-            .topbar-note,
-            .eyebrow,
-            .section-index,
-            .service-tag {
-                font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-            }
-
-            .topbar-note {
-                color: var(--quiet);
-                font-size: 0.7rem;
-                letter-spacing: 0.08em;
-                text-transform: uppercase;
-            }
-
-            .hero {
-                position: relative;
-                display: flex;
-                min-height: 12rem;
-                align-items: center;
-                justify-content: space-between;
-                gap: 1.5rem;
-                padding: 1.75rem 0 1.5rem;
-                border-bottom: 1px solid var(--line);
-            }
-
-            .hero-copy {
-                max-width: 42rem;
-            }
-
-            .eyebrow {
-                display: inline-flex;
-                align-items: center;
-                gap: 0.6rem;
-                margin: 0 0 1rem;
-                color: var(--mint);
-                font-size: 0.72rem;
-                letter-spacing: 0.13em;
-                text-transform: uppercase;
-            }
-
-            .eyebrow::before {
-                width: 0.4rem;
-                height: 0.4rem;
-                border-radius: 50%;
-                background: var(--mint);
-                box-shadow: 0 0 0.8rem rgba(154, 242, 211, 0.75);
-                content: "";
-            }
-
-            h1,
-            h2,
-            p {
-                margin-top: 0;
-            }
-
-            h1 {
-                max-width: none;
-                margin-bottom: 0.4rem;
-                font-size: clamp(2rem, 4.5vw, 3.5rem);
-                font-weight: 760;
-                letter-spacing: -0.075em;
-                line-height: 0.93;
-            }
-
-            .hero-accent {
-                color: var(--violet);
-                letter-spacing: -0.01em;
-                text-shadow: 0 0 2.2rem rgba(183, 160, 255, 0.3);
-            }
-
-            .intro {
-                max-width: 38rem;
-                margin-bottom: 0;
-                color: var(--muted);
-                font-size: 0.94rem;
-            }
-
-            .hero-art {
-                position: relative;
-                display: grid;
-                flex: 0 0 8rem;
-                width: 8rem;
-                height: 8rem;
-                place-items: center;
-                margin-right: 1.5rem;
-                border: 1px solid rgba(183, 160, 255, 0.12);
-                border-radius: 50%;
-                background: radial-gradient(circle, rgba(129, 105, 231, 0.13), transparent 67%);
-            }
-
-            .hero-art::before,
-            .hero-art::after {
-                position: absolute;
-                border: 1px solid rgba(183, 160, 255, 0.24);
-                border-radius: 50%;
-                content: "";
-                inset: 1rem;
-            }
-
-            .hero-art::after {
-                border-color: rgba(154, 242, 211, 0.2);
-                transform: rotateX(66deg) rotate(-26deg) scale(1.18);
-            }
-
-            .hero-glyph {
-                color: var(--violet);
-                font-size: 4.3rem;
-                line-height: 1;
-                text-shadow: 0 0 2rem rgba(183, 160, 255, 0.58);
-            }
-
-            main {
-                display: flex;
-                flex: 1;
-                flex-direction: column;
-                justify-content: space-evenly;
-            }
-
-            .service-section {
-                padding-top: 1.1rem;
-            }
-
-            .section-heading {
-                display: flex;
-                align-items: baseline;
-                gap: 0.8rem;
-                margin-bottom: 0.75rem;
-            }
-
-            h2 {
-                margin-bottom: 0;
-                font-size: 1rem;
-                font-weight: 700;
-                letter-spacing: -0.015em;
-            }
-
-            .section-index {
-                color: var(--quiet);
-                font-size: 0.7rem;
-                letter-spacing: 0.04em;
-            }
-
-            .service-grid {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
-                gap: 0.7rem;
-            }
-
-            .service-card {
-                position: relative;
-                display: flex;
-                min-height: 5rem;
-                align-items: center;
-                gap: 0.8rem;
-                overflow: hidden;
-                padding: 0.75rem 0.9rem;
-                border: 1px solid var(--line);
-                border-radius: 0.9rem;
-                background: var(--panel);
-                box-shadow: 0 1.1rem 2.8rem rgba(0, 0, 0, 0.15);
-                backdrop-filter: blur(14px);
-                transition:
-                    background 180ms ease,
-                    border-color 180ms ease,
-                    box-shadow 180ms ease,
-                    transform 180ms ease;
-            }
-
-            .service-card::before {
-                position: absolute;
-                width: 7rem;
-                height: 7rem;
-                border-radius: 50%;
-                background: var(--card-glow, rgba(183, 160, 255, 0.14));
-                content: "";
-                filter: blur(1.5rem);
-                opacity: 0;
-                pointer-events: none;
-                right: -3rem;
-                top: -3.5rem;
-                transition: opacity 180ms ease;
-            }
-
-            .service-card:hover {
-                transform: translateY(-3px);
-                border-color: rgba(183, 160, 255, 0.4);
-                background: rgba(26, 29, 46, 0.96);
-                box-shadow: 0 1.4rem 3rem rgba(0, 0, 0, 0.27), 0 0 1.8rem rgba(120, 99, 220, 0.1);
-            }
-
-            .service-card:hover::before {
-                opacity: 1;
-            }
-
-            .service-card:focus-visible {
-                outline: 2px solid var(--mint);
-                outline-offset: 3px;
-            }
-
-            .service-icon {
-                position: relative;
-                z-index: 1;
-                display: grid;
-                flex: 0 0 2.8rem;
-                width: 2.8rem;
-                height: 2.8rem;
-                place-items: center;
-                border: 1px solid rgba(183, 160, 255, 0.2);
-                border-radius: 0.8rem;
-                background: linear-gradient(145deg, rgba(183, 160, 255, 0.16), rgba(183, 160, 255, 0.04));
-                color: var(--icon-color, var(--violet));
-                font-size: 1.2rem;
-            }
-
-            .service-copy {
-                position: relative;
-                z-index: 1;
-                display: grid;
-                flex: 1;
-                gap: 0.16rem;
-                min-width: 0;
-            }
-
-            .service-name {
-                font-size: 0.98rem;
-                font-weight: 700;
-                letter-spacing: -0.02em;
-            }
-
-            .service-description {
-                color: var(--muted);
-                font-size: 0.83rem;
-            }
-
-            .service-tag {
-                color: var(--quiet);
-                font-size: 0.58rem;
-                letter-spacing: 0.06em;
-                text-transform: uppercase;
-            }
-
-            .service-arrow {
-                position: relative;
-                z-index: 1;
-                margin-left: auto;
-                color: var(--quiet);
-                font-size: 1.2rem;
-                transition: color 180ms ease, transform 180ms ease;
-            }
-
-            .service-card:hover .service-arrow,
-            .service-card:focus-visible .service-arrow {
-                transform: translateX(0.2rem);
-                color: var(--mint);
-            }
-
-            .service-card--transmission {
-                --card-glow: rgba(154, 242, 211, 0.17);
-                --icon-color: var(--mint);
-                border-color: rgba(154, 242, 211, 0.22);
-                background: linear-gradient(115deg, rgba(18, 34, 39, 0.9), rgba(19, 22, 35, 0.8) 70%);
-            }
-
-            .service-card--transmission .service-icon {
-                border-color: rgba(154, 242, 211, 0.22);
-                background: linear-gradient(145deg, rgba(154, 242, 211, 0.16), rgba(154, 242, 211, 0.04));
-            }
-
-            .site-footer {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                gap: 1rem;
-                margin-top: 1.3rem;
-                padding-top: 0.8rem;
-                border-top: 1px solid var(--line);
-                color: var(--quiet);
-                font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-                font-size: 0.67rem;
-                letter-spacing: 0.06em;
-                text-transform: uppercase;
-            }
-
-            @media (prefers-reduced-motion: reduce) {
-                *,
-                *::before,
-                *::after {
-                    scroll-behavior: auto !important;
-                    transition-duration: 0.01ms !important;
-                }
-            }
-
-            @media (max-width: 42rem) {
-                .site-shell {
-                    width: min(100% - 1.25rem, 70rem);
-                }
-
-                .topbar-note {
-                    font-size: 0.6rem;
-                    letter-spacing: 0.04em;
-                }
-
-                .hero {
-                    min-height: 0;
-                    padding: 1rem 0 0.8rem;
-                }
-
-                h1 {
-                    font-size: clamp(1.9rem, 9vw, 2.8rem);
-                }
-
-                .intro {
-                    font-size: 0.85rem;
-                    line-height: 1.4;
-                }
-
-                .hero-art {
-                    display: none;
-                }
-
-                .service-section {
-                    padding-top: 0.8rem;
-                }
-
-                .service-grid {
-                    gap: 0.5rem;
-                }
-
-                .service-card {
-                    min-height: 4rem;
-                    gap: 0.6rem;
-                    padding: 0.45rem 0.65rem;
-                }
-
-                .service-icon {
-                    flex-basis: 2.4rem;
-                    width: 2.4rem;
-                    height: 2.4rem;
-                }
-
-                .service-name {
-                    font-size: 0.9rem;
-                }
-
-                .service-description {
-                    font-size: 0.74rem;
-                    line-height: 1.3;
-                }
-
-                .service-tag {
-                    display: none;
-                }
-
-                .site-footer {
-                    margin-top: 0.65rem;
-                    padding-top: 0.55rem;
-                }
-            }
-        </style>
     </head>
     <body>
         <div class="site-shell">
@@ -509,7 +49,13 @@
                             </span>
                             <span class="service-arrow" aria-hidden="true">↗</span>
                         </a>
-                        <a class="service-card" href="/calibre">
+                        <a
+                            class="service-card"
+                            href="https://aslan.archnet.lol/calibre/"
+                            data-status-url="https://aslan.archnet.lol/calibre/"
+                            data-restricted-status="403"
+                            data-restricted-on-fetch-error="true"
+                        >
                             <span class="service-icon" aria-hidden="true">▤</span>
                             <span class="service-copy">
                                 <span class="service-name">Calibre</span>
@@ -518,7 +64,12 @@
                             </span>
                             <span class="service-arrow" aria-hidden="true">↗</span>
                         </a>
-                        <a class="service-card service-card--transmission" href="/transmission">
+                        <a
+                            class="service-card service-card--transmission"
+                            href="/transmission"
+                            data-status-url="/transmission/rpc"
+                            data-reachable-status="409"
+                        >
                             <span class="service-icon" aria-hidden="true">↓</span>
                             <span class="service-copy">
                                 <span class="service-name">Transmission</span>
@@ -557,7 +108,11 @@
                             </span>
                             <span class="service-arrow" aria-hidden="true">↗</span>
                         </a>
-                        <a class="service-card" href="/job-applier/">
+                        <a
+                            class="service-card"
+                            href="/job-applier/"
+                            data-restricted-on-fetch-error="true"
+                        >
                             <span class="service-icon" aria-hidden="true">✦</span>
                             <span class="service-copy">
                                 <span class="service-name">Job Applier</span>
@@ -584,5 +139,87 @@
                 <span>Independent by design</span>
             </footer>
         </div>
+        <script>
+            const serviceCards = document.querySelectorAll(".service-card");
+
+            serviceCards.forEach((card) => {
+                const status = document.createElement("span");
+                status.className = "service-status";
+                status.dataset.state = "checking";
+                status.setAttribute("role", "status");
+                status.setAttribute("aria-live", "polite");
+                status.setAttribute("aria-atomic", "true");
+
+                const dot = document.createElement("span");
+                dot.className = "service-status-dot";
+                dot.setAttribute("aria-hidden", "true");
+
+                const label = document.createElement("span");
+                label.className = "service-status-label";
+                label.textContent = "Checking";
+                status.append(dot, label);
+                card.querySelector(".service-arrow").before(status);
+
+                const updateStatus = (state) => {
+                    if (status.dataset.state === state) return;
+
+                    status.dataset.state = state;
+                    status.classList.remove(
+                        "service-status--responding",
+                        "service-status--restricted",
+                        "service-status--unavailable",
+                    );
+                    if (state !== "checking") {
+                        status.classList.add(`service-status--${state}`);
+                    }
+                    label.textContent =
+                        state === "responding"
+                            ? "Responding"
+                            : state === "restricted"
+                              ? "Restricted"
+                              : "Unavailable";
+                };
+
+                const checkUrl = new URL(card.dataset.statusUrl || card.href, location.href);
+                if (checkUrl.origin !== location.origin) {
+                    updateStatus("restricted");
+                    return;
+                }
+
+                const checkReachability = async () => {
+                    const controller = new AbortController();
+                    const timeout = window.setTimeout(() => controller.abort(), 5000);
+                    try {
+                        const response = await fetch(checkUrl.href, {
+                            method: "GET",
+                            cache: "no-store",
+                            signal: controller.signal,
+                        });
+                        const restricted =
+                            card.dataset.restrictedStatus === String(response.status);
+                        const responds =
+                            response.ok ||
+                            response.status === 401 ||
+                            response.status === 403 ||
+                            card.dataset.reachableStatus === String(response.status);
+                        response.body?.cancel().catch(() => {});
+                        updateStatus(
+                            restricted ? "restricted" : responds ? "responding" : "unavailable",
+                        );
+                    } catch {
+                        updateStatus(
+                            card.dataset.restrictedOnFetchError === "true"
+                                ? "restricted"
+                                : "unavailable",
+                        );
+                    } finally {
+                        window.clearTimeout(timeout);
+                    }
+                };
+
+                checkReachability();
+                window.setInterval(checkReachability, 60000);
+            });
+        </script>
     </body>
 </html>
