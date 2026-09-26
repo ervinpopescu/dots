@@ -71,7 +71,11 @@
             .site-shell {
                 position: relative;
                 z-index: 1;
+                display: flex;
                 width: min(100% - 3rem, 70rem);
+                min-height: 100vh;
+                min-height: 100svh;
+                flex-direction: column;
                 margin: 0 auto;
                 padding: 0.95rem 0 1rem;
             }
@@ -215,6 +219,13 @@
                 font-size: 4.3rem;
                 line-height: 1;
                 text-shadow: 0 0 2rem rgba(183, 160, 255, 0.58);
+            }
+
+            main {
+                display: flex;
+                flex: 1;
+                flex-direction: column;
+                justify-content: space-evenly;
             }
 
             .service-section {
