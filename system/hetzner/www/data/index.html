@@ -182,7 +182,8 @@
                     if (checking) return;
                     checking = true;
                     const controller = new AbortController();
-                    const timeout = window.setTimeout(() => controller.abort(), 2500);
+                    const timeoutMs = card.dataset.statusUrl === "/health/transmission" ? 14000 : 2500;
+                    const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
                     try {
                         const response = await fetch(checkUrl.href, {
                             method: card.dataset.jsonHealth === "grafana" ? "GET" : "HEAD",
