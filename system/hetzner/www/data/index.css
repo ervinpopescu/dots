@@ -416,6 +416,16 @@ svg > path {
                 animation: status-flicker 2.8s ease-in-out infinite;
             }
 
+            .service-status--degraded {
+                color: #f4bd63;
+            }
+
+            .service-status--degraded .service-status-dot {
+                background: #f2b84b;
+                box-shadow: 0 0 0.55rem rgba(242, 184, 75, 0.68);
+                animation: status-flicker 2.8s ease-in-out infinite;
+            }
+
             .service-status--unavailable,
             .service-status--restricted {
                 color: #ff858d;
