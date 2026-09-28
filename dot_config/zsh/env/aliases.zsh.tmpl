@@ -9,7 +9,7 @@ alias clear="clear; tmux server-info &>/dev/null; [[ $? -eq 1 ]] && tmux clearhi
 alias csv2json="mlr --c2j cat | jq"
 # alias cd=z
 alias cp="cp -v"
-alias df="df -h -x tmpfs -x devtmpfs -x squashfs"
+alias df="df -h{{ if .is_linux }} -x tmpfs -x devtmpfs -x squashfs{{ end }}"
 alias diff="diff --color=auto --ignore-all-space --ignore-blank-lines --ignore-case --ignore-space-change --ignore-trailing-space --ignore-file-name-case --ignore-tab-expansion"
 alias dosbox='dosbox -conf "$XDG_CONFIG_HOME"/dosbox/dosbox.conf'
 alias egrep='egrep --color=auto'
@@ -98,7 +98,7 @@ alias clear="clear_terminal"
 alias copy="xclip -selection clipboard"
 alias code="code --extensions-dir \"$XDG_DATA_HOME/vscode\""
 alias cp="cp -vi"
-alias df="df -h -x tmpfs -x devtmpfs -x squashfs"
+alias df="df -h{{ if .is_linux }} -x tmpfs -x devtmpfs -x squashfs{{ end }}"
 alias diff="diff --color=auto --ignore-all-space --ignore-blank-lines --ignore-case --ignore-space-change --ignore-trailing-space --ignore-file-name-case --ignore-tab-expansion"
 alias dosbox='dosbox -conf "$XDG_CONFIG_HOME"/dosbox/dosbox.conf'
 alias egrep='egrep --color=auto'
