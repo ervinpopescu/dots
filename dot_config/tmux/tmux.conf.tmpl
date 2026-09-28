@@ -8,6 +8,20 @@ set-option -g history-limit 50000
 set-option -g mouse on
 set-option -g set-titles on
 set-option -g set-titles-string "#S | #W"
+# Keep #W authoritative in both current and inactive status entries. Explicit
+# rename-window remains available; shell/app title sequences and auto-rename
+# must not replace the manually chosen window name.
+set-window-option -g automatic-rename off
+set-window-option -g allow-rename off
+# Global window options are defaults, so enforce them on windows that already
+# exist whenever this config is sourced.
+run-shell 'tmux list-windows -a -F "##{window_id}" | while IFS= read -r window_id; do tmux set-window-option -t "$window_id" automatic-rename off; tmux set-window-option -t "$window_id" allow-rename off; done'
+# tmux-resurrect restores per-window automatic-rename values after config load.
+set-option -g @resurrect-hook-post-restore-all 'tmux list-windows -a -F "#{window_id}" | while IFS= read -r window_id; do tmux set-window-option -t "$window_id" automatic-rename off; tmux set-window-option -t "$window_id" allow-rename off; done'
+# Remove indexed hooks installed by tmux-window-name in earlier configs.
+set-hook -gu after-new-window[8921]
+set-hook -gu after-select-window[8921]
+set-hook -gu after-rename-window[8921]
 set-option default-terminal "tmux-256color"
 
 # Pane border & dynamic titles
@@ -100,6 +114,8 @@ set-option -g @plugin 'tmux-plugins/tpm'
 #### THEMING ####
 
 set-option -g @plugin 'ervinpopescu/catppuccin-tmux'
+set-option -g @catppuccin_window_text "#W "
+set-option -g @catppuccin_window_current_text "#W "
 run ~/.config/tmux/plugins/catppuccin-tmux/catppuccin.tmux
 {{ if .has_battery -}}
 set-option -g @plugin 'tmux-plugins/tmux-battery'
@@ -117,8 +133,6 @@ set-option -g @catppuccin_window_middle_separator " | "
 set-option -g @catppuccin_window_number_position "left"
 set-option -g @catppuccin_window_default_fill "all"
 set-option -g @catppuccin_window_current_fill "all"
-set-option -g @catppuccin_window_default_text "#W "
-set-option -g @catppuccin_window_current_text "#W "
 
 set-option -g @catppuccin_status_left_separator  ""
 set-option -g @catppuccin_status_left_separator_inverse "no"
