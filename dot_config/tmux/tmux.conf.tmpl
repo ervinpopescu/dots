@@ -117,6 +117,10 @@ set-option -g @plugin 'ervinpopescu/catppuccin-tmux'
 set-option -g @catppuccin_window_text "#W "
 set-option -g @catppuccin_window_current_text "#W "
 run ~/.config/tmux/plugins/catppuccin-tmux/catppuccin.tmux
+# tmux replaces the status line with command prompts; opaque Mocha surfaces
+# keep prompts and ordinary messages readable instead of showing status through.
+set-option -g message-command-style "fg=#cdd6f4,bg=#1e1e2e,align=left"
+set-option -g message-style "fg=#cdd6f4,bg=#313244,align=left"
 {{ if .has_battery -}}
 set-option -g @plugin 'tmux-plugins/tmux-battery'
 {{ end -}}
