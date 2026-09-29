@@ -1,6 +1,7 @@
 README.md
 CLAUDE.md
 AGENTS.md
+SESSION.md
 LICENSE
 ruff.toml
 tmp
@@ -35,7 +36,11 @@ bin/dismiss-keychain-prompts
 {{ end }}
 
 {{ if not .is_hetzner }}
+.config/notify/config.env
 .config/systemd/**
+bin/notify-alert.sh
+bin/retire-solux-service.sh
+bin/systemd-notify-failure.sh
 {{ end }}
 
 {{ if .is_hetzner }}
