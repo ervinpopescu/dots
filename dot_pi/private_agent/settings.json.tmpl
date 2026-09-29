@@ -1,3 +1,11 @@
+{{- $destPath := joinPath .chezmoi.homeDir ".pi/agent/settings.json" -}}
+{{- $currentVersion := "0.87.1" -}}
+{{- if stat $destPath -}}
+  {{- $current := include $destPath | fromJson -}}
+  {{- if hasKey $current "lastChangelogVersion" -}}
+    {{- $currentVersion = get $current "lastChangelogVersion" -}}
+  {{- end -}}
+{{- end -}}
 {
   "autocompleteMaxVisible": 15,
   "collapseChangelog": true,
@@ -20,7 +28,7 @@
 {{- end }}
   "defaultThinkingLevel": "high",
   "hideThinkingBlock": true,
-  "lastChangelogVersion": "0.84.4",
+  "lastChangelogVersion": {{ $currentVersion | quote }},
   "packages": [
     "npm:pi-mcp-adapter",
     "npm:pi-subagents",
