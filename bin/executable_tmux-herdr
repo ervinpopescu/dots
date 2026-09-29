@@ -1,0 +1,1110 @@
+#!/usr/bin/env python3
+"""Safely plan/import one tmux session into a named Herdr session."""
+
+import argparse
+import errno
+import hashlib
+import json
+import os
+import pathlib
+import re
+import stat
+import subprocess
+import sys
+
+
+def run(argv, *, input_text=None):
+    return subprocess.run(
+        argv, input=input_text, text=True, check=True, capture_output=True
+    ).stdout
+
+
+def _proc_stat(path):
+    with path.open("rb") as stream:
+        raw = stream.read(4097)
+    if len(raw) > 4096:
+        raise ValueError("oversized proc stat")
+    text = raw.decode("ascii")
+    close = text.rfind(")")
+    if close < 0:
+        raise ValueError("malformed proc stat")
+    fields = text[close + 1 :].split()
+    if len(fields) < 6:
+        raise ValueError("short proc stat")
+    return {"ppid": int(fields[1]), "pgrp": int(fields[2]), "tpgid": int(fields[5])}
+
+
+def _proc_children(proc_root, pid):
+    path = proc_root / str(pid) / "task" / str(pid) / "children"
+    with path.open("rb") as stream:
+        raw = stream.read(8193)
+    if len(raw) > 8192:
+        raise OverflowError
+    text = raw.decode("ascii")
+    values = [int(value) for value in text.split()]
+    if len(values) > 512:
+        raise OverflowError
+    return values
+
+
+def _read_pi_environment(path):
+    """Stream bounded proc environ, retaining values only for the approved Pi keys."""
+    values = {}
+    duplicate = False
+    truncated = False
+    total = 0
+    key = bytearray()
+    value = bytearray()
+    after_equals = False
+    approved_name = None
+    capture = False
+    oversized_value = False
+    approved = {
+        b"PI_SESSION_FILE": "PI_SESSION_FILE",
+        b"PI_SESSION_ID": "PI_SESSION_ID",
+    }
+    with path.open("rb") as stream:
+        while total < 65536:
+            chunk = stream.read(min(4096, 65536 - total))
+            if not chunk:
+                break
+            total += len(chunk)
+            for byte in chunk:
+                if byte == 0:
+                    if capture and not oversized_value and approved_name:
+                        values[approved_name] = bytes(value).decode("utf-8", "strict")
+                    key.clear()
+                    value.clear()
+                    after_equals = False
+                    approved_name = None
+                    capture = False
+                    oversized_value = False
+                elif not after_equals:
+                    if byte == ord("="):
+                        after_equals = True
+                        approved_name = approved.get(bytes(key))
+                        if approved_name:
+                            if approved_name in values:
+                                duplicate = True
+                            else:
+                                capture = True
+                    elif len(key) < 64:
+                        key.append(byte)
+                    else:
+                        # Unusually long variable names are ignored without retaining values.
+                        after_equals = True
+                elif capture:
+                    if len(value) < 4096:
+                        value.append(byte)
+                    else:
+                        value.clear()
+                        capture = False
+                        oversized_value = True
+                        truncated = True
+        truncated = truncated or total == 65536
+    return values, truncated, duplicate
+
+
+def _valid_pi_session_path(value, home=None):
+    if not value or "\x00" in value:
+        return None
+    candidate = pathlib.Path(value)
+    if not candidate.is_absolute() or candidate.suffix != ".jsonl":
+        return None
+    try:
+        base = (
+            pathlib.Path(home or pathlib.Path.home())
+            .joinpath(".pi/agent/sessions")
+            .resolve(strict=True)
+        )
+        resolved = candidate.resolve(strict=True)
+        resolved.relative_to(base)
+        info = resolved.stat()
+        if not stat.S_ISREG(info.st_mode) or info.st_uid != os.getuid():
+            return None
+    except (OSError, ValueError, RuntimeError):
+        return None
+    return str(resolved)
+
+
+def _valid_pi_session_id(value):
+    # Pi requires alphanumeric endpoints and allows letters, digits, dot, underscore, hyphen.
+    if isinstance(value, str) and re.fullmatch(
+        r"[A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?", value
+    ):
+        return value
+    return None
+
+
+def validate_pi_session_ref(ref, home=None):
+    """Return a canonical trusted {kind, value} reference or a non-sensitive reason code."""
+    if not isinstance(ref, dict) or set(ref) != {"kind", "value"}:
+        return None, "invalid_session_reference"
+    kind, value = ref["kind"], ref["value"]
+    if not isinstance(kind, str) or not isinstance(value, str):
+        return None, "invalid_session_reference"
+    if kind == "path":
+        path = _valid_pi_session_path(value, home)
+        if path:
+            return {"kind": "path", "value": path}, None
+        return None, "invalid_session_path"
+    if kind == "id":
+        session_id = _valid_pi_session_id(value)
+        if session_id:
+            return {"kind": "id", "value": session_id}, None
+        return None, "invalid_session_id"
+    return None, "invalid_session_reference"
+
+
+def launch_pi(argv):
+    """Exec Pi from a positional-only helper command that Herdr cannot misparse."""
+    if not argv:
+        raise ValueError("missing Pi launcher command")
+    if argv[0] == "resume-pi":
+        if len(argv) != 3:
+            raise ValueError("resume-pi requires a reference kind and value")
+        ref, reason = validate_pi_session_ref({"kind": argv[1], "value": argv[2]})
+        if not ref:
+            raise ValueError(f"invalid Pi session reference ({reason})")
+        os.execvp("pi", ["pi", "--session", ref["value"]])
+        return 0
+    if argv[0] == "continue-pi":
+        if len(argv) != 1:
+            raise ValueError("continue-pi takes no arguments")
+        os.execvp("pi", ["pi", "--continue"])
+        return 0
+    raise ValueError("unknown Pi launcher command")
+
+
+def _beacon_directory(home=None, environ=None):
+    """Return the same absolute beacon directory used by the Pi extension."""
+    environ = os.environ if environ is None else environ
+    runtime = environ.get("XDG_RUNTIME_DIR")
+    if runtime and pathlib.Path(runtime).is_absolute():
+        return pathlib.Path(runtime) / "pi-herdr-sessions"
+    home_path = environ.get("HOME") or home
+    if home_path and pathlib.Path(home_path).is_absolute():
+        return pathlib.Path(home_path) / ".cache/pi-herdr-sessions"
+    return None
+
+
+class _UntrustedBeaconDirectory(Exception):
+    pass
+
+
+def _open_beacon_directory(directory):
+    """Open each absolute component without following symlinks; return a pinned leaf fd."""
+    if (
+        os.name != "posix"
+        or not hasattr(os, "O_DIRECTORY")
+        or not hasattr(os, "O_NOFOLLOW")
+        or os.open not in os.supports_dir_fd
+        or os.stat not in os.supports_dir_fd
+    ):
+        raise _UntrustedBeaconDirectory
+    flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0)
+    fd = os.open("/", flags)
+    try:
+        for component in pathlib.Path(directory).parts[1:]:
+            try:
+                next_fd = os.open(component, flags, dir_fd=fd)
+            except OSError as exc:
+                if exc.errno in (errno.ELOOP, errno.ENOTDIR):
+                    raise _UntrustedBeaconDirectory from exc
+                raise
+            os.close(fd)
+            fd = next_fd
+        info = os.fstat(fd)
+        if (
+            not stat.S_ISDIR(info.st_mode)
+            or info.st_uid != os.getuid()
+            or stat.S_IMODE(info.st_mode) != 0o700
+        ):
+            raise _UntrustedBeaconDirectory
+        return fd
+    except Exception:
+        os.close(fd)
+        raise
+
+
+def _read_pi_beacon(pid, pane_id, proc_root, home=None, environ=None):
+    """Read and validate the minimal private beacon relative to a pinned directory fd."""
+    directory = _beacon_directory(home, environ)
+    if directory is None:
+        return None, "beacon_directory_unavailable"
+    dir_fd = None
+    file_fd = None
+    try:
+        dir_fd = _open_beacon_directory(directory)
+        name = f"{pid}.json"
+        info = os.stat(name, dir_fd=dir_fd, follow_symlinks=False)
+        if stat.S_ISLNK(info.st_mode) or not stat.S_ISREG(info.st_mode):
+            return None, "beacon_invalid_file_type"
+        if info.st_uid != os.getuid():
+            return None, "beacon_wrong_owner"
+        if stat.S_IMODE(info.st_mode) != 0o600:
+            return None, "beacon_loose_permissions"
+        flags = os.O_RDONLY | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0)
+        file_fd = os.open(name, flags, dir_fd=dir_fd)
+        opened = os.fstat(file_fd)
+        if not stat.S_ISREG(opened.st_mode) or opened.st_ino != info.st_ino:
+            return None, "beacon_invalid_file_type"
+        if opened.st_uid != os.getuid():
+            return None, "beacon_wrong_owner"
+        if stat.S_IMODE(opened.st_mode) != 0o600:
+            return None, "beacon_loose_permissions"
+        with os.fdopen(file_fd, "rb", closefd=False) as stream:
+            raw = stream.read(16385)
+        if len(raw) > 16384:
+            return None, "beacon_malformed"
+
+        def unique_object(pairs):
+            result = {}
+            for key, value in pairs:
+                if key in result:
+                    raise ValueError("duplicate beacon field")
+                result[key] = value
+            return result
+
+        data = json.loads(raw, object_pairs_hook=unique_object)
+        if (
+            not isinstance(data, dict)
+            or set(data) != {"schema", "pid", "pane_id", "start_time", "session_ref"}
+            or type(data.get("schema")) is not int
+            or data["schema"] != 1
+        ):
+            return None, "beacon_invalid_schema"
+        if type(data.get("pid")) is not int or data.get("pid") != int(pid):
+            return None, "beacon_pid_mismatch"
+        if data.get("pane_id") != pane_id:
+            return None, "beacon_pane_mismatch"
+        if not isinstance(data.get("start_time"), str) or not re.fullmatch(
+            r"[0-9]+", data["start_time"]
+        ):
+            return None, "beacon_invalid_process_identity"
+        current = _proc_start_time(pathlib.Path(proc_root) / str(pid) / "stat")
+        if data["start_time"] != current:
+            return None, "beacon_stale_process"
+        ref, _reason = validate_pi_session_ref(data.get("session_ref"), home)
+        if not ref:
+            return None, "beacon_invalid_session_reference"
+        return ref, None
+    except FileNotFoundError:
+        return None, "beacon_missing"
+    except _UntrustedBeaconDirectory:
+        return None, "beacon_untrusted_directory"
+    except PermissionError:
+        return None, "beacon_permission_denied"
+    except (OSError, ValueError, UnicodeError, json.JSONDecodeError):
+        return None, "beacon_malformed"
+    finally:
+        if file_fd is not None:
+            os.close(file_fd)
+        if dir_fd is not None:
+            os.close(dir_fd)
+
+
+def _proc_start_time(path):
+    with path.open("rb") as stream:
+        raw = stream.read(4097)
+    if len(raw) > 4096:
+        raise ValueError("oversized proc stat")
+    text = raw.decode("ascii")
+    close = text.rfind(")")
+    if close < 0:
+        raise ValueError("malformed proc stat")
+    fields = text[close + 1 :].split()
+    if len(fields) < 20:
+        raise ValueError("short proc stat")
+    return fields[19]
+
+
+def resolve_pi_session(
+    pane_pid,
+    pane_tty,
+    proc_root="/proc",
+    home=None,
+    platform=None,
+    pane_id=None,
+    environ=None,
+):
+    """Resolve exact Pi session metadata from one unambiguous foreground process."""
+    platform = platform or sys.platform
+    proc_root = pathlib.Path(proc_root)
+    if platform != "linux":
+        return None, "unsupported_platform"
+    if not proc_root.is_dir():
+        return None, "proc_unavailable"
+    if (
+        not str(pane_pid).isdigit()
+        or not pane_tty
+        or not pathlib.Path(pane_tty).is_absolute()
+    ):
+        return None, "invalid_pane_metadata"
+    root = proc_root / str(pane_pid)
+    try:
+        root_stat = _proc_stat(root / "stat")
+        tty = os.path.realpath(pane_tty)
+        if not os.path.exists(tty):
+            return None, "tty_unavailable"
+        queue = [int(pane_pid)]
+        visited = set()
+        candidates = []
+        foreground_pids = []
+        vanished = False
+        truncated_environment = False
+        while queue and len(visited) < 512:
+            pid = queue.pop(0)
+            if pid in visited:
+                continue
+            visited.add(pid)
+            process = proc_root / str(pid)
+            try:
+                info = (
+                    root_stat if pid == int(pane_pid) else _proc_stat(process / "stat")
+                )
+                queue.extend(_proc_children(proc_root, pid))
+                if info["pgrp"] != root_stat["tpgid"]:
+                    continue
+                stdin_tty = os.path.realpath(process / "fd/0")
+                if stdin_tty != tty:
+                    continue
+                foreground_pids.append(pid)
+            except FileNotFoundError:
+                vanished = True
+            except PermissionError:
+                return None, "proc_permission_denied"
+            except (OSError, UnicodeError, ValueError):
+                continue
+            except OverflowError:
+                return None, "process_tree_too_large"
+        if queue:
+            return None, "process_tree_too_large"
+        beacon_failure = None
+        if pane_id:
+            beacon_candidates = []
+            for foreground_pid in foreground_pids:
+                beacon_ref, beacon_warning = _read_pi_beacon(
+                    foreground_pid, pane_id, proc_root, home, environ
+                )
+                if beacon_ref:
+                    beacon_candidates.append(beacon_ref)
+                elif beacon_warning != "beacon_missing":
+                    beacon_failure = beacon_warning
+            if len(beacon_candidates) > 1:
+                return None, "ambiguous_beacons"
+            if beacon_candidates:
+                return beacon_candidates[0], None
+        for foreground_pid in foreground_pids:
+            try:
+                env, truncated, duplicate = _read_pi_environment(
+                    proc_root / str(foreground_pid) / "environ"
+                )
+                truncated_environment |= truncated
+                if env.get("PI_SESSION_FILE") or env.get("PI_SESSION_ID"):
+                    candidates.append((foreground_pid, env, truncated, duplicate))
+            except FileNotFoundError:
+                vanished = True
+            except PermissionError:
+                return None, "proc_permission_denied"
+            except (OSError, UnicodeError, ValueError):
+                continue
+        if len(candidates) > 1:
+            return None, "ambiguous_processes"
+        if not candidates:
+            if truncated_environment:
+                return None, "environment_truncated"
+            if beacon_failure:
+                return None, beacon_failure
+            return None, "process_disappeared" if vanished else "session_ref_missing"
+        candidate_pid, env, truncated, duplicate = candidates[0]
+        if duplicate:
+            return None, "duplicate_session_environment"
+        warning = "environment_truncated" if truncated else None
+        if pane_id and beacon_failure:
+            warning = beacon_failure
+        if env.get("PI_SESSION_FILE"):
+            file_ref, _ = validate_pi_session_ref(
+                {"kind": "path", "value": env["PI_SESSION_FILE"]}, home
+            )
+            if file_ref:
+                return file_ref, warning
+            warning = "invalid_session_file_ignored" if warning is None else warning
+        if env.get("PI_SESSION_ID"):
+            id_ref, _ = validate_pi_session_ref(
+                {"kind": "id", "value": env["PI_SESSION_ID"]}, home
+            )
+            if id_ref:
+                return id_ref, warning
+            if env.get("PI_SESSION_FILE"):
+                return None, warning or "invalid_session_id"
+            return None, warning or "invalid_session_id"
+        if env.get("PI_SESSION_FILE"):
+            return None, warning or "invalid_session_file"
+        return None, warning or "session_ref_missing"
+    except FileNotFoundError:
+        return None, "process_disappeared"
+    except PermissionError:
+        return None, "proc_permission_denied"
+    except (OSError, ValueError, UnicodeError):
+        return None, "proc_read_error"
+
+
+def tmux_snapshot(session, resolve_pi_sessions=False, proc_root="/proc"):
+    sessions = run(["tmux", "list-sessions", "-F", "#{session_name}"]).splitlines()
+    if session not in sessions:
+        raise ValueError(f"tmux session not found: {session}")
+    windows = run(
+        [
+            "tmux",
+            "list-windows",
+            "-t",
+            session,
+            "-F",
+            "#{window_index}\t#{window_name}\t#{window_active}\t#{window_layout}",
+        ]
+    ).splitlines()
+    attached = (
+        run(
+            ["tmux", "display-message", "-p", "-t", session, "#{session_attached}"]
+        ).strip()
+        == "1"
+    )
+    result = {
+        "schema": 1,
+        "source": {"kind": "tmux"},
+        "name": session,
+        "attached": attached,
+        "tabs": [],
+        "pi_session_resolution": {
+            "enabled": resolve_pi_sessions,
+            "resolved": 0,
+            "unresolved": 0,
+            "warnings": [],
+        },
+    }
+    for row in windows:
+        index, name, active, layout = row.split("\t", 3)
+        pane_format = "#{pane_index}\t#{pane_active}\t#{pane_current_path}\t#{pane_current_command}\t#{pane_title}\t#{pane_width}\t#{pane_height}\t#{pane_left}\t#{pane_top}\t#{pane_right}\t#{pane_bottom}"
+        if resolve_pi_sessions:
+            pane_format += "\t#{pane_pid}\t#{pane_tty}\t#{pane_id}"
+        panes = run(
+            ["tmux", "list-panes", "-t", f"{session}:{index}", "-F", pane_format]
+        ).splitlines()
+        tab = {
+            "index": int(index),
+            "name": name,
+            "active": active == "1",
+            "tmux_layout": layout,
+            "panes": [],
+        }
+        for pane in panes:
+            fields = pane.split("\t", 13)
+            (
+                pindex,
+                pactive,
+                cwd,
+                command,
+                title,
+                width,
+                height,
+                left,
+                top,
+                right,
+                bottom,
+            ) = fields[:11]
+            pane_pid, pane_tty, pane_id = (
+                fields[11:14] if resolve_pi_sessions else (None, None, None)
+            )
+            cwd_exists = pathlib.Path(cwd).is_dir()
+            kind = classify(command)
+            if resolve_pi_sessions and kind["kind"] == "pi":
+                kind["session_ref"], resolution_warning = resolve_pi_session(
+                    pane_pid, pane_tty, proc_root=proc_root, pane_id=pane_id
+                )
+                if kind["session_ref"]:
+                    result["pi_session_resolution"]["resolved"] += 1
+                else:
+                    result["pi_session_resolution"]["unresolved"] += 1
+                if resolution_warning:
+                    result["pi_session_resolution"]["warnings"].append(
+                        {
+                            "window_index": int(index),
+                            "pane_index": int(pindex),
+                            "code": resolution_warning,
+                        }
+                    )
+            item = {
+                "index": int(pindex),
+                "active": pactive == "1",
+                "cwd": cwd,
+                "cwd_exists": cwd_exists,
+                "command": command,
+                "title": title,
+                "geometry": {
+                    "width": int(width),
+                    "height": int(height),
+                    "x": int(left),
+                    "y": int(top),
+                    "right": int(right),
+                    "bottom": int(bottom),
+                },
+                "application": kind,
+            }
+            tab["panes"].append(item)
+        result["tabs"].append(tab)
+    return result
+
+
+def classify(command):
+    if command in ("pi",):
+        return {"kind": "pi", "session_ref": None}
+    if command == "lazygit":
+        return {"kind": "lazygit"}
+    if command in ("zsh", "bash", "sh", "fish", "dash"):
+        return {"kind": "shell"}
+    return {"kind": "unknown"}
+
+
+def plan(snapshot, allow_continue=False):
+    operations = []
+    warnings = []
+    for tab in snapshot["tabs"]:
+        for pane in tab["panes"]:
+            app = pane["application"]["kind"]
+            cwd = pane["cwd"]
+            if not pane["cwd_exists"]:
+                command = None
+                warning = f"cwd_unavailable: {cwd}; pane left unlaunched"
+            elif app == "pi":
+                ref = pane["application"].get("session_ref")
+                validated_ref, ref_warning = (
+                    validate_pi_session_ref(ref) if ref is not None else (None, None)
+                )
+                if validated_ref:
+                    command = [
+                        "tmux-herdr",
+                        "resume-pi",
+                        validated_ref["kind"],
+                        validated_ref["value"],
+                    ]
+                    warning = None
+                elif ref is not None:
+                    command = None
+                    warning = f"invalid Pi session reference ignored ({ref_warning}); shell fallback"
+                elif allow_continue:
+                    command = ["tmux-herdr", "continue-pi"]
+                    warning = "Pi --continue resumes newest project session, not necessarily this conversation"
+                else:
+                    command = None
+                    warning = "pi_session_unknown: exact Pi conversation reference unavailable; shell fallback"
+            elif app == "lazygit":
+                command, warning = ["lazygit"], None
+            elif app == "shell":
+                command, warning = None, None
+            else:
+                command = None
+                warning = f"unknown command {pane['command']!r} not replayed; plain shell fallback"
+            if warning:
+                warnings.append(f"{tab['name']}:{pane['index']}: {warning}")
+            operations.append(
+                {
+                    "tab": tab["name"],
+                    "pane": pane["index"],
+                    "cwd": cwd,
+                    "command": command,
+                    "label": pane["command"] if app == "unknown" else pane["title"],
+                    "active": pane["active"],
+                    "warning": warning,
+                }
+            )
+    return {
+        "target_workspace": "tmux:" + snapshot["name"],
+        "operations": operations,
+        "warnings": warnings,
+    }
+
+
+def herdr(target, *args):
+    output = run(["herdr", "--session", target, *args])
+    if args[:2] == ("pane", "run"):
+        return output
+    return json.loads(output)
+
+
+def _command_result(response, command_id, result_type, object_names):
+    if (
+        not isinstance(response, dict)
+        or set(response) != {"id", "result"}
+        or response["id"] != command_id
+        or not isinstance(response["result"], dict)
+        or set(response["result"]) != {"type", *object_names}
+        or response["result"]["type"] != result_type
+    ):
+        raise ValueError(
+            f"Herdr response for {command_id} was malformed; refusing apply: {response!r}"
+        )
+    return response["result"]
+
+
+def _object_id(result, object_name, id_name, response):
+    obj = result.get(object_name)
+    value = obj.get(id_name) if isinstance(obj, dict) else None
+    if not isinstance(value, str) or not value or not value.strip():
+        raise ValueError(
+            f"Herdr response missing {object_name}.{id_name}: {response!r}"
+        )
+    return value
+
+
+def _validate_workspace(workspace, index):
+    if not isinstance(workspace, dict):
+        raise ValueError(
+            f"Herdr workspace list entry {index} is malformed; refusing apply"
+        )
+    workspace_id = workspace.get("workspace_id")
+    if not isinstance(workspace_id, str) or not workspace_id.strip():
+        raise ValueError(
+            f"Herdr workspace list entry {index} has no valid workspace_id; refusing apply"
+        )
+    label = workspace.get("label")
+    if not isinstance(label, str):
+        raise ValueError(
+            f"Herdr workspace list entry {index} has an invalid label; refusing apply"
+        )
+    focused = workspace.get("focused")
+    if focused is not None and type(focused) is not bool:
+        raise ValueError(
+            f"Herdr workspace list entry {index} has an invalid focused flag; refusing apply"
+        )
+    active_tab_id = workspace.get("active_tab_id")
+    if active_tab_id is not None and (
+        not isinstance(active_tab_id, str) or not active_tab_id.strip()
+    ):
+        raise ValueError(
+            f"Herdr workspace list entry {index} has an invalid active_tab_id; refusing apply"
+        )
+    return workspace
+
+
+def _list_workspaces(response):
+    if (
+        isinstance(response, dict)
+        and set(response) == {"id", "result"}
+        and response["id"] == "cli:workspace:list"
+        and isinstance(response["result"], dict)
+        and set(response["result"]) == {"type", "workspaces"}
+        and response["result"]["type"] == "workspace_list"
+        and isinstance(response["result"]["workspaces"], list)
+    ):
+        return [
+            _validate_workspace(workspace, index)
+            for index, workspace in enumerate(response["result"]["workspaces"])
+        ]
+    raise ValueError(
+        "Herdr workspace list returned an unrecognized response; refusing apply"
+    )
+
+
+def _pane_label(pane):
+    return pane.get("title") or pane.get("command") or f"pane-{pane['index']}"
+
+
+def _source_name(snapshot):
+    source = snapshot.get("name") if isinstance(snapshot, dict) else None
+    if not isinstance(source, str) or not source or "\x00" in source:
+        raise ValueError("snapshot source session name is invalid")
+    return source
+
+
+def _marker_path(state_dir, target, source):
+    source_hash = hashlib.sha256(source.encode("utf-8")).hexdigest()
+    return state_dir / f"{target}-{source_hash}.json"
+
+
+def _read_marker(marker):
+    try:
+        info = marker.lstat()
+    except OSError as exc:
+        raise ValueError(f"marker is malformed; refusing duplicate: {marker}") from exc
+    if (
+        not stat.S_ISREG(info.st_mode)
+        or info.st_uid != os.getuid()
+        or stat.S_IMODE(info.st_mode) != 0o600
+    ):
+        raise ValueError(
+            f"marker is not a private regular file; refusing duplicate: {marker}"
+        )
+    try:
+        value = json.loads(marker.read_text())
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ValueError(f"marker is malformed; refusing duplicate: {marker}") from exc
+    if not isinstance(value, dict):
+        raise ValueError(f"marker is malformed; refusing duplicate: {marker}")
+    return value
+
+
+def _legacy_marker_matches(marker, snapshot, target, allow_continue, label, workspaces):
+    """Recognize only the original, already-applied dots import; never rewrite it."""
+    if target != "pilot" or snapshot.get("name") != "dots":
+        return False
+    old = _read_marker(marker)
+    legacy_identity = json.dumps(
+        {"snapshot": snapshot, "allow_pi_continue": allow_continue}, sort_keys=True
+    )
+    if old.get("status") != "applied" or old.get("identity") != legacy_identity:
+        raise ValueError(
+            f"legacy marker identity differs; refusing duplicate: {marker}"
+        )
+    labels = [workspace.get("label") for workspace in workspaces]
+    if labels.count(label) != 1:
+        raise ValueError(
+            f"legacy marker does not match exactly one workspace label; refusing duplicate: {marker}"
+        )
+    return True
+
+
+def apply(snapshot, target, allow_continue=False):
+    """Append one source workspace without claiming or altering other workspaces."""
+    if not target or any(
+        char not in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_"
+        for char in target
+    ):
+        raise ValueError("target --session must be a simple named Herdr session")
+    source = _source_name(snapshot)
+    label = "tmux:" + source
+    marker_dir = pathlib.Path.home() / ".local/state/tmux-herdr"
+    marker_dir.mkdir(parents=True, exist_ok=True, mode=0o700)
+    try:
+        marker_dir_info = marker_dir.lstat()
+    except OSError as exc:
+        raise ValueError(
+            f"marker directory is unavailable; refusing apply: {marker_dir}"
+        ) from exc
+    if (
+        not stat.S_ISDIR(marker_dir_info.st_mode)
+        or marker_dir_info.st_uid != os.getuid()
+    ):
+        raise ValueError(
+            f"marker directory is not private; refusing apply: {marker_dir}"
+        )
+    marker_dir.chmod(0o700)
+    marker = _marker_path(marker_dir, target, source)
+    legacy_marker = marker_dir / (target + ".json")
+    digest = json.dumps(
+        {"snapshot": snapshot, "allow_pi_continue": allow_continue}, sort_keys=True
+    )
+
+    # A completed source marker is authoritative for idempotency, but the list is still
+    # checked so a pre-existing duplicate label cannot be silently accepted.
+    marker_state = None
+    if marker.exists():
+        marker_state = _read_marker(marker)
+        if (
+            marker_state.get("status") == "applied"
+            and marker_state.get("identity") == digest
+            and marker_state.get("source_session") == source
+            and marker_state.get("target") == target
+            and marker_state.get("label") == label
+        ):
+            pass
+        else:
+            raise ValueError(
+                f"matching source marker is partial or identity differs; refusing duplicate: {marker}"
+            )
+    elif legacy_marker.exists():
+        # Do not let an old target-wide marker reserve unrelated new sources.
+        marker_state = "legacy"
+
+    status = run(["herdr", "--session", target, "status", "server"])
+    if "not running" in status.lower():
+        raise ValueError("target Herdr server is not running; refusing to start it")
+    workspaces = _list_workspaces(herdr(target, "workspace", "list"))
+    labels = [workspace.get("label") for workspace in workspaces]
+    focused_tabs = [
+        workspace.get("active_tab_id")
+        for workspace in workspaces
+        if workspace.get("focused") is True
+    ]
+    if len(focused_tabs) > 1:
+        raise ValueError("multiple focused Herdr workspaces reported; refusing apply")
+    previous_focused_tab = focused_tabs[0] if focused_tabs else None
+    desired_count = labels.count(label)
+    if desired_count > 1:
+        raise ValueError(f"duplicate workspace label {label!r}; refusing apply")
+    if marker_state == "legacy":
+        if _legacy_marker_matches(
+            legacy_marker, snapshot, target, allow_continue, label, workspaces
+        ):
+            print("already applied; no-op (legacy marker retained)")
+            return
+    elif marker_state is not None:
+        print("already applied; no-op")
+        return
+    if desired_count:
+        raise ValueError(
+            f"workspace label {label!r} exists without a matching completed marker; refusing apply"
+        )
+
+    unavailable = [
+        pane["cwd"]
+        for tab in snapshot["tabs"]
+        for pane in tab["panes"]
+        if not pane["cwd_exists"]
+    ]
+    if unavailable:
+        raise ValueError(
+            "unavailable cwd(s); refusing apply: " + ", ".join(unavailable)
+        )
+    if not snapshot.get("tabs") or any(
+        not tab.get("panes") for tab in snapshot["tabs"]
+    ):
+        raise ValueError("snapshot contains an empty tab list or tab")
+
+    fd = None
+    try:
+        fd = os.open(marker, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    except FileExistsError as exc:
+        raise ValueError(
+            f"target/source already reserved; refusing duplicate: {marker}"
+        ) from exc
+    created = []
+    mutation_started = False
+    try:
+        with os.fdopen(fd, "w") as stream:
+            json.dump(
+                {
+                    "status": "applying",
+                    "target": target,
+                    "source_session": source,
+                    "label": label,
+                    "identity": digest,
+                    "created": created,
+                },
+                stream,
+                indent=2,
+            )
+            stream.write("\n")
+            stream.flush()
+            os.fsync(stream.fileno())
+        first_tab = snapshot["tabs"][0]
+        first = first_tab["panes"][0]
+        create_args = [
+            "workspace",
+            "create",
+            "--label",
+            f"tmux:{snapshot['name']}",
+            "--cwd",
+            first["cwd"],
+        ]
+        create_args.append("--focus" if first_tab.get("active") else "--no-focus")
+        mutation_started = True
+        response = herdr(target, *create_args)
+        created.append(response)
+        result = _command_result(
+            response,
+            "cli:workspace:create",
+            "workspace_created",
+            {"workspace", "tab", "root_pane"},
+        )
+        workspace_id = _object_id(result, "workspace", "workspace_id", response)
+        first_tab_id = _object_id(result, "tab", "tab_id", response)
+        root_id = _object_id(result, "root_pane", "pane_id", response)
+        tabs = [(first_tab, first_tab_id, root_id)]
+        for tab in snapshot["tabs"][1:]:
+            first_pane = tab["panes"][0]
+            args = [
+                "tab",
+                "create",
+                "--workspace",
+                workspace_id,
+                "--label",
+                tab["name"],
+                "--cwd",
+                first_pane["cwd"],
+            ]
+            args.append("--focus" if tab.get("active") else "--no-focus")
+            reply = herdr(target, *args)
+            created.append(reply)
+            result = _command_result(
+                reply,
+                "cli:tab:create",
+                "tab_created",
+                {"tab", "root_pane"},
+            )
+            tab_id = _object_id(result, "tab", "tab_id", reply)
+            tab_root = _object_id(result, "root_pane", "pane_id", reply)
+            tabs.append((tab, tab_id, tab_root))
+
+        for tab, tab_id, root_pane_id in tabs:
+            rename_tab = herdr(target, "tab", "rename", tab_id, tab["name"])
+            created.append(rename_tab)
+            result = _command_result(rename_tab, "cli:tab:rename", "tab_info", {"tab"})
+            _object_id(result, "tab", "tab_id", rename_tab)
+            panes = tab["panes"]
+            for pane in panes:
+                app_plan = plan(
+                    {"name": snapshot["name"], "tabs": [{**tab, "panes": [pane]}]},
+                    allow_continue,
+                )["operations"][0]
+                if pane is panes[0]:
+                    pane_id = root_pane_id
+                else:
+                    direction = (
+                        "right"
+                        if pane["geometry"]["x"] > panes[0]["geometry"]["x"]
+                        else "down"
+                    )
+                    extent_key = "width" if direction == "right" else "height"
+                    extent = panes[0]["geometry"][extent_key]
+                    ratio = min(
+                        0.9, max(0.1, extent / (extent + pane["geometry"][extent_key]))
+                    )
+                    args = [
+                        "pane",
+                        "split",
+                        "--pane",
+                        root_pane_id,
+                        "--direction",
+                        direction,
+                        "--ratio",
+                        f"{ratio:.4f}",
+                        "--cwd",
+                        pane["cwd"],
+                    ]
+                    args.append(
+                        "--focus"
+                        if tab.get("active") and pane.get("active")
+                        else "--no-focus"
+                    )
+                    reply = herdr(target, *args)
+                    created.append(reply)
+                    result = _command_result(
+                        reply, "cli:pane:split", "pane_info", {"pane"}
+                    )
+                    pane_id = _object_id(result, "pane", "pane_id", reply)
+                label_reply = herdr(
+                    target, "pane", "rename", pane_id, _pane_label(pane)
+                )
+                created.append(label_reply)
+                result = _command_result(
+                    label_reply, "cli:pane:rename", "pane_info", {"pane"}
+                )
+                _object_id(result, "pane", "pane_id", label_reply)
+                if app_plan["command"]:
+                    herdr(target, "pane", "run", pane_id, *app_plan["command"])
+            if tab.get("active"):
+                focus_reply = herdr(target, "tab", "focus", tab_id)
+                created.append(focus_reply)
+                result = _command_result(
+                    focus_reply, "cli:tab:focus", "tab_info", {"tab"}
+                )
+                _object_id(result, "tab", "tab_id", focus_reply)
+        if previous_focused_tab:
+            restore_reply = herdr(target, "tab", "focus", previous_focused_tab)
+            created.append(restore_reply)
+            result = _command_result(
+                restore_reply, "cli:tab:focus", "tab_info", {"tab"}
+            )
+            _object_id(result, "tab", "tab_id", restore_reply)
+        marker.write_text(
+            json.dumps(
+                {
+                    "status": "applied",
+                    "target": target,
+                    "source_session": source,
+                    "label": label,
+                    "identity": digest,
+                    "created": created,
+                },
+                indent=2,
+            )
+            + "\n"
+        )
+        marker.chmod(0o600)
+        print(f"created workspace with {len(tabs)} tab(s); tmux unchanged")
+    except Exception:
+        if not mutation_started:
+            marker.unlink(missing_ok=True)
+        raise
+
+
+def main():
+    if sys.argv[1:2] and sys.argv[1] in {"resume-pi", "continue-pi"}:
+        try:
+            return launch_pi(sys.argv[1:])
+        except (OSError, ValueError) as exc:
+            print(f"tmux-herdr: {exc}", file=sys.stderr)
+            return 1
+
+    parser = argparse.ArgumentParser(description=__doc__)
+    mode = parser.add_mutually_exclusive_group(required=True)
+    mode.add_argument(
+        "--snapshot", metavar="TMUX_SESSION", help="collect one session and write JSON"
+    )
+    mode.add_argument(
+        "--dry-run",
+        metavar="SNAPSHOT",
+        help="print deterministic import plan (default safe mode)",
+    )
+    mode.add_argument(
+        "--apply",
+        metavar="SNAPSHOT",
+        help="explicitly create in Herdr; requires --session",
+    )
+    parser.add_argument("--session", help="named target Herdr session for --apply")
+    parser.add_argument("--output", help="snapshot output path; default stdout")
+    parser.add_argument(
+        "--resolve-pi-sessions",
+        action="store_true",
+        help="snapshot opt-in: inspect foreground Pi process for exact session metadata",
+    )
+    parser.add_argument(
+        "--allow-pi-continue",
+        action="store_true",
+        help="allow non-exact Pi newest-session resume",
+    )
+    args = parser.parse_args()
+    try:
+        if args.resolve_pi_sessions and not args.snapshot:
+            raise ValueError("--resolve-pi-sessions is valid only with --snapshot")
+        if args.snapshot:
+            text = (
+                json.dumps(
+                    tmux_snapshot(
+                        args.snapshot, resolve_pi_sessions=args.resolve_pi_sessions
+                    ),
+                    indent=2,
+                    ensure_ascii=False,
+                )
+                + "\n"
+            )
+            if args.output:
+                path = pathlib.Path(args.output)
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(text)
+                path.chmod(0o600)
+            else:
+                print(text, end="")
+        else:
+            snapshot = json.loads(pathlib.Path(args.dry_run or args.apply).read_text())
+            result = plan(snapshot, args.allow_pi_continue)
+            if args.apply:
+                if not args.session:
+                    raise ValueError("--apply requires a named target --session")
+                apply(snapshot, args.session, args.allow_pi_continue)
+            else:
+                print(json.dumps(result, indent=2, ensure_ascii=False))
+    except (
+        OSError,
+        ValueError,
+        subprocess.CalledProcessError,
+        json.JSONDecodeError,
+    ) as exc:
+        print(f"tmux-herdr: {exc}", file=sys.stderr)
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
