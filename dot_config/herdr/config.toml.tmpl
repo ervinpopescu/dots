@@ -1,0 +1,50 @@
+onboarding = false
+# Native Herdr defaults. Alacritty remains the outer terminal; do not nest in tmux.
+[theme]
+name = "catppuccin"
+
+[terminal]
+default_shell = "/bin/zsh"
+new_cwd = "follow"
+
+# Mirror the established tmux muscle memory where Herdr has an equivalent action.
+[keys]
+prefix = "ctrl+space"
+help = "prefix+?"
+settings = "prefix+shift+s"
+detach = "prefix+d"
+reload_config = "prefix+r"
+workspace_picker = "prefix+s"
+new_tab = "prefix+c"
+rename_tab = "prefix+comma"
+previous_tab = ["shift+left", "alt+shift+h"]
+next_tab = ["shift+right", "alt+shift+l"]
+move_tab_previous = "alt+shift+left"
+move_tab_next = "alt+shift+right"
+switch_tab = "prefix+1..9"
+rename_pane = "prefix+shift+t"
+copy_mode = "prefix+["
+focus_pane_left = ["prefix+h", "alt+left"]
+focus_pane_down = ["prefix+j", "alt+down"]
+focus_pane_up = ["prefix+k", "alt+up"]
+focus_pane_right = ["prefix+l", "alt+right"]
+last_pane = "ctrl+tab"
+split_vertical = "prefix+%"
+split_horizontal = "prefix+quote"
+close_pane = "prefix+x"
+zoom = "prefix+z"
+resize_mode = "prefix+shift+r"
+toggle_sidebar = "prefix+b"
+
+[ui]
+tab_bar_position = "bottom"
+tab_bar_right = [
+  { type = "zoom" },
+  { type = "hostname" },
+  { type = "datetime", format = "%H:%M %d-%b-%y" },
+]
+tab_bar_right_separator = " · "
+status_indicators = "symbols"
+
+[session]
+resume_agents_on_restore = true
