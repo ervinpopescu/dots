@@ -5,6 +5,7 @@ import pathlib
 import runpy
 import sys
 import tempfile
+import threading
 import unittest
 from unittest.mock import patch
 
@@ -759,7 +760,7 @@ class TmuxHerdrTests(unittest.TestCase):
             patch.dict(
                 module["apply"].__globals__,
                 {
-                    "run": lambda argv: "status: running\\n",
+                    "run": lambda argv: "status: running\n",
                     "herdr": self.make_apply_mocks(calls),
                 },
             ),
@@ -976,6 +977,138 @@ class TmuxHerdrTests(unittest.TestCase):
         )
         self.assertIn(("focus-target", "tab", "focus", "tab-2"), calls)
         self.assertEqual(calls[-1], ("focus-target", "tab", "focus", "existing-tab"))
+
+    def test_malformed_snapshot_refused_before_marker_or_mutation(self):
+        snapshot = self.apply_snapshot()
+        del snapshot["tabs"][0]["panes"][0]["application"]
+        calls = []
+
+        def fake_herdr(target, *args):
+            calls.append((target, *args))
+            if args[:2] == ("workspace", "list"):
+                return {
+                    "id": "cli:workspace:list",
+                    "result": {"type": "workspace_list", "workspaces": []},
+                }
+            raise AssertionError("malformed snapshot reached Herdr mutation")
+
+        with (
+            tempfile.TemporaryDirectory() as tmp,
+            patch.object(pathlib.Path, "home", return_value=pathlib.Path(tmp)),
+            patch.dict(
+                module["apply"].__globals__,
+                {"run": lambda argv: "running", "herdr": fake_herdr},
+            ),
+        ):
+            with self.assertRaisesRegex(ValueError, "missing fields"):
+                module["apply"](snapshot, "malformed-snapshot")
+            self.assertEqual(calls, [("malformed-snapshot", "workspace", "list")])
+            self.assertFalse(
+                self.marker_path(tmp, "malformed-snapshot", snapshot).exists()
+            )
+
+    def test_non_positive_geometry_refused_before_marker_or_mutation(self):
+        for key, value in (("width", 0), ("height", 0), ("width", -1), ("height", -1)):
+            with (
+                self.subTest(key=key, value=value),
+                tempfile.TemporaryDirectory() as tmp,
+            ):
+                snapshot = self.apply_snapshot()
+                snapshot["tabs"][0]["panes"][1]["geometry"][key] = value
+                calls = []
+
+                def fake_herdr(target, *args):
+                    calls.append((target, *args))
+                    if args[:2] == ("workspace", "list"):
+                        return {
+                            "id": "cli:workspace:list",
+                            "result": {"type": "workspace_list", "workspaces": []},
+                        }
+                    raise AssertionError("invalid geometry reached Herdr mutation")
+
+                with (
+                    patch.object(pathlib.Path, "home", return_value=pathlib.Path(tmp)),
+                    patch.dict(
+                        module["apply"].__globals__,
+                        {"run": lambda argv: "running", "herdr": fake_herdr},
+                    ),
+                ):
+                    with self.assertRaisesRegex(ValueError, "non-positive geometry"):
+                        module["apply"](snapshot, f"geometry-{key}-{value}")
+                    self.assertEqual(
+                        calls,
+                        [(f"geometry-{key}-{value}", "workspace", "list")],
+                    )
+                    self.assertFalse(
+                        self.marker_path(
+                            tmp, f"geometry-{key}-{value}", snapshot
+                        ).exists()
+                    )
+
+    def test_unknown_server_status_refused_before_workspace_list(self):
+        for status in ("", "stopped", "server: stopped", "unexpected output"):
+            with self.subTest(status=status), tempfile.TemporaryDirectory() as tmp:
+                calls = []
+
+                def should_not_list(target, *args):
+                    calls.append((target, *args))
+                    raise AssertionError("unknown server status reached workspace list")
+
+                with (
+                    patch.object(pathlib.Path, "home", return_value=pathlib.Path(tmp)),
+                    patch.dict(
+                        module["apply"].__globals__,
+                        {
+                            "run": lambda argv, value=status: value,
+                            "herdr": should_not_list,
+                        },
+                    ),
+                ):
+                    with self.assertRaisesRegex(ValueError, "not explicitly running"):
+                        module["apply"](self.apply_snapshot(), "status-target")
+                self.assertEqual(calls, [])
+
+    def test_focus_is_restored_after_post_focus_failure(self):
+        snapshot = self.apply_snapshot()
+        calls = []
+        base = self.make_apply_mocks(calls)
+
+        def failing_herdr(target, *args):
+            if args[:2] == ("workspace", "list"):
+                calls.append((target, *args))
+                return {
+                    "id": "cli:workspace:list",
+                    "result": {
+                        "type": "workspace_list",
+                        "workspaces": [
+                            {
+                                "workspace_id": "existing",
+                                "label": "notes",
+                                "focused": True,
+                                "active_tab_id": "existing-tab",
+                            }
+                        ],
+                    },
+                }
+            if args[:2] == ("tab", "focus") and args[2] == "tab-1":
+                calls.append((target, *args))
+                raise RuntimeError("imported focus failed")
+            return base(target, *args)
+
+        with (
+            tempfile.TemporaryDirectory() as tmp,
+            patch.object(pathlib.Path, "home", return_value=pathlib.Path(tmp)),
+            patch.dict(
+                module["apply"].__globals__,
+                {"run": lambda argv: "running", "herdr": failing_herdr},
+            ),
+        ):
+            with self.assertRaisesRegex(RuntimeError, "imported focus failed"):
+                module["apply"](snapshot, "focus-failure")
+            self.assertEqual(
+                calls[-1], ("focus-failure", "tab", "focus", "existing-tab")
+            )
+            self.assertTrue(self.marker_path(tmp, "focus-failure", snapshot).exists())
 
     def test_duplicate_desired_labels_refused(self):
         snapshot = self.apply_snapshot()
@@ -1443,6 +1576,63 @@ class TmuxHerdrTests(unittest.TestCase):
                 (self.marker_path(tmp, "pi-continue", snapshot)).read_text()
             )["identity"]
             self.assertIn('"allow_pi_continue": true', identity)
+
+    def test_real_concurrent_creators_share_exclusive_marker(self):
+        snapshot = self.apply_snapshot()
+        calls = []
+        calls_lock = threading.Lock()
+        listed = threading.Barrier(2)
+        create_count = 0
+        create_count_lock = threading.Lock()
+        base = self.make_apply_mocks(calls)
+
+        def concurrent_herdr(target, *args):
+            nonlocal create_count
+            if args[:2] == ("workspace", "list"):
+                listed.wait(timeout=5)
+                with calls_lock:
+                    calls.append((target, *args))
+                return {
+                    "id": "cli:workspace:list",
+                    "result": {"type": "workspace_list", "workspaces": []},
+                }
+            if args[:2] == ("workspace", "create"):
+                with create_count_lock:
+                    create_count += 1
+            return base(target, *args)
+
+        results = []
+
+        def worker():
+            try:
+                module["apply"](snapshot, "concurrent-target")
+            except Exception as exc:  # noqa: BLE001 - assert one race loser below
+                results.append(exc)
+            else:
+                results.append(None)
+
+        with (
+            tempfile.TemporaryDirectory() as tmp,
+            patch.object(pathlib.Path, "home", return_value=pathlib.Path(tmp)),
+            patch.dict(
+                module["apply"].__globals__,
+                {"run": lambda argv: "running", "herdr": concurrent_herdr},
+            ),
+        ):
+            threads = [threading.Thread(target=worker) for _ in range(2)]
+            for thread in threads:
+                thread.start()
+            for thread in threads:
+                thread.join(timeout=10)
+            self.assertTrue(all(not thread.is_alive() for thread in threads))
+            self.assertTrue(
+                self.marker_path(tmp, "concurrent-target", snapshot).exists()
+            )
+
+        self.assertEqual(len(results), 2)
+        self.assertEqual(sum(result is None for result in results), 1)
+        self.assertEqual(sum(isinstance(result, ValueError) for result in results), 1)
+        self.assertEqual(create_count, 1)
 
     def test_atomic_marker_collision_prevents_second_creator(self):
         calls = []

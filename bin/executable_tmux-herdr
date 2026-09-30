@@ -5,6 +5,7 @@ import argparse
 import errno
 import hashlib
 import json
+import math
 import os
 import pathlib
 import re
@@ -710,6 +711,132 @@ def _pane_label(pane):
     return pane.get("title") or pane.get("command") or f"pane-{pane['index']}"
 
 
+def _validate_snapshot(snapshot):
+    if not isinstance(snapshot, dict):
+        raise ValueError("snapshot must be an object")
+    _source_name(snapshot)
+    attached = snapshot.get("attached", False)
+    if not isinstance(attached, bool):
+        raise ValueError("snapshot attached flag is invalid")
+    tabs = snapshot.get("tabs")
+    if (
+        not isinstance(tabs, list)
+        or not tabs
+        or any(not isinstance(tab, dict) for tab in tabs)
+    ):
+        raise ValueError("snapshot contains an empty tab list or malformed tab")
+    for tab_index, tab in enumerate(tabs):
+        if not isinstance(tab.get("name"), str):
+            raise ValueError(f"snapshot tab {tab_index} has an invalid name")
+        if not isinstance(tab.get("active"), bool):
+            raise ValueError(f"snapshot tab {tab_index} has an invalid active flag")
+        panes = tab.get("panes")
+        if not isinstance(panes, list) or not panes:
+            raise ValueError(f"snapshot tab {tab_index} has no panes")
+        for pane_index, pane in enumerate(panes):
+            if not isinstance(pane, dict):
+                raise ValueError(f"snapshot pane {tab_index}:{pane_index} is malformed")
+            required = {
+                "index",
+                "active",
+                "cwd",
+                "cwd_exists",
+                "command",
+                "title",
+                "geometry",
+                "application",
+            }
+            if not required.issubset(pane):
+                raise ValueError(
+                    f"snapshot pane {tab_index}:{pane_index} is missing fields"
+                )
+            if not isinstance(pane["index"], int) or isinstance(pane["index"], bool):
+                raise ValueError(
+                    f"snapshot pane {tab_index}:{pane_index} has an invalid index"
+                )
+            if not isinstance(pane["active"], bool):
+                raise ValueError(
+                    f"snapshot pane {tab_index}:{pane_index} has an invalid active flag"
+                )
+            if not isinstance(pane["cwd"], str) or not isinstance(
+                pane["cwd_exists"], bool
+            ):
+                raise ValueError(
+                    f"snapshot pane {tab_index}:{pane_index} has an invalid cwd"
+                )
+            if not isinstance(pane["command"], str) or not isinstance(
+                pane["title"], str
+            ):
+                raise ValueError(
+                    f"snapshot pane {tab_index}:{pane_index} has invalid labels"
+                )
+            geometry = pane["geometry"]
+            if not isinstance(geometry, dict) or not {
+                "x",
+                "y",
+                "width",
+                "height",
+            }.issubset(geometry):
+                raise ValueError(
+                    f"snapshot pane {tab_index}:{pane_index} has invalid geometry"
+                )
+            for key in ("x", "y", "width", "height"):
+                value = geometry[key]
+                if (
+                    isinstance(value, bool)
+                    or not isinstance(value, (int, float))
+                    or not math.isfinite(value)
+                ):
+                    raise ValueError(
+                        f"snapshot pane {tab_index}:{pane_index} has invalid geometry"
+                    )
+                if key in {"width", "height"} and value <= 0:
+                    raise ValueError(
+                        f"snapshot pane {tab_index}:{pane_index} has non-positive geometry"
+                    )
+            application = pane["application"]
+            if not isinstance(application, dict) or not isinstance(
+                application.get("kind"), str
+            ):
+                raise ValueError(
+                    f"snapshot pane {tab_index}:{pane_index} has invalid application"
+                )
+
+
+def _precompute_import(snapshot, allow_continue):
+    _validate_snapshot(snapshot)
+    planned = plan(snapshot, allow_continue)
+    prepared = []
+    operation_index = 0
+    for tab in snapshot["tabs"]:
+        first_pane = tab["panes"][0]
+        for pane_index, pane in enumerate(tab["panes"]):
+            split = None
+            if pane_index:
+                direction = (
+                    "right"
+                    if pane["geometry"]["x"] > first_pane["geometry"]["x"]
+                    else "down"
+                )
+                extent_key = "width" if direction == "right" else "height"
+                extent = first_pane["geometry"][extent_key]
+                pane_extent = pane["geometry"][extent_key]
+                denominator = extent + pane_extent
+                if denominator <= 0 or not math.isfinite(denominator):
+                    raise ValueError(
+                        f"snapshot pane geometry cannot produce a safe split for tab {tab['name']!r}"
+                    )
+                ratio = min(0.9, max(0.1, extent / denominator))
+                if not math.isfinite(ratio):
+                    raise ValueError(
+                        f"snapshot pane geometry cannot produce a safe split for tab {tab['name']!r}"
+                    )
+                split = (direction, ratio)
+            prepared.append((planned["operations"][operation_index], split))
+            operation_index += 1
+    return prepared
+
+
 def _source_name(snapshot):
     source = snapshot.get("name") if isinstance(snapshot, dict) else None
     if not isinstance(source, str) or not source or "\x00" in source:
@@ -742,6 +869,16 @@ def _read_marker(marker):
     if not isinstance(value, dict):
         raise ValueError(f"marker is malformed; refusing duplicate: {marker}")
     return value
+
+
+def _require_running_server(status):
+    if not isinstance(status, str):
+        raise ValueError("target Herdr server status was malformed; refusing apply")
+    state = status.strip().lower()
+    if state not in {"running", "status: running", "server: running"}:
+        raise ValueError(
+            "target Herdr server is not explicitly running; refusing apply"
+        )
 
 
 def _legacy_marker_matches(marker, snapshot, target, allow_continue, label, workspaces):
@@ -817,8 +954,7 @@ def apply(snapshot, target, allow_continue=False):
         marker_state = "legacy"
 
     status = run(["herdr", "--session", target, "status", "server"])
-    if "not running" in status.lower():
-        raise ValueError("target Herdr server is not running; refusing to start it")
+    _require_running_server(status)
     workspaces = _list_workspaces(herdr(target, "workspace", "list"))
     labels = [workspace.get("label") for workspace in workspaces]
     focused_tabs = [
@@ -846,6 +982,7 @@ def apply(snapshot, target, allow_continue=False):
             f"workspace label {label!r} exists without a matching completed marker; refusing apply"
         )
 
+    prepared = _precompute_import(snapshot, allow_continue)
     unavailable = [
         pane["cwd"]
         for tab in snapshot["tabs"]
@@ -856,11 +993,6 @@ def apply(snapshot, target, allow_continue=False):
         raise ValueError(
             "unavailable cwd(s); refusing apply: " + ", ".join(unavailable)
         )
-    if not snapshot.get("tabs") or any(
-        not tab.get("panes") for tab in snapshot["tabs"]
-    ):
-        raise ValueError("snapshot contains an empty tab list or tab")
-
     fd = None
     try:
         fd = os.open(marker, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
@@ -936,6 +1068,7 @@ def apply(snapshot, target, allow_continue=False):
             tab_root = _object_id(result, "root_pane", "pane_id", reply)
             tabs.append((tab, tab_id, tab_root))
 
+        prepared_operations = iter(prepared)
         for tab, tab_id, root_pane_id in tabs:
             rename_tab = herdr(target, "tab", "rename", tab_id, tab["name"])
             created.append(rename_tab)
@@ -943,23 +1076,11 @@ def apply(snapshot, target, allow_continue=False):
             _object_id(result, "tab", "tab_id", rename_tab)
             panes = tab["panes"]
             for pane in panes:
-                app_plan = plan(
-                    {"name": snapshot["name"], "tabs": [{**tab, "panes": [pane]}]},
-                    allow_continue,
-                )["operations"][0]
-                if pane is panes[0]:
+                app_plan, split = next(prepared_operations)
+                if split is None:
                     pane_id = root_pane_id
                 else:
-                    direction = (
-                        "right"
-                        if pane["geometry"]["x"] > panes[0]["geometry"]["x"]
-                        else "down"
-                    )
-                    extent_key = "width" if direction == "right" else "height"
-                    extent = panes[0]["geometry"][extent_key]
-                    ratio = min(
-                        0.9, max(0.1, extent / (extent + pane["geometry"][extent_key]))
-                    )
+                    direction, ratio = split
                     args = [
                         "pane",
                         "split",
@@ -1024,6 +1145,11 @@ def apply(snapshot, target, allow_continue=False):
         marker.chmod(0o600)
         print(f"created workspace with {len(tabs)} tab(s); tmux unchanged")
     except Exception:
+        if mutation_started and previous_focused_tab:
+            try:
+                herdr(target, "tab", "focus", previous_focused_tab)
+            except Exception:
+                pass
         if not mutation_started:
             marker.unlink(missing_ok=True)
         raise
