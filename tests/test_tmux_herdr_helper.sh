@@ -43,6 +43,164 @@ if ! grep -q '(info.st_uid != owner && info.st_uid != 0)' "$INSTALLER_SOURCE" ||
   echo "native installer lacks trusted ancestors or unique temporary handling" >&2
   exit 1
 fi
+
+# Controlling-terminal verification regression tests
+if grep -E 'ttyinfo\.st_rdev == self->tty_dev|self->tty_dev == ttyinfo\.st_rdev' "$SOURCE"; then
+  echo "Darwin helper regression: verify_current_tty compares /dev/tty multiplexer st_rdev to self->tty_dev" >&2
+  exit 1
+fi
+if ! grep -q 'NODEV' "$SOURCE" ||
+   ! grep -q 'PROC_FLAG_CONTROLT' "$SOURCE" ||
+   ! grep -q 'self->pgid != self->tpgid' "$SOURCE" ||
+   ! grep -q 'tcgetsid(ttyfd)' "$SOURCE" ||
+   ! grep -q 'tcgetpgrp(ttyfd)' "$SOURCE" ||
+   ! grep -q 'S_ISCHR(ttyinfo.st_mode)' "$SOURCE"; then
+  echo "Darwin helper lacks required controlling-terminal security verification checks" >&2
+  exit 1
+fi
+
+# Behavioral logic unit test for verify_current_tty
+# Note: Linux test execution proves controlling-terminal verification logic and rejection paths;
+# it does not claim native Darwin runtime/PTY validation.
+cat << 'EOF' > "$TMP_DIR/test_verify_tty.c"
+#define _GNU_SOURCE
+#include <assert.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
+
+#define PROC_FLAG_CONTROLT 0x40
+
+typedef struct {
+  pid_t pid;
+  pid_t ppid;
+  pid_t pgid;
+  pid_t sid;
+  dev_t tty_dev;
+  pid_t tpgid;
+  uint64_t start_sec;
+  uint64_t start_usec;
+  uint32_t flags;
+} process_record;
+
+static int mock_open_ret = 3;
+static int mock_fstat_ret = 0;
+static mode_t mock_fstat_mode = S_IFCHR | 0620;
+static dev_t mock_fstat_rdev = 0x0200; /* /dev/tty multiplexer (e.g. major 2, minor 0) */
+static pid_t mock_tcgetsid_ret = 100;
+static pid_t mock_tcgetpgrp_ret = 200;
+
+static int mock_open(const char *path, int flags, ...) {
+  (void)flags;
+  if (strcmp(path, "/dev/tty") != 0) return -1;
+  return mock_open_ret;
+}
+
+static int mock_fstat(int fd, struct stat *buf) {
+  (void)fd;
+  if (mock_fstat_ret != 0) return mock_fstat_ret;
+  memset(buf, 0, sizeof(*buf));
+  buf->st_mode = mock_fstat_mode;
+  buf->st_rdev = mock_fstat_rdev;
+  return 0;
+}
+
+static pid_t mock_tcgetsid(int fd) {
+  (void)fd;
+  return mock_tcgetsid_ret;
+}
+
+static pid_t mock_tcgetpgrp(int fd) {
+  (void)fd;
+  return mock_tcgetpgrp_ret;
+}
+
+static int mock_close(int fd) {
+  (void)fd;
+  return 0;
+}
+
+#define open mock_open
+#define fstat mock_fstat
+#define tcgetsid mock_tcgetsid
+#define tcgetpgrp mock_tcgetpgrp
+#define close mock_close
+
+EOF
+
+sed -n '/#ifndef NODEV/,/^}/p' "$SOURCE" >> "$TMP_DIR/test_verify_tty.c"
+
+cat << 'EOF' >> "$TMP_DIR/test_verify_tty.c"
+int main(void) {
+  process_record self;
+  memset(&self, 0, sizeof(self));
+  self.pid = 42;
+  self.ppid = 1;
+  self.pgid = 200;
+  self.sid = 100;
+  self.tty_dev = 0x1001; /* e_tdev slave PTY device (e.g. ttys001) */
+  self.tpgid = 200;
+  self.flags = PROC_FLAG_CONTROLT;
+
+  /* 1. Normal case on macOS: multiplexer /dev/tty (0x0200) != slave PTY (0x1001) */
+  assert(verify_current_tty(&self) == 0);
+
+  /* 2. Reject NODEV in process metadata */
+  self.tty_dev = (dev_t)-1;
+  assert(verify_current_tty(&self) == -1);
+  self.tty_dev = 0x1001;
+
+  /* 3. Reject missing PROC_FLAG_CONTROLT */
+  self.flags = 0;
+  assert(verify_current_tty(&self) == -1);
+  self.flags = PROC_FLAG_CONTROLT;
+
+  /* 4. Reject background process (pgid != tpgid) */
+  self.pgid = 201;
+  assert(verify_current_tty(&self) == -1);
+  self.pgid = 200;
+
+  /* 5. Reject session mismatch */
+  mock_tcgetsid_ret = 101;
+  assert(verify_current_tty(&self) == -1);
+  mock_tcgetsid_ret = 100;
+
+  /* 6. Reject foreground group mismatch */
+  mock_tcgetpgrp_ret = 201;
+  assert(verify_current_tty(&self) == -1);
+  mock_tcgetpgrp_ret = 200;
+
+  /* 7. Reject non-character device */
+  mock_fstat_mode = S_IFREG | 0644;
+  assert(verify_current_tty(&self) == -1);
+  mock_fstat_mode = S_IFCHR | 0620;
+
+  /* 8. Reject /dev/tty open failure */
+  mock_open_ret = -1;
+  assert(verify_current_tty(&self) == -1);
+  mock_open_ret = 3;
+
+  /* 9. Reject NULL pointer */
+  assert(verify_current_tty(NULL) == -1);
+
+  /* 10. Reject non-positive sid / pgid / tpgid */
+  self.sid = 0; assert(verify_current_tty(&self) == -1); self.sid = 100;
+  self.pgid = 0; assert(verify_current_tty(&self) == -1); self.pgid = 200;
+  self.tpgid = 0; assert(verify_current_tty(&self) == -1); self.tpgid = 200;
+
+  return 0;
+}
+EOF
+
+"$CC_BIN" -std=c11 -Wall -Wextra -Werror -pedantic "$TMP_DIR/test_verify_tty.c" -o "$TMP_DIR/test_verify_tty"
+"$TMP_DIR/test_verify_tty"
+
 HOOK_TMPL="$REPO_ROOT/run_onchange_build-tmux-herdr-darwin-helper.sh.tmpl"
 if ! grep -q "trap 'rm -rf \"\$BUILD_DIR\"' EXIT" "$HOOK_TMPL" ||
    grep -q '%M' "$HOOK_TMPL" ||

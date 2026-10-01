@@ -33,7 +33,11 @@ type PublishResult =
         | "helper_missing"
         | "helper_build_failure"
         | "helper_process_failure"
-        | "process_identity_unavailable";
+        | "process_identity_unavailable"
+        | "tty_unavailable"
+        | "proc_permission_denied"
+        | "process_identity_stale"
+        | "invalid_request";
     };
 type DarwinHelperReply =
   | { ok: true }
@@ -300,6 +304,14 @@ function publishDarwinBeacon(
       return { published: false, reason: "helper_build_failure" };
     if (reply.reason === "io")
       return { published: false, reason: "secure_storage_unavailable" };
+    if (reply.reason === "no_tty")
+      return { published: false, reason: "tty_unavailable" };
+    if (reply.reason === "denied")
+      return { published: false, reason: "proc_permission_denied" };
+    if (reply.reason === "stale")
+      return { published: false, reason: "process_identity_stale" };
+    if (reply.reason === "invalid")
+      return { published: false, reason: "invalid_request" };
     return { published: false, reason: "process_identity_unavailable" };
   } catch (error) {
     if (error instanceof DarwinHelperError)
