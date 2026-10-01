@@ -9,6 +9,7 @@ from modules import (  # noqa: F401
     keys,
     layouts,
     mouse,
+    screens,
     widget_defaults,
 )
 from modules.hooks import apps as apps_hooks
@@ -21,6 +22,7 @@ assert groups
 assert keys
 assert layouts
 assert mouse
+assert screens
 assert widget_defaults
 assert extension_defaults
 
@@ -32,7 +34,7 @@ with open(os.path.join(config_path, "json", "config.json")) as f:
     config = json.load(f)
     for key, val in config.items():
         if key != "theme":
-            exec(f"{key}=val")
+            globals()[key] = val
 
 
 focus_on_window_activation = "smart"

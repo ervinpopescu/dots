@@ -7,11 +7,12 @@ from .idle import idle_inhibitors, idle_timers
 from .keys import keys
 from .layouts import floating_layout, layouts
 from .mouse import mouse
-from .screens import generate_screens
+from .screens import generate_screens, screens
 
 __all__ = [
     "apps_hooks",
     "floating_layout",
+    "generate_screens",
     "groups",
     "idle_inhibitors",
     "idle_timers",
@@ -19,7 +20,7 @@ __all__ = [
     "layouts",
     "misc_hooks",
     "mouse",
-    "generate_screens",
-    "window_rules_hooks",
     "qalttab_hooks",
+    "screens",
+    "window_rules_hooks",
 ]
