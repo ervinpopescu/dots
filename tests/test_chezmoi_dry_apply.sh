@@ -69,12 +69,152 @@ rendered_helper_hook="$(chezmoi -S "$REPO_ROOT" execute-template --override-data
 assert_contains "Darwin hook validates parents before writes" "validate_parent" "$rendered_helper_hook"
 assert_contains "Darwin hook rejects symlinks" '[[ -e "$DEST_DIR" || -L "$DEST_DIR" ]]' "$rendered_helper_hook"
 assert_contains "Darwin hook validates destination leaf" "validate_helper_leaf \"\$DEST\"" "$rendered_helper_hook"
+assert_contains "Darwin hook discovers SDK path" 'xcrun --sdk macosx --show-sdk-path' "$rendered_helper_hook"
+assert_contains "Darwin hook verifies standard headers" 'usr/include/errno.h' "$rendered_helper_hook"
+assert_contains "Darwin hook compiles helper with explicit isysroot" '"$CC" -isysroot "$SDKROOT"' "$rendered_helper_hook"
+assert_contains "Darwin hook compiles installer with explicit isysroot" '"$CC" -isysroot "$SDKROOT" -std=c11 -Wall -Wextra -Werror -O2 "$INSTALLER_SOURCE"' "$rendered_helper_hook"
 if [[ "$rendered_helper_hook" == *".tmux-herdr-darwin-helper.build.lock"* ]]; then
   echo "  FAIL: Darwin hook retains a permanent fixed lock"
   failures=$((failures + 1))
 else
   echo "  PASS: Darwin hook has no permanent fixed lock"
   passes=$((passes + 1))
+fi
+
+# Behavioral test for Darwin hook SDK resolution and failure when absent
+sdk_test_dir="$TEST_DIR/sdk_test"
+mock_home="$sdk_test_dir/home"
+mock_bin="$sdk_test_dir/bin"
+mkdir -p "$mock_home/.local/share/tmux-herdr" "$mock_home/.local/libexec" "$mock_bin"
+chmod 700 "$mock_home" "$mock_home/.local" "$mock_home/.local/share" "$mock_home/.local/share/tmux-herdr" "$mock_home/.local/libexec"
+cp "$REPO_ROOT/private_dot_local/private_share/tmux-herdr/tmux-herdr-darwin-helper.c" "$mock_home/.local/share/tmux-herdr/"
+cp "$REPO_ROOT/private_dot_local/private_share/tmux-herdr/tmux-herdr-darwin-installer.c" "$mock_home/.local/share/tmux-herdr/"
+chmod 600 "$mock_home/.local/share/tmux-herdr/"*
+
+cat << 'EOF' > "$mock_bin/stat"
+#!/bin/bash
+fmt=""
+target=""
+while [ $# -gt 0 ]; do
+  if [ "$1" = "-f" ]; then
+    fmt="$2"
+    shift 2
+  else
+    target="$1"
+    shift
+  fi
+done
+
+if [ "$fmt" = "%HT" ]; then
+  if [ -d "$target" ]; then echo "Directory"; else echo "Regular File"; fi
+elif [ "$fmt" = "%u" ]; then
+  id -u
+elif [ "$fmt" = "%Lp" ]; then
+  /usr/bin/stat -c "%a" "$target" 2>/dev/null || echo "700"
+else
+  /usr/bin/stat "$@"
+fi
+EOF
+chmod 700 "$mock_bin/stat"
+
+cat << 'EOF' > "$mock_bin/xcrun"
+#!/bin/bash
+if [[ "$*" == *"--find clang"* ]]; then
+  echo "$(dirname "$0")/clang"
+  exit 0
+fi
+exit 1
+EOF
+chmod 700 "$mock_bin/xcrun"
+
+cat << 'EOF' > "$mock_bin/clang"
+#!/bin/bash
+exit 0
+EOF
+chmod 700 "$mock_bin/clang"
+
+hook_script="$sdk_test_dir/run_hook.sh"
+echo "$rendered_helper_hook" > "$hook_script"
+chmod 700 "$hook_script"
+
+set +e
+missing_sdk_err="$(HOME="$mock_home" PATH="$mock_bin:/usr/bin:/bin" bash "$hook_script" 2>&1)"
+missing_sdk_status=$?
+set -e
+
+if [ $missing_sdk_status -ne 0 ] && [[ "$missing_sdk_err" == *"active macOS SDK or standard headers"* ]]; then
+  echo "  PASS: Darwin hook fails closed when macOS SDK is absent"
+  passes=$((passes + 1))
+else
+  echo "  FAIL: Darwin hook did not fail closed on missing SDK (status=$missing_sdk_status output=$missing_sdk_err)"
+  failures=$((failures + 1))
+fi
+
+mock_sdk="$sdk_test_dir/MacOSX.sdk"
+mkdir -p "$mock_sdk/usr/include"
+touch "$mock_sdk/usr/include/errno.h" "$mock_sdk/usr/include/libproc.h"
+
+cat << EOF > "$mock_bin/xcrun"
+#!/bin/bash
+if [[ "\$*" == *"--find clang"* ]]; then
+  echo "\$(dirname "\$0")/clang"
+  exit 0
+fi
+if [[ "\$*" == *"--show-sdk-path"* ]]; then
+  echo "$mock_sdk"
+  exit 0
+fi
+exit 1
+EOF
+chmod 700 "$mock_bin/xcrun"
+
+compiler_log="$sdk_test_dir/compiler.log"
+cat << EOF > "$mock_bin/clang"
+#!/bin/bash
+echo "CLANG_ARGS: \$*" >> "$compiler_log"
+prev=""
+for arg in "\$@"; do
+  if [ "\$prev" = "-o" ]; then
+    out="\$arg"
+    cat << "OUT_EOF" > "\$out"
+#!/bin/bash
+if [ "\$1" = "selftest" ]; then
+  exit 0
+fi
+if [ -n "\$2" ]; then
+  cp "\$1" "\$2/tmux-herdr-darwin-helper"
+  chmod 700 "\$2/tmux-herdr-darwin-helper"
+fi
+exit 0
+OUT_EOF
+    chmod 700 "\$out"
+  fi
+  prev="\$arg"
+done
+exit 0
+EOF
+chmod 700 "$mock_bin/clang"
+
+set +e
+sdk_success_out="$(HOME="$mock_home" PATH="$mock_bin:/usr/bin:/bin" bash "$hook_script" 2>&1)"
+sdk_success_status=$?
+set -e
+
+if [ $sdk_success_status -eq 0 ] && grep -q -- "-isysroot $mock_sdk" "$compiler_log"; then
+  echo "  PASS: Darwin hook invokes compiler with explicit -isysroot SDKROOT"
+  passes=$((passes + 1))
+else
+  echo "  FAIL: Darwin hook failed to supply -isysroot (status=$sdk_success_status output=$sdk_success_out)"
+  failures=$((failures + 1))
+fi
+
+compile_count="$(grep -c -- "-isysroot $mock_sdk" "$compiler_log" || true)"
+if [ "$compile_count" -eq 2 ]; then
+  echo "  PASS: Both helper and installer were compiled with explicit -isysroot"
+  passes=$((passes + 1))
+else
+  echo "  FAIL: Expected 2 compilations with -isysroot, got $compile_count"
+  failures=$((failures + 1))
 fi
 if [ "$profile_is_macbook" = "true" ]; then
   echo "Test: macOS XDG environment renders tool configuration"
