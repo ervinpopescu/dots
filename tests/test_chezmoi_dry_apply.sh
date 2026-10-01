@@ -65,6 +65,17 @@ ISOLATED_SYS_TARGET="$TEST_DIR/sys_target"
 mkdir -p "$ISOLATED_SOURCE" "$ISOLATED_DEST" "$ISOLATED_SYS_TARGET/etc/nginx/conf.d"
 
 profile_is_macbook="$(chezmoi -S "$REPO_ROOT" execute-template '{{ .is_macbook }}')"
+rendered_helper_hook="$(chezmoi -S "$REPO_ROOT" execute-template --override-data '{"is_macbook":true}' -f run_onchange_build-tmux-herdr-darwin-helper.sh.tmpl)"
+assert_contains "Darwin hook validates parents before writes" "validate_parent" "$rendered_helper_hook"
+assert_contains "Darwin hook rejects symlinks" '[[ -e "$DEST_DIR" || -L "$DEST_DIR" ]]' "$rendered_helper_hook"
+assert_contains "Darwin hook validates destination leaf" "validate_helper_leaf \"\$DEST\"" "$rendered_helper_hook"
+if [[ "$rendered_helper_hook" == *".tmux-herdr-darwin-helper.build.lock"* ]]; then
+  echo "  FAIL: Darwin hook retains a permanent fixed lock"
+  failures=$((failures + 1))
+else
+  echo "  PASS: Darwin hook has no permanent fixed lock"
+  passes=$((passes + 1))
+fi
 if [ "$profile_is_macbook" = "true" ]; then
   echo "Test: macOS XDG environment renders tool configuration"
   macos_vars="$(chezmoi -S "$REPO_ROOT" execute-template '{{ includeTemplate "dot_config/zsh/env/vars.zsh.tmpl" . }}')"

@@ -17,6 +17,10 @@ pkgs
 **/**.log
 
 {{ if not .is_macbook }}
+.local/share/tmux-herdr/**
+{{ end }}
+
+{{ if not .is_macbook }}
 .config/npm/npmrc
 .config/vim/vimrc
 {{ end }}

@@ -1,8 +1,11 @@
+import contextlib
 import copy
+import io
 import json
 import os
 import pathlib
 import runpy
+import subprocess
 import sys
 import tempfile
 import threading
@@ -11,6 +14,16 @@ from unittest.mock import patch
 
 SCRIPT = pathlib.Path(__file__).parents[1] / "bin/executable_tmux-herdr"
 module = runpy.run_path(str(SCRIPT), run_name="tmux_herdr_test")
+_real_resolve_pi_session = module["resolve_pi_session"]
+
+
+def fixture_resolve_pi_session(*args, **kwargs):
+    """Use synthetic Linux process fixtures independently of the host OS."""
+    kwargs.setdefault("platform", "linux")
+    return _real_resolve_pi_session(*args, **kwargs)
+
+
+module["resolve_pi_session"] = fixture_resolve_pi_session
 
 
 def pane(kind, command, cwd="/tmp", ref=None):
@@ -145,6 +158,7 @@ class TmuxHerdrTests(unittest.TestCase):
 
     def apply_snapshot(self, app_kind="lazygit"):
         return {
+            "schema": 1,
             "name": "pilot-source",
             "attached": True,
             "tabs": [
@@ -155,7 +169,7 @@ class TmuxHerdrTests(unittest.TestCase):
                         pane(
                             app_kind, "pi" if app_kind == "pi" else "lazygit", ref=None
                         ),
-                        pane("shell", "zsh"),
+                        dict(pane("shell", "zsh"), active=False),
                     ],
                 },
                 {
@@ -245,6 +259,19 @@ class TmuxHerdrTests(unittest.TestCase):
             self.assertIsNone(warning)
             self.assertTrue((moved / "101.json").exists())
             self.assertEqual(list(attacker.iterdir()), [])
+
+    def test_open_beacon_directory_handles_colliding_ancestor_and_leaf_names(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            base = pathlib.Path(tmp)
+            target = base / "nested" / "middle" / "nested"
+            target.mkdir(parents=True, mode=0o700)
+            (base / "nested").chmod(0o755)
+            (base / "nested" / "middle").chmod(0o755)
+            target.chmod(0o700)
+            fd = module["_open_beacon_directory"](target)
+            self.assertIsInstance(fd, int)
+            self.assertGreaterEqual(fd, 0)
+            os.close(fd)
 
     def test_valid_beacon_preferred_over_environment_fallback(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -378,7 +405,10 @@ class TmuxHerdrTests(unittest.TestCase):
     def test_auto_resolution_prefers_valid_session_file(self):
         with tempfile.TemporaryDirectory() as tmp:
             home = pathlib.Path(tmp) / "home"
-            session = home / ".pi/agent/sessions/project/session.jsonl"
+            session = (
+                home
+                / '.pi/agent/sessions/project/space "quote" \\\\ slash-日本語.jsonl'
+            )
             session.parent.mkdir(parents=True)
             session.write_text("")
             env = f"PI_SESSION_FILE={session}\0PI_SESSION_ID=550e8400-e29b-41d4-a716-446655440000\0".encode()
@@ -396,6 +426,12 @@ class TmuxHerdrTests(unittest.TestCase):
             ref, warning = module["resolve_pi_session"]("100", str(tty), proc, home=tmp)
         self.assertEqual(ref, {"kind": "id", "value": session_id})
         self.assertIsNone(warning)
+
+    def test_session_identifier_byte_boundary_matches_darwin_contract(self):
+        exact = "a" * module["SESSION_ID_MAX_BYTES"]
+        self.assertEqual(module["_valid_pi_session_id"](exact), exact)
+        self.assertIsNone(module["_valid_pi_session_id"](exact + "a"))
+        self.assertIsNone(module["_valid_pi_session_id"]("é" + "a" * 255))
 
     def test_auto_resolution_accepts_documented_custom_id_and_rejects_invalid_id(self):
         self.assertEqual(module["_valid_pi_session_id"]("abc123._x"), "abc123._x")
@@ -461,6 +497,43 @@ class TmuxHerdrTests(unittest.TestCase):
         self.assertNotIn("first-id", warning)
         self.assertNotIn("second-id", warning)
 
+    def test_auto_resolution_rejects_complete_chain_change(self):
+        with (
+            tempfile.TemporaryDirectory() as tmp,
+            patch.dict(
+                _real_resolve_pi_session.__globals__,
+                {"_same_proc_chain": lambda _root, _chain: False},
+            ),
+        ):
+            proc, tty = self.proc_fixture(tmp, b"PI_SESSION_ID=chain-race\0")
+            ref, warning = module["resolve_pi_session"]("100", str(tty), proc, home=tmp)
+        self.assertIsNone(ref)
+        self.assertEqual(warning, "process_disappeared")
+
+    def test_same_proc_chain_rejects_empty_chain(self):
+        self.assertFalse(module["_same_proc_chain"](pathlib.Path("/proc"), ()))
+        self.assertFalse(module["_same_proc_chain"](pathlib.Path("/proc"), []))
+
+    def test_auto_resolution_rejects_uncaptured_candidate_chain(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            home = pathlib.Path(tmp) / "home"
+            home.mkdir()
+            proc, tty = self.proc_fixture(tmp, b"PI_SESSION_ID=valid-id\0")
+            self.write_beacon(home)
+            with patch.dict(
+                _real_resolve_pi_session.__globals__,
+                {
+                    "_proc_chain": lambda *args: (_ for _ in ()).throw(
+                        ValueError("cycle")
+                    )
+                },
+            ):
+                ref, warning = module["resolve_pi_session"](
+                    "100", str(tty), proc, home=home, pane_id="%1", environ={}
+                )
+            self.assertIsNone(ref)
+            self.assertEqual(warning, "process_disappeared")
+
     def test_auto_resolution_fails_closed_on_multiple_foreground_candidates(self):
         session_id = "550e8400-e29b-41d4-a716-446655440000"
         with tempfile.TemporaryDirectory() as tmp:
@@ -481,21 +554,242 @@ class TmuxHerdrTests(unittest.TestCase):
             self.assertIsNone(ref)
             self.assertEqual(warning, "proc_unavailable")
             ref, warning = module["resolve_pi_session"](
-                "100", "/dev/pts/1", tmp, platform="darwin"
+                "100", "/dev/pts/1", tmp, platform="darwin", pane_id="%1"
             )
             self.assertIsNone(ref)
-            self.assertEqual(warning, "unsupported_platform")
+            self.assertEqual(warning, "helper_missing")
             proc = pathlib.Path(tmp) / "proc"
             proc.mkdir()
             ref, warning = module["resolve_pi_session"]("123", "/dev/pts/1", proc)
             self.assertIsNone(ref)
             self.assertEqual(warning, "process_disappeared")
 
+    def test_darwin_missing_pane_metadata_precedes_storage_reason(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            for pane_pid, pane_tty in (
+                (None, None),
+                ("100", None),
+                (None, "/dev/pts/1"),
+            ):
+                with self.subTest(pane_pid=pane_pid, pane_tty=pane_tty):
+                    ref, warning = module["resolve_pi_session"](
+                        pane_pid, pane_tty, tmp, platform="darwin"
+                    )
+                    self.assertIsNone(ref)
+                    self.assertEqual(warning, "tmux_pane_missing")
+
+    def test_darwin_resolution_never_falls_back_to_ps_or_environment(self):
+        with (
+            tempfile.TemporaryDirectory() as tmp,
+            patch.dict(
+                _real_resolve_pi_session.__globals__,
+                {
+                    "_read_pi_environment": lambda *args: self.fail(
+                        "Darwin must not inspect process environments"
+                    ),
+                    "_read_pi_beacon": lambda *args, **kwargs: self.fail(
+                        "Darwin must not read an unpinned beacon path"
+                    ),
+                },
+            ),
+        ):
+            ref, warning = module["resolve_pi_session"](
+                "100", "/dev/pts/1", tmp, platform="darwin", pane_id="%1"
+            )
+        self.assertIsNone(ref)
+        self.assertEqual(warning, "helper_missing")
+
+    def test_darwin_helper_streams_and_bounds_real_stdout(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            parent = pathlib.Path(tmp) / "libexec"
+            parent.mkdir(mode=0o700)
+            parent.chmod(0o700)
+            helper = parent / "tmux-herdr-darwin-helper"
+            helper.write_text(
+                "#!/usr/bin/env python3\nimport sys\nsys.stdout.write('x' * 20000)\n"
+            )
+            helper.chmod(0o700)
+            result, warning = module["_run_darwin_helper"]("{}", helper_path=helper)
+            self.assertIsNone(result)
+            self.assertEqual(warning, "helper_process_failure")
+
+    def test_darwin_helper_uses_deadline_bounded_nonblocking_stdin(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            parent = pathlib.Path(tmp) / "libexec"
+            parent.mkdir(mode=0o700)
+            parent.chmod(0o700)
+            helper = parent / "tmux-herdr-darwin-helper"
+            helper.write_text("#!/usr/bin/env python3\nimport time\ntime.sleep(10)\n")
+            helper.chmod(0o700)
+            result, warning = module["_run_darwin_helper"](
+                "x" * 16384, helper_path=helper
+            )
+        self.assertIsNone(result)
+        self.assertEqual(warning, "helper_process_failure")
+
+    def test_darwin_helper_cleanup_on_exception(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            parent = pathlib.Path(tmp) / "libexec"
+            parent.mkdir(mode=0o700)
+            parent.chmod(0o700)
+            helper = parent / "tmux-herdr-darwin-helper"
+            helper.write_text(
+                "#!/usr/bin/env python3\nimport sys\nsys.stdout.write('not-json\\n')\n"
+            )
+            helper.chmod(0o700)
+            stopped = []
+            real_stop = module["_stop_darwin_process"]
+
+            def tracking_stop(proc):
+                stopped.append(proc)
+                return real_stop(proc)
+
+            with patch.dict(
+                module["_run_darwin_helper"].__globals__,
+                {"_stop_darwin_process": tracking_stop},
+            ):
+                result, warning = module["_run_darwin_helper"]("{}", helper_path=helper)
+            self.assertIsNone(result)
+            self.assertEqual(warning, "helper_process_failure")
+            self.assertTrue(len(stopped) > 0)
+
+    def test_darwin_helper_timeout_expired_uses_seconds(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            parent = pathlib.Path(tmp) / "libexec"
+            parent.mkdir(mode=0o700)
+            parent.chmod(0o700)
+            helper = parent / "tmux-herdr-darwin-helper"
+            helper.write_text("#!/usr/bin/env python3\nimport time\ntime.sleep(10)\n")
+            helper.chmod(0o700)
+            captured_timeouts = []
+            real_timeout_init = subprocess.TimeoutExpired.__init__
+
+            def tracking_timeout(self, cmd, timeout, output=None, stderr=None):
+                captured_timeouts.append(timeout)
+                return real_timeout_init(
+                    self, cmd, timeout, output=output, stderr=stderr
+                )
+
+            with patch.object(subprocess.TimeoutExpired, "__init__", tracking_timeout):
+                result, warning = module["_run_darwin_helper"](
+                    "x" * 16384, helper_path=helper
+                )
+            self.assertIsNone(result)
+            self.assertEqual(warning, "helper_process_failure")
+            self.assertIn(1.5, captured_timeouts)
+            self.assertNotIn(1500, captured_timeouts)
+
+    def test_darwin_helper_requires_exact_0700_modes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            parent = pathlib.Path(tmp) / "libexec"
+            parent.mkdir(mode=0o700)
+            parent.chmod(0o700)
+            helper = parent / "tmux-herdr-darwin-helper"
+            helper.write_bytes(b"helper")
+            helper.chmod(0o700)
+            module["_validate_darwin_helper"](helper)
+            for mode in (0o744, 0o755, 0o600):
+                helper.chmod(mode)
+                with self.assertRaisesRegex(ValueError, "helper_build_failure"):
+                    module["_validate_darwin_helper"](helper)
+            helper.chmod(0o700)
+            for mode in (0o744, 0o755, 0o750):
+                parent.chmod(mode)
+                with self.assertRaisesRegex(ValueError, "helper_build_failure"):
+                    module["_validate_darwin_helper"](helper)
+
+    def test_darwin_helper_valid_and_malformed_responses(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            calls = []
+            self.write_beacon(tmp, pid=101, pane_id="%1", start_time="123.000456")
+
+            def valid_runner(action, request):
+                calls.append((action, json.loads(request)))
+                return json.dumps(
+                    {
+                        "ok": True,
+                        "kind": "id",
+                        "value": "mac-id",
+                        "pid": 101,
+                        "start_time": "123.000456",
+                    }
+                )
+
+            ref, warning = module["resolve_pi_session"](
+                "100",
+                "/dev/ttys001",
+                tmp,
+                home=tmp,
+                platform="darwin",
+                pane_id="%1",
+                environ={},
+                helper_runner=valid_runner,
+            )
+            self.assertEqual(ref, {"kind": "id", "value": "session-123"})
+            self.assertIsNone(warning)
+            self.assertEqual(calls[0][0], "resolve")
+            self.assertEqual(calls[0][1]["pane_pid"], 100)
+            self.assertEqual(calls[0][1]["pane_id"], "%1")
+
+            for output, expected in (
+                ("{}", "helper_process_failure"),
+                ('{"ok":true,"extra":1}', "helper_process_failure"),
+                ('{"ok":false}', "helper_process_failure"),
+                ('{"ok":false,"reason":"unknown"}', "helper_process_failure"),
+                (
+                    '{"ok":false,"reason":"io","reason":"stale"}',
+                    "helper_process_failure",
+                ),
+                (json.dumps({"ok": False, "reason": "stale"}), "beacon_stale_process"),
+                (
+                    json.dumps({"ok": False, "reason": "process_tree_too_large"}),
+                    "process_tree_too_large",
+                ),
+                (
+                    "x" * (module["DARWIN_HELPER_OUTPUT_LIMIT"] + 1),
+                    "helper_process_failure",
+                ),
+            ):
+                ref, warning = module["resolve_pi_session"](
+                    "100",
+                    "/dev/ttys001",
+                    tmp,
+                    home=tmp,
+                    platform="darwin",
+                    pane_id="%1",
+                    environ={},
+                    helper_runner=lambda _action, _request, value=output: value,
+                )
+                self.assertIsNone(ref)
+                self.assertEqual(warning, expected)
+
+            ref, warning = module["resolve_pi_session"](
+                "100",
+                "/dev/ttys001",
+                tmp,
+                home=tmp,
+                platform="darwin",
+                pane_id="%1",
+                environ={},
+                helper_runner=lambda _action, _request: (_ for _ in ()).throw(
+                    TimeoutError()
+                ),
+            )
+            self.assertIsNone(ref)
+            self.assertEqual(warning, "helper_process_failure")
+
+    def test_missing_tmux_pane_has_non_sensitive_reason(self):
+        ref, warning = module["resolve_pi_session"](
+            None, None, "/proc", platform="linux"
+        )
+        self.assertIsNone(ref)
+        self.assertEqual(warning, "tmux_pane_missing")
+
     def test_proc_permission_denied_is_non_sensitive(self):
         with tempfile.TemporaryDirectory() as tmp:
             proc, tty = self.proc_fixture(tmp, b"PI_SESSION_ID=secret-id\0")
             with patch.dict(
-                module["resolve_pi_session"].__globals__,
+                _real_resolve_pi_session.__globals__,
                 {
                     "_read_pi_environment": lambda path: (_ for _ in ()).throw(
                         PermissionError()
@@ -522,6 +816,29 @@ class TmuxHerdrTests(unittest.TestCase):
             ):
                 self.assertEqual(module["main"](), 0)
             self.assertEqual(output.stat().st_mode & 0o777, 0o600)
+
+    def test_snapshot_output_file_rejects_symlinks(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            real_file = pathlib.Path(tmp) / "real.json"
+            real_file.touch()
+            symlink_output = pathlib.Path(tmp) / "symlink.json"
+            symlink_output.symlink_to(real_file)
+            argv = [
+                "tmux-herdr",
+                "--snapshot",
+                "pilot",
+                "--output",
+                str(symlink_output),
+            ]
+            with (
+                patch.object(sys, "argv", argv),
+                patch.object(sys, "stderr", io.StringIO()),
+                patch.dict(
+                    module["main"].__globals__,
+                    {"run": self.fake_tmux_snapshot_run()},
+                ),
+            ):
+                self.assertEqual(module["main"](), 1)
 
     def test_snapshot_resolution_is_opt_in_and_never_leaks_other_environment(self):
         secret = "DO_NOT_LEAK_ENV_VALUE"
@@ -824,7 +1141,7 @@ class TmuxHerdrTests(unittest.TestCase):
                 "0.5000",
                 "--cwd",
                 "/tmp",
-                "--focus",
+                "--no-focus",
             ),
             calls,
         )
@@ -977,6 +1294,55 @@ class TmuxHerdrTests(unittest.TestCase):
         )
         self.assertIn(("focus-target", "tab", "focus", "tab-2"), calls)
         self.assertEqual(calls[-1], ("focus-target", "tab", "focus", "existing-tab"))
+
+    def test_strict_snapshot_json_rejected_before_herdr_mutation(self):
+        base = self.apply_snapshot()
+        encoded = json.dumps(base)
+        malformed = (
+            encoded.replace('"schema": 1', '"schema": 2', 1),
+            encoded.replace(
+                '"name": "pilot-source"',
+                '"name": "pilot-source", "name": "duplicate"',
+                1,
+            ),
+            encoded.replace('"attached": true', '"attached": NaN', 1),
+            encoded + " trailing",
+        )
+        for index, content in enumerate(malformed):
+            with self.subTest(index=index), tempfile.TemporaryDirectory() as tmp:
+                snapshot_path = pathlib.Path(tmp) / "snapshot.json"
+                snapshot_path.write_text(content)
+                calls = []
+                with (
+                    patch.object(
+                        sys,
+                        "argv",
+                        [
+                            "tmux-herdr",
+                            "--apply",
+                            str(snapshot_path),
+                            "--session",
+                            "strict-target",
+                        ],
+                    ),
+                    patch.dict(
+                        module["main"].__globals__,
+                        {"apply": lambda *args: calls.append(args)},
+                    ),
+                    contextlib.redirect_stderr(io.StringIO()),
+                ):
+                    self.assertEqual(module["main"](), 1)
+                self.assertEqual(calls, [])
+
+    def test_snapshot_requires_exact_active_tab_and_pane_cardinality(self):
+        snapshot = self.apply_snapshot()
+        snapshot["tabs"][1]["active"] = True
+        with self.assertRaisesRegex(ValueError, "exactly one active tab"):
+            module["_validate_snapshot"](snapshot)
+        snapshot = self.apply_snapshot()
+        snapshot["tabs"][0]["panes"][1]["active"] = True
+        with self.assertRaisesRegex(ValueError, "exactly one active pane"):
+            module["_validate_snapshot"](snapshot)
 
     def test_malformed_snapshot_refused_before_marker_or_mutation(self):
         snapshot = self.apply_snapshot()
@@ -1480,7 +1846,7 @@ class TmuxHerdrTests(unittest.TestCase):
 
     def test_empty_source_snapshot_refused_before_marker_or_mutation(self):
         calls = []
-        snapshot = {"name": "empty", "tabs": []}
+        snapshot = {"schema": 1, "name": "empty", "tabs": []}
 
         def list_empty(target, *args):
             calls.append((target, *args))
@@ -1525,8 +1891,47 @@ class TmuxHerdrTests(unittest.TestCase):
         ):
             with self.assertRaisesRegex(ValueError, "unavailable cwd"):
                 module["apply"](snapshot, "missing-cwd")
-            self.assertEqual(calls, [("missing-cwd", "workspace", "list")])
+            self.assertEqual(calls, [])
             self.assertFalse((self.marker_path(tmp, "missing-cwd", snapshot)).exists())
+
+    def test_apply_rechecks_cwd_after_snapshot_and_before_marker(self):
+        calls = []
+        snapshot = self.apply_snapshot()
+        with tempfile.TemporaryDirectory() as tmp, tempfile.TemporaryDirectory() as cwd:
+            for tab in snapshot["tabs"]:
+                for pane_data in tab["panes"]:
+                    pane_data["cwd"] = cwd
+                    pane_data["cwd_exists"] = True
+
+            def list_empty(target, *args):
+                calls.append((target, *args))
+                return {
+                    "id": "cli:workspace:list",
+                    "result": {"type": "workspace_list", "workspaces": []},
+                }
+
+            original_prepare = module["apply"].__globals__["_precompute_import"]
+
+            def delete_after_prepare(current, allow_continue):
+                prepared = original_prepare(current, allow_continue)
+                pathlib.Path(cwd).rmdir()
+                return prepared
+
+            with (
+                patch.object(pathlib.Path, "home", return_value=pathlib.Path(tmp)),
+                patch.dict(
+                    module["apply"].__globals__,
+                    {
+                        "run": lambda argv: "running",
+                        "herdr": list_empty,
+                        "_precompute_import": delete_after_prepare,
+                    },
+                ),
+            ):
+                with self.assertRaisesRegex(ValueError, "unavailable cwd"):
+                    module["apply"](snapshot, "cwd-race")
+            self.assertEqual(calls, [("cwd-race", "workspace", "list")])
+            self.assertFalse(self.marker_path(tmp, "cwd-race", snapshot).exists())
 
     def test_pi_continue_option_reaches_apply_and_manifest_identity(self):
         calls = []
