@@ -22,7 +22,7 @@ The script may be run from this checkout as `./bin/executable_tmux-herdr`. Apply
 
 The snapshot retains session/window/pane names and indices, attached and active flags, cwd, title, foreground command name, and cell geometry. By default no process environment is inspected. The explicit `--resolve-pi-sessions` snapshot option uses Linux `/proc` process-tree, foreground process-group, and TTY metadata to look only for a single matching foreground Pi process. It first checks that process's private beacon for the exact tmux pane and process-start identity, then falls back to the bounded approved `PI_SESSION_FILE`/`PI_SESSION_ID` environment lookup. It never returns other variables or reads Pi JSONL contents. A validated, owned regular session file under `~/.pi/agent/sessions/` is preferred; otherwise an ID is accepted only if it matches Pi's documented grammar: letters/digits with an alphanumeric first and last character, and only letters, digits, `.`, `_`, or `-` in between. Ambiguity, invalid paths/IDs, vanished/inaccessible processes, rejected beacons, or unsupported platforms leave the reference unset or use only the approved environment fallback, and add non-sensitive reason codes. Pane PID/TTY, pane ID, beacon contents, and raw process environment are not saved; only a validated `{kind,value}` session reference and status are persisted. The flag is snapshot-only; without it no automatic lookup occurs. All snapshots exclude other environment variables, command arguments, pane contents/scrollback, and Pi JSONL contents. Tmux's layout token is diagnostic only. Workspaces correspond to the selected tmux session and tabs to windows; the first tab and pane are explicitly renamed, other tabs use captured names, and panes use captured terminal title (falling back to command/index). Pane splits use `right`/`down` with an approximate ratio derived from cell extents; this is not a recursive reconstruction of arbitrary layouts. Active tab/pane focus is requested where the Herdr CLI supports it. Herdr cannot adopt live PTYs, process memory, shell jobs/history, scrollback, terminal modes, dev servers, or unsaved Pi requests. Cell geometry and exact layout are not portable.
 
-#### Darwin native boundary
+### Darwin native boundary
 
 macOS uses the managed `tmux-herdr-darwin-helper` for both publication and resolution. The helper is a small C program built by chezmoi from `private_dot_local/private_share/tmux-herdr/tmux-herdr-darwin-helper.c` into the user-owned, mode-0700 path `~/.local/libexec/tmux-herdr-darwin-helper` with both the helper and trusted `~/.local/libexec` parent required to be user-owned mode 0700. It obtains the exact `(pid,start_tvsec,start_tvusec)` tuple and numeric PPID/PGID/SID/TTY/foreground metadata with `proc_pidinfo(PROC_PIDTBSDINFO)` and `getsid()`. It performs publication and authoritative process discovery through descriptor-relative `openat`/`mkdirat`/`fstat`/`renameat` operations. Node never uses `/dev/fd/N/child`; Python revalidates the returned beacon through its own pinned `dir_fd` APIs. Neither side uses `ps`, argv, unrelated environments, or absolute beacon pathname fallbacks on Darwin.
 
@@ -47,6 +47,30 @@ Beacons contain only schema, Pi PID, tmux pane ID, a process-start identity, and
 
 The shipped `dot_config/herdr/config.toml.tmpl` provides only basic shell, cwd and Herdr agent-restore preferences. It does not start Herdr or configure automatic migration.
 
+### Troubleshooting Darwin beacon publication
+
+If `/herdr-beacon` returns `secure_storage_unavailable` on macOS, run the privacy-safe diagnostic script deployed as `tmux-herdr-diagnose` (or `./bin/executable_tmux-herdr-diagnose` from this checkout):
+
+```sh
+tmux-herdr-diagnose
+# Optional: skip the temporary-entry fsync probe
+tmux-herdr-diagnose --no-fsync-probe
+# Optional: structured JSON format
+tmux-herdr-diagnose --json
+```
+
+The script is strictly read-only except an optional temporary probe file inside the verified beacon directory that always unlinks its probe file during cleanup. It prints only fixed non-sensitive status labels—never paths, usernames, UID values, PIDs, pane IDs/values, session IDs/paths, environment values, argv, or file contents. It verifies:
+
+- Platform and boolean `TMUX_PANE` presence
+- Darwin helper binary and `~/.local/libexec` parent ownership, type, mode (`exact_0700`), link count (`single`), and executable status
+- Bounded helper `selftest` invocation (`ok` on valid install)
+- Storage base selection label (`xdg_runtime_dir` vs `home_fallback`)
+- Every storage path component against Darwin helper security rules (descriptor-pinned validation for symlinks, trusted owner, non-writable intermediate modes, and `exact_0700` leaf directory)
+- Existing beacon leaf files (regular `exact_0600` file, single link, owned by self)
+- Directory and file fsync capabilities (reporting `ok`, `invalid_argument`, or mapped categories without leaking paths or errno strings)
+
+Paste the compact key-value output directly for triage.
+
 ## Fixture checks
 
-`python3 -m unittest discover -s tests -p 'test_tmux_herdr.py'`, `node --experimental-strip-types --test tests/tmux-herdr-beacon.test.mjs`, and `./tests/test_tmux_herdr_helper.sh` are portable fixture/protocol commands: synthetic Python process resolution explicitly injects Linux semantics, Node publisher tests inject a Linux storage/process fixture, and the C helper builds a non-Darwin stub with strict warnings. The two direct Node pinned-directory `/proc` tests are clearly marked Linux-only and skip on macOS; Darwin helper/publisher/importer protocol tests run deterministically on every host. Also run `python3 -m compileall -q bin/executable_tmux-herdr`, Ruff, Prettier, available TypeScript/static checks, `herdr --help`, `herdr config check`, `git diff --check`, and `bash -n` on the build hook. On a real macOS deployment, run `chezmoi apply --dry-run` plus the actual hook in a disposable destination, verify `xcrun --find clang`, helper ownership/mode, `codesign` policy if configured, and the true-runtime matrix above before importing anything. Do not use migration `--apply` on a live server during validation.
+`python3 -m unittest discover -s tests -p 'test_*.py'`, `node --experimental-strip-types --test tests/tmux-herdr-beacon.test.mjs`, and `./tests/test_tmux_herdr_helper.sh` are portable fixture/protocol commands: synthetic Python process resolution explicitly injects Linux semantics, Node publisher tests inject a Linux storage/process fixture, and the C helper builds a non-Darwin stub with strict warnings. The two direct Node pinned-directory `/proc` tests are clearly marked Linux-only and skip on macOS; Darwin helper/publisher/importer protocol tests run deterministically on every host. Also run `python3 -m compileall -q bin/executable_tmux-herdr bin/executable_tmux-herdr-diagnose`, Ruff, Prettier, available TypeScript/static checks, `herdr --help`, `herdr config check`, `git diff --check`, and `bash -n` on the build hook. On a real macOS deployment, run `chezmoi apply --dry-run` plus the actual hook in a disposable destination, verify `xcrun --find clang`, helper ownership/mode, `codesign` policy if configured, and the true-runtime matrix above before importing anything. Do not use migration `--apply` on a live server during validation.
