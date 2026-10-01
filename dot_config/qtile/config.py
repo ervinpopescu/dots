@@ -1,6 +1,7 @@
 import json
 import os
 
+from libqtile import confreader
 from modules import (  # noqa: F401
     extension_defaults,
     floating_layout,
@@ -9,7 +10,6 @@ from modules import (  # noqa: F401
     keys,
     layouts,
     mouse,
-    screens,
     widget_defaults,
 )
 from modules.hooks import apps as apps_hooks
@@ -22,7 +22,6 @@ assert groups
 assert keys
 assert layouts
 assert mouse
-assert screens
 assert widget_defaults
 assert extension_defaults
 
@@ -38,3 +37,7 @@ with open(os.path.join(config_path, "json", "config.json")) as f:
 
 
 focus_on_window_activation = "smart"
+
+# Fallback for Qtile < 0.35 which does not support generate_screens
+if "generate_screens" not in getattr(confreader.Config, "__annotations__", {}):
+    from modules.screens import screens  # noqa: F401

@@ -87,11 +87,3 @@ def generate_screens(outputs: list[Output]) -> list[Screen]:
         result.append(_primary_screen(w1))
 
     return result
-
-
-_w1, _w2, _w3 = build_widget_lists()
-screens = [
-    _primary_screen(_w1),
-    _secondary_screen(_w2),
-    _secondary_screen(_w3),
-]
