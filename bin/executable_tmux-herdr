@@ -70,10 +70,13 @@ def _same_proc_chain(proc_root, chain):
     if not chain:
         return False
     try:
-        return tuple(
-            (pid, tuple(sorted(_proc_stat(proc_root / str(pid) / "stat").items())))
-            for pid, _identity in chain
-        ) == chain
+        return (
+            tuple(
+                (pid, tuple(sorted(_proc_stat(proc_root / str(pid) / "stat").items())))
+                for pid, _identity in chain
+            )
+            == chain
+        )
     except (FileNotFoundError, OSError, UnicodeError, ValueError):
         return False
 
@@ -545,11 +548,7 @@ def _read_pi_beacon(pid, pane_id, proc_root, home=None, environ=None):
         dir_fd = _open_beacon_directory(directory)
         name = f"{pid}.json"
         info = os.stat(name, dir_fd=dir_fd, follow_symlinks=False)
-        if (
-            stat.S_ISLNK(info.st_mode)
-            or not stat.S_ISREG(info.st_mode)
-            or info.st_nlink != 1
-        ):
+        if stat.S_ISLNK(info.st_mode) or not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
             return None, "beacon_invalid_file_type"
         if info.st_uid != os.getuid():
             return None, "beacon_wrong_owner"
@@ -788,9 +787,7 @@ def resolve_pi_session(
             visited.add(pid)
             process = proc_root / str(pid)
             try:
-                info = (
-                    root_stat if pid == int(pane_pid) else _proc_stat(process / "stat")
-                )
+                info = root_stat if pid == int(pane_pid) else _proc_stat(process / "stat")
                 queue.extend(_proc_children(proc_root, pid))
                 if info["pgrp"] != root_stat["tpgid"]:
                     continue
@@ -827,13 +824,12 @@ def resolve_pi_session(
                 return None, "ambiguous_beacons"
             if beacon_candidates:
                 selected = [
-                    pid for pid in foreground_pids
+                    pid
+                    for pid in foreground_pids
                     if _read_pi_beacon(pid, pane_id, proc_root, home, environ)[0]
                 ]
                 chain = candidate_chains.get(selected[0]) if len(selected) == 1 else None
-                if len(selected) != 1 or not chain or not _same_proc_chain(
-                    proc_root, chain
-                ):
+                if len(selected) != 1 or not chain or not _same_proc_chain(proc_root, chain):
                     return None, "process_disappeared"
                 return beacon_candidates[0], None
         for foreground_pid in foreground_pids:
@@ -894,7 +890,8 @@ def resolve_pi_session(
         return None, "proc_read_error"
 
 
-def tmux_snapshot(session, resolve_pi_sessions=False, proc_root="/proc"):
+def tmux_snapshot(session, resolve_pi_sessions=False, proc_root="/proc", platform=None):
+    target_platform = platform or sys.platform
     sessions = run(["tmux", "list-sessions", "-F", "#{session_name}"]).splitlines()
     if session not in sessions:
         raise ValueError(f"tmux session not found: {session}")
@@ -909,9 +906,7 @@ def tmux_snapshot(session, resolve_pi_sessions=False, proc_root="/proc"):
         ]
     ).splitlines()
     attached = (
-        run(
-            ["tmux", "display-message", "-p", "-t", session, "#{session_attached}"]
-        ).strip()
+        run(["tmux", "display-message", "-p", "-t", session, "#{session_attached}"]).strip()
         == "1"
     )
     result = {
@@ -964,7 +959,11 @@ def tmux_snapshot(session, resolve_pi_sessions=False, proc_root="/proc"):
             kind = classify(command)
             if resolve_pi_sessions and kind["kind"] == "pi":
                 kind["session_ref"], resolution_warning = resolve_pi_session(
-                    pane_pid, pane_tty, proc_root=proc_root, pane_id=pane_id
+                    pane_pid,
+                    pane_tty,
+                    proc_root=proc_root,
+                    platform=target_platform,
+                    pane_id=pane_id,
                 )
                 if kind["session_ref"]:
                     result["pi_session_resolution"]["resolved"] += 1
@@ -978,6 +977,25 @@ def tmux_snapshot(session, resolve_pi_sessions=False, proc_root="/proc"):
                             "code": resolution_warning,
                         }
                     )
+            elif resolve_pi_sessions and target_platform == "darwin" and command == "node":
+                session_ref, resolution_warning = resolve_pi_session(
+                    pane_pid,
+                    pane_tty,
+                    proc_root=proc_root,
+                    platform=target_platform,
+                    pane_id=pane_id,
+                )
+                if session_ref:
+                    kind = {"kind": "pi", "session_ref": session_ref}
+                    result["pi_session_resolution"]["resolved"] += 1
+                    if resolution_warning:
+                        result["pi_session_resolution"]["warnings"].append(
+                            {
+                                "window_index": int(index),
+                                "pane_index": int(pindex),
+                                "code": resolution_warning,
+                            }
+                        )
             item = {
                 "index": int(pindex),
                 "active": pactive == "1",
@@ -1035,7 +1053,9 @@ def plan(snapshot, allow_continue=False):
                     warning = None
                 elif ref is not None:
                     command = None
-                    warning = f"invalid Pi session reference ignored ({ref_warning}); shell fallback"
+                    warning = (
+                        f"invalid Pi session reference ignored ({ref_warning}); shell fallback"
+                    )
                 elif allow_continue:
                     command = ["tmux-herdr", "continue-pi"]
                     warning = "Pi --continue resumes newest project session, not necessarily this conversation"
@@ -1048,7 +1068,9 @@ def plan(snapshot, allow_continue=False):
                 command, warning = None, None
             else:
                 command = None
-                warning = f"unknown command {pane['command']!r} not replayed; plain shell fallback"
+                warning = (
+                    f"unknown command {pane['command']!r} not replayed; plain shell fallback"
+                )
             if warning:
                 warnings.append(f"{tab['name']}:{pane['index']}: {warning}")
             operations.append(
@@ -1095,17 +1117,13 @@ def _object_id(result, object_name, id_name, response):
     obj = result.get(object_name)
     value = obj.get(id_name) if isinstance(obj, dict) else None
     if not isinstance(value, str) or not value or not value.strip():
-        raise ValueError(
-            f"Herdr response missing {object_name}.{id_name}: {response!r}"
-        )
+        raise ValueError(f"Herdr response missing {object_name}.{id_name}: {response!r}")
     return value
 
 
 def _validate_workspace(workspace, index):
     if not isinstance(workspace, dict):
-        raise ValueError(
-            f"Herdr workspace list entry {index} is malformed; refusing apply"
-        )
+        raise ValueError(f"Herdr workspace list entry {index} is malformed; refusing apply")
     workspace_id = workspace.get("workspace_id")
     if not isinstance(workspace_id, str) or not workspace_id.strip():
         raise ValueError(
@@ -1145,9 +1163,7 @@ def _list_workspaces(response):
             _validate_workspace(workspace, index)
             for index, workspace in enumerate(response["result"]["workspaces"])
         ]
-    raise ValueError(
-        "Herdr workspace list returned an unrecognized response; refusing apply"
-    )
+    raise ValueError("Herdr workspace list returned an unrecognized response; refusing apply")
 
 
 def _pane_label(pane):
@@ -1190,11 +1206,7 @@ def _validate_snapshot(snapshot):
     if not isinstance(attached, bool):
         raise ValueError("snapshot attached flag is invalid")
     tabs = snapshot.get("tabs")
-    if (
-        not isinstance(tabs, list)
-        or not tabs
-        or any(not isinstance(tab, dict) for tab in tabs)
-    ):
+    if not isinstance(tabs, list) or not tabs or any(not isinstance(tab, dict) for tab in tabs):
         raise ValueError("snapshot contains an empty tab list or malformed tab")
     if sum(tab.get("active") is True for tab in tabs) != 1:
         raise ValueError("snapshot must contain exactly one active tab")
@@ -1206,12 +1218,8 @@ def _validate_snapshot(snapshot):
         panes = tab.get("panes")
         if not isinstance(panes, list) or not panes:
             raise ValueError(f"snapshot tab {tab_index} has no panes")
-        if sum(
-            isinstance(pane, dict) and pane.get("active") is True for pane in panes
-        ) != 1:
-            raise ValueError(
-                f"snapshot tab {tab_index} must contain exactly one active pane"
-            )
+        if sum(isinstance(pane, dict) and pane.get("active") is True for pane in panes) != 1:
+            raise ValueError(f"snapshot tab {tab_index} must contain exactly one active pane")
         for pane_index, pane in enumerate(panes):
             if not isinstance(pane, dict):
                 raise ValueError(f"snapshot pane {tab_index}:{pane_index} is malformed")
@@ -1226,29 +1234,17 @@ def _validate_snapshot(snapshot):
                 "application",
             }
             if not required.issubset(pane):
-                raise ValueError(
-                    f"snapshot pane {tab_index}:{pane_index} is missing fields"
-                )
+                raise ValueError(f"snapshot pane {tab_index}:{pane_index} is missing fields")
             if not isinstance(pane["index"], int) or isinstance(pane["index"], bool):
-                raise ValueError(
-                    f"snapshot pane {tab_index}:{pane_index} has an invalid index"
-                )
+                raise ValueError(f"snapshot pane {tab_index}:{pane_index} has an invalid index")
             if not isinstance(pane["active"], bool):
                 raise ValueError(
                     f"snapshot pane {tab_index}:{pane_index} has an invalid active flag"
                 )
-            if not isinstance(pane["cwd"], str) or not isinstance(
-                pane["cwd_exists"], bool
-            ):
-                raise ValueError(
-                    f"snapshot pane {tab_index}:{pane_index} has an invalid cwd"
-                )
-            if not isinstance(pane["command"], str) or not isinstance(
-                pane["title"], str
-            ):
-                raise ValueError(
-                    f"snapshot pane {tab_index}:{pane_index} has invalid labels"
-                )
+            if not isinstance(pane["cwd"], str) or not isinstance(pane["cwd_exists"], bool):
+                raise ValueError(f"snapshot pane {tab_index}:{pane_index} has an invalid cwd")
+            if not isinstance(pane["command"], str) or not isinstance(pane["title"], str):
+                raise ValueError(f"snapshot pane {tab_index}:{pane_index} has invalid labels")
             geometry = pane["geometry"]
             if not isinstance(geometry, dict) or not {
                 "x",
@@ -1256,9 +1252,7 @@ def _validate_snapshot(snapshot):
                 "width",
                 "height",
             }.issubset(geometry):
-                raise ValueError(
-                    f"snapshot pane {tab_index}:{pane_index} has invalid geometry"
-                )
+                raise ValueError(f"snapshot pane {tab_index}:{pane_index} has invalid geometry")
             for key in ("x", "y", "width", "height"):
                 value = geometry[key]
                 if (
@@ -1274,9 +1268,7 @@ def _validate_snapshot(snapshot):
                         f"snapshot pane {tab_index}:{pane_index} has non-positive geometry"
                     )
             application = pane["application"]
-            if not isinstance(application, dict) or not isinstance(
-                application.get("kind"), str
-            ):
+            if not isinstance(application, dict) or not isinstance(application.get("kind"), str):
                 raise ValueError(
                     f"snapshot pane {tab_index}:{pane_index} has invalid application"
                 )
@@ -1293,9 +1285,7 @@ def _precompute_import(snapshot, allow_continue):
             split = None
             if pane_index:
                 direction = (
-                    "right"
-                    if pane["geometry"]["x"] > first_pane["geometry"]["x"]
-                    else "down"
+                    "right" if pane["geometry"]["x"] > first_pane["geometry"]["x"] else "down"
                 )
                 extent_key = "width" if direction == "right" else "height"
                 extent = first_pane["geometry"][extent_key]
@@ -1353,9 +1343,7 @@ def _read_marker(marker):
         or info.st_uid != os.getuid()
         or stat.S_IMODE(info.st_mode) != 0o600
     ):
-        raise ValueError(
-            f"marker is not a private regular file; refusing duplicate: {marker}"
-        )
+        raise ValueError(f"marker is not a private regular file; refusing duplicate: {marker}")
     try:
         value = json.loads(marker.read_text())
     except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
@@ -1370,9 +1358,7 @@ def _require_running_server(status):
         raise ValueError("target Herdr server status was malformed; refusing apply")
     state = status.strip().lower()
     if state not in {"running", "status: running", "server: running"}:
-        raise ValueError(
-            "target Herdr server is not explicitly running; refusing apply"
-        )
+        raise ValueError("target Herdr server is not explicitly running; refusing apply")
 
 
 def _atomic_marker_replace(marker_dir, marker_name, payload):
@@ -1386,7 +1372,8 @@ def _atomic_marker_replace(marker_dir, marker_name, payload):
     temp_name = None
     try:
         destination_fd = os.open(
-            marker_name, os.O_RDONLY | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0),
+            marker_name,
+            os.O_RDONLY | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0),
             dir_fd=directory_fd,
         )
         try:
@@ -1436,7 +1423,8 @@ def _atomic_marker_replace(marker_dir, marker_name, payload):
         os.rename(temp_name, marker_name, src_dir_fd=directory_fd, dst_dir_fd=directory_fd)
         temp_name = None
         installed_fd = os.open(
-            marker_name, os.O_RDONLY | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0),
+            marker_name,
+            os.O_RDONLY | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0),
             dir_fd=directory_fd,
         )
         try:
@@ -1468,9 +1456,7 @@ def _legacy_marker_matches(marker, snapshot, target, allow_continue, label, work
         {"snapshot": snapshot, "allow_pi_continue": allow_continue}, sort_keys=True
     )
     if old.get("status") != "applied" or old.get("identity") != legacy_identity:
-        raise ValueError(
-            f"legacy marker identity differs; refusing duplicate: {marker}"
-        )
+        raise ValueError(f"legacy marker identity differs; refusing duplicate: {marker}")
     labels = [workspace.get("label") for workspace in workspaces]
     if labels.count(label) != 1:
         raise ValueError(
@@ -1497,13 +1483,8 @@ def apply(snapshot, target, allow_continue=False):
         raise ValueError(
             f"marker directory is unavailable; refusing apply: {marker_dir}"
         ) from exc
-    if (
-        not stat.S_ISDIR(marker_dir_info.st_mode)
-        or marker_dir_info.st_uid != os.getuid()
-    ):
-        raise ValueError(
-            f"marker directory is not private; refusing apply: {marker_dir}"
-        )
+    if not stat.S_ISDIR(marker_dir_info.st_mode) or marker_dir_info.st_uid != os.getuid():
+        raise ValueError(f"marker directory is not private; refusing apply: {marker_dir}")
     marker_dir.chmod(0o700)
     marker = _marker_path(marker_dir, target, source)
     legacy_marker = marker_dir / (target + ".json")
@@ -1567,9 +1548,7 @@ def apply(snapshot, target, allow_continue=False):
     try:
         fd = os.open(marker, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
     except FileExistsError as exc:
-        raise ValueError(
-            f"target/source already reserved; refusing duplicate: {marker}"
-        ) from exc
+        raise ValueError(f"target/source already reserved; refusing duplicate: {marker}") from exc
     created = []
     mutation_started = False
     try:
@@ -1667,23 +1646,15 @@ def apply(snapshot, target, allow_continue=False):
                         pane["cwd"],
                     ]
                     args.append(
-                        "--focus"
-                        if tab.get("active") and pane.get("active")
-                        else "--no-focus"
+                        "--focus" if tab.get("active") and pane.get("active") else "--no-focus"
                     )
                     reply = herdr(target, *args)
                     created.append(reply)
-                    result = _command_result(
-                        reply, "cli:pane:split", "pane_info", {"pane"}
-                    )
+                    result = _command_result(reply, "cli:pane:split", "pane_info", {"pane"})
                     pane_id = _object_id(result, "pane", "pane_id", reply)
-                label_reply = herdr(
-                    target, "pane", "rename", pane_id, _pane_label(pane)
-                )
+                label_reply = herdr(target, "pane", "rename", pane_id, _pane_label(pane))
                 created.append(label_reply)
-                result = _command_result(
-                    label_reply, "cli:pane:rename", "pane_info", {"pane"}
-                )
+                result = _command_result(label_reply, "cli:pane:rename", "pane_info", {"pane"})
                 _object_id(result, "pane", "pane_id", label_reply)
                 if app_plan["command"]:
                     _recheck_cwd(pane["cwd"])
@@ -1691,16 +1662,12 @@ def apply(snapshot, target, allow_continue=False):
             if tab.get("active"):
                 focus_reply = herdr(target, "tab", "focus", tab_id)
                 created.append(focus_reply)
-                result = _command_result(
-                    focus_reply, "cli:tab:focus", "tab_info", {"tab"}
-                )
+                result = _command_result(focus_reply, "cli:tab:focus", "tab_info", {"tab"})
                 _object_id(result, "tab", "tab_id", focus_reply)
         if previous_focused_tab:
             restore_reply = herdr(target, "tab", "focus", previous_focused_tab)
             created.append(restore_reply)
-            result = _command_result(
-                restore_reply, "cli:tab:focus", "tab_info", {"tab"}
-            )
+            result = _command_result(restore_reply, "cli:tab:focus", "tab_info", {"tab"})
             _object_id(result, "tab", "tab_id", restore_reply)
         _atomic_marker_replace(
             marker_dir,
@@ -1772,9 +1739,7 @@ def main():
         if args.snapshot:
             text = (
                 json.dumps(
-                    tmux_snapshot(
-                        args.snapshot, resolve_pi_sessions=args.resolve_pi_sessions
-                    ),
+                    tmux_snapshot(args.snapshot, resolve_pi_sessions=args.resolve_pi_sessions),
                     indent=2,
                     ensure_ascii=False,
                 )

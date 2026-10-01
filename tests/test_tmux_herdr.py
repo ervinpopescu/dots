@@ -54,9 +54,7 @@ class TmuxHerdrTests(unittest.TestCase):
             (root / "fd").mkdir()
             (root / "task" / str(pid) / "children").write_text("")
             stat_fields = (
-                ["S", str(ppid), str(pgrp), "1", "0", str(tpgid)]
-                + ["0"] * 13
-                + ["987654"]
+                ["S", str(ppid), str(pgrp), "1", "0", str(tpgid)] + ["0"] * 13 + ["987654"]
             )
             (root / "stat").write_text(f"{pid} (node) {' '.join(stat_fields)}\n")
             (root / "environ").write_bytes(env)
@@ -64,17 +62,15 @@ class TmuxHerdrTests(unittest.TestCase):
 
         setup_process(100, 1, 100, 101)
         children = [101, *extra_processes]
-        (proc / "100" / "task" / "100" / "children").write_text(
-            " ".join(map(str, children))
-        )
+        (proc / "100" / "task" / "100" / "children").write_text(" ".join(map(str, children)))
         setup_process(101, 100, 101, 101, environment)
-        for pid, env in (
-            extra_processes.items() if isinstance(extra_processes, dict) else ()
-        ):
+        for pid, env in extra_processes.items() if isinstance(extra_processes, dict) else ():
             setup_process(pid, 100, 101, 101, env)
         return proc, tty
 
-    def fake_tmux_snapshot_run(self, pane_pid=100, pane_tty="/dev/null"):
+    def fake_tmux_snapshot_run(
+        self, pane_pid=100, pane_tty="/dev/null", command="pi", title="Pi title"
+    ):
         def fake_run(argv, **kwargs):
             if argv[1:3] == ["list-sessions", "-F"]:
                 return "pilot\n"
@@ -87,8 +83,8 @@ class TmuxHerdrTests(unittest.TestCase):
                     "0",
                     "1",
                     "/tmp",
-                    "pi",
-                    "Pi title",
+                    command,
+                    title,
                     "80",
                     "24",
                     "0",
@@ -166,9 +162,7 @@ class TmuxHerdrTests(unittest.TestCase):
                     "name": "first-window",
                     "active": True,
                     "panes": [
-                        pane(
-                            app_kind, "pi" if app_kind == "pi" else "lazygit", ref=None
-                        ),
+                        pane(app_kind, "pi" if app_kind == "pi" else "lazygit", ref=None),
                         dict(pane("shell", "zsh"), active=False),
                     ],
                 },
@@ -225,9 +219,7 @@ class TmuxHerdrTests(unittest.TestCase):
             pathlib.Path("/home/test-user/.cache/pi-herdr-sessions"),
         )
         self.assertIsNone(
-            module["_beacon_directory"](
-                None, {"XDG_RUNTIME_DIR": "relative", "HOME": "relative"}
-            )
+            module["_beacon_directory"](None, {"XDG_RUNTIME_DIR": "relative", "HOME": "relative"})
         )
 
     def test_darwin_beacon_directory_canonicalization_with_symlink_ancestor(self):
@@ -395,9 +387,7 @@ class TmuxHerdrTests(unittest.TestCase):
 
             # Test 1: Symlinked ancestor Darwin path
             env1 = {"XDG_RUNTIME_DIR": str(symlink_run), "HOME": str(home)}
-            importer_path1 = str(
-                module["_beacon_directory"](home, env1, platform="darwin")
-            )
+            importer_path1 = str(module["_beacon_directory"](home, env1, platform="darwin"))
             expected1 = str(real_run.resolve() / "pi-herdr-sessions")
             self.assertEqual(importer_path1, expected1)
 
@@ -406,9 +396,7 @@ class TmuxHerdrTests(unittest.TestCase):
                 "XDG_RUNTIME_DIR": str(tmp_path / "nonexistent"),
                 "HOME": str(home),
             }
-            importer_path2 = str(
-                module["_beacon_directory"](home, env2, platform="darwin")
-            )
+            importer_path2 = str(module["_beacon_directory"](home, env2, platform="darwin"))
             expected2 = str(home.resolve() / ".cache/pi-herdr-sessions")
             self.assertEqual(importer_path2, expected2)
 
@@ -537,9 +525,7 @@ class TmuxHerdrTests(unittest.TestCase):
                 home = pathlib.Path(tmp) / "home"
                 home.mkdir()
                 proc, tty = self.proc_fixture(tmp, b"PI_SESSION_ID=fallback-id\0")
-                beacon = self.write_beacon(
-                    home, mode=0o644 if case == "mode" else 0o600
-                )
+                beacon = self.write_beacon(home, mode=0o644 if case == "mode" else 0o600)
                 expected = {
                     "mode": "beacon_loose_permissions",
                     "symlink": "beacon_invalid_file_type",
@@ -587,17 +573,12 @@ class TmuxHerdrTests(unittest.TestCase):
     def test_auto_resolution_prefers_valid_session_file(self):
         with tempfile.TemporaryDirectory() as tmp:
             home = pathlib.Path(tmp) / "home"
-            session = (
-                home
-                / '.pi/agent/sessions/project/space "quote" \\\\ slash-日本語.jsonl'
-            )
+            session = home / '.pi/agent/sessions/project/space "quote" \\\\ slash-日本語.jsonl'
             session.parent.mkdir(parents=True)
             session.write_text("")
             env = f"PI_SESSION_FILE={session}\0PI_SESSION_ID=550e8400-e29b-41d4-a716-446655440000\0".encode()
             proc, tty = self.proc_fixture(tmp, env)
-            ref, warning = module["resolve_pi_session"](
-                "100", str(tty), proc, home=home
-            )
+            ref, warning = module["resolve_pi_session"]("100", str(tty), proc, home=home)
         self.assertEqual(ref, {"kind": "path", "value": str(session.resolve())})
         self.assertIsNone(warning)
 
@@ -704,11 +685,7 @@ class TmuxHerdrTests(unittest.TestCase):
             self.write_beacon(home)
             with patch.dict(
                 _real_resolve_pi_session.__globals__,
-                {
-                    "_proc_chain": lambda *args: (_ for _ in ()).throw(
-                        ValueError("cycle")
-                    )
-                },
+                {"_proc_chain": lambda *args: (_ for _ in ()).throw(ValueError("cycle"))},
             ):
                 ref, warning = module["resolve_pi_session"](
                     "100", str(tty), proc, home=home, pane_id="%1", environ={}
@@ -803,9 +780,7 @@ class TmuxHerdrTests(unittest.TestCase):
             helper = parent / "tmux-herdr-darwin-helper"
             helper.write_text("#!/usr/bin/env python3\nimport time\ntime.sleep(10)\n")
             helper.chmod(0o700)
-            result, warning = module["_run_darwin_helper"](
-                "x" * 16384, helper_path=helper
-            )
+            result, warning = module["_run_darwin_helper"]("x" * 16384, helper_path=helper)
         self.assertIsNone(result)
         self.assertEqual(warning, "helper_process_failure")
 
@@ -848,14 +823,10 @@ class TmuxHerdrTests(unittest.TestCase):
 
             def tracking_timeout(self, cmd, timeout, output=None, stderr=None):
                 captured_timeouts.append(timeout)
-                return real_timeout_init(
-                    self, cmd, timeout, output=output, stderr=stderr
-                )
+                return real_timeout_init(self, cmd, timeout, output=output, stderr=stderr)
 
             with patch.object(subprocess.TimeoutExpired, "__init__", tracking_timeout):
-                result, warning = module["_run_darwin_helper"](
-                    "x" * 16384, helper_path=helper
-                )
+                result, warning = module["_run_darwin_helper"]("x" * 16384, helper_path=helper)
             self.assertIsNone(result)
             self.assertEqual(warning, "helper_process_failure")
             self.assertIn(1.5, captured_timeouts)
@@ -953,17 +924,13 @@ class TmuxHerdrTests(unittest.TestCase):
                 platform="darwin",
                 pane_id="%1",
                 environ={},
-                helper_runner=lambda _action, _request: (_ for _ in ()).throw(
-                    TimeoutError()
-                ),
+                helper_runner=lambda _action, _request: (_ for _ in ()).throw(TimeoutError()),
             )
             self.assertIsNone(ref)
             self.assertEqual(warning, "helper_process_failure")
 
     def test_missing_tmux_pane_has_non_sensitive_reason(self):
-        ref, warning = module["resolve_pi_session"](
-            None, None, "/proc", platform="linux"
-        )
+        ref, warning = module["resolve_pi_session"](None, None, "/proc", platform="linux")
         self.assertIsNone(ref)
         self.assertEqual(warning, "tmux_pane_missing")
 
@@ -972,15 +939,9 @@ class TmuxHerdrTests(unittest.TestCase):
             proc, tty = self.proc_fixture(tmp, b"PI_SESSION_ID=secret-id\0")
             with patch.dict(
                 _real_resolve_pi_session.__globals__,
-                {
-                    "_read_pi_environment": lambda path: (_ for _ in ()).throw(
-                        PermissionError()
-                    )
-                },
+                {"_read_pi_environment": lambda path: (_ for _ in ()).throw(PermissionError())},
             ):
-                ref, warning = module["resolve_pi_session"](
-                    "100", str(tty), proc, home=tmp
-                )
+                ref, warning = module["resolve_pi_session"]("100", str(tty), proc, home=tmp)
         self.assertIsNone(ref)
         self.assertEqual(warning, "proc_permission_denied")
         self.assertNotIn("secret-id", warning)
@@ -1031,22 +992,18 @@ class TmuxHerdrTests(unittest.TestCase):
             )
             namespace = module["tmux_snapshot"].__globals__
             resolver = module["resolve_pi_session"]
-            with patch.dict(
-                namespace, {"run": self.fake_tmux_snapshot_run(pane_tty=str(tty))}
-            ):
+            with patch.dict(namespace, {"run": self.fake_tmux_snapshot_run(pane_tty=str(tty))}):
                 with patch.dict(
                     namespace,
                     {
-                        "resolve_pi_session": lambda *args, **kwargs: (
-                            _ for _ in ()
-                        ).throw(AssertionError("resolver ran without opt-in"))
+                        "resolve_pi_session": lambda *args, **kwargs: (_ for _ in ()).throw(
+                            AssertionError("resolver ran without opt-in")
+                        )
                     },
                 ):
                     disabled = module["tmux_snapshot"]("pilot")
             self.assertFalse(disabled["pi_session_resolution"]["enabled"])
-            self.assertIsNone(
-                disabled["tabs"][0]["panes"][0]["application"]["session_ref"]
-            )
+            self.assertIsNone(disabled["tabs"][0]["panes"][0]["application"]["session_ref"])
             with patch.dict(
                 namespace,
                 {
@@ -1089,18 +1046,14 @@ class TmuxHerdrTests(unittest.TestCase):
             },
         ):
             snapshot = module["tmux_snapshot"]("pilot", resolve_pi_sessions=True)
-        self.assertEqual(
-            snapshot["tabs"][0]["panes"][0]["application"]["kind"], "shell"
-        )
+        self.assertEqual(snapshot["tabs"][0]["panes"][0]["application"]["kind"], "shell")
         self.assertNotIn("pane_id", json.dumps(snapshot))
 
     def test_no_foreground_pi_candidate_has_no_session_ref(self):
         with tempfile.TemporaryDirectory() as tmp:
             proc = pathlib.Path(tmp) / "proc"
             proc.mkdir()
-            ref, warning = module["resolve_pi_session"](
-                "100", "/dev/pts/1", proc, pane_id="%1"
-            )
+            ref, warning = module["resolve_pi_session"]("100", "/dev/pts/1", proc, pane_id="%1")
         self.assertIsNone(ref)
         self.assertEqual(warning, "process_disappeared")
 
@@ -1130,6 +1083,267 @@ class TmuxHerdrTests(unittest.TestCase):
         self.assertIsNone(snapshot["tabs"][0]["panes"][0]["application"]["session_ref"])
         self.assertNotIn(private_path, output)
         self.assertNotIn(invalid_id, output)
+
+    def test_darwin_node_pane_with_valid_beacon_promotes_to_pi_and_resumes_in_plan(self):
+        session_id = "550e8400-e29b-41d4-a716-446655440000"
+        with tempfile.TemporaryDirectory() as tmp:
+            self.write_beacon(
+                tmp,
+                pid=101,
+                pane_id="%1",
+                start_time="123.000456",
+                session_ref={"kind": "id", "value": session_id},
+            )
+
+            def valid_runner(action, request):
+                return json.dumps(
+                    {
+                        "ok": True,
+                        "kind": "id",
+                        "value": "mac-id",
+                        "pid": 101,
+                        "start_time": "123.000456",
+                    }
+                )
+
+            namespace = module["tmux_snapshot"].__globals__
+            resolver = module["resolve_pi_session"]
+            with patch.dict(
+                namespace,
+                {
+                    "run": self.fake_tmux_snapshot_run(command="node", pane_tty="/dev/ttys001"),
+                    "resolve_pi_session": lambda *args, **kwargs: resolver(
+                        *args,
+                        **{
+                            **kwargs,
+                            "home": tmp,
+                            "environ": {},
+                            "helper_runner": valid_runner,
+                        },
+                    ),
+                },
+            ):
+                snapshot = module["tmux_snapshot"](
+                    "pilot", resolve_pi_sessions=True, platform="darwin"
+                )
+
+            pane = snapshot["tabs"][0]["panes"][0]
+            self.assertEqual(pane["command"], "node")
+            self.assertEqual(pane["application"]["kind"], "pi")
+            self.assertEqual(
+                pane["application"]["session_ref"],
+                {"kind": "id", "value": session_id},
+            )
+            self.assertEqual(snapshot["pi_session_resolution"]["resolved"], 1)
+            self.assertEqual(snapshot["pi_session_resolution"]["unresolved"], 0)
+            self.assertEqual(snapshot["pi_session_resolution"]["warnings"], [])
+
+            planned = module["plan"](snapshot)
+            op = planned["operations"][0]
+            self.assertEqual(
+                op["command"],
+                ["tmux-herdr", "resume-pi", "id", session_id],
+            )
+            self.assertIsNone(op["warning"])
+            self.assertEqual(op["label"], "Pi title")
+            self.assertEqual(planned["warnings"], [])
+
+    def test_darwin_general_node_without_beacon_remains_unknown_shell_fallback(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            namespace = module["tmux_snapshot"].__globals__
+            resolver = module["resolve_pi_session"]
+
+            def missing_runner(action, request):
+                return json.dumps({"ok": False, "reason": "beacon_missing"})
+
+            with patch.dict(
+                namespace,
+                {
+                    "run": self.fake_tmux_snapshot_run(command="node", pane_tty="/dev/ttys001"),
+                    "resolve_pi_session": lambda *args, **kwargs: resolver(
+                        *args,
+                        **{
+                            **kwargs,
+                            "home": tmp,
+                            "environ": {},
+                            "helper_runner": missing_runner,
+                        },
+                    ),
+                },
+            ):
+                snapshot = module["tmux_snapshot"](
+                    "pilot", resolve_pi_sessions=True, platform="darwin"
+                )
+
+            pane = snapshot["tabs"][0]["panes"][0]
+            self.assertEqual(pane["command"], "node")
+            self.assertEqual(pane["application"]["kind"], "unknown")
+            self.assertNotIn("session_ref", pane["application"])
+            self.assertEqual(snapshot["pi_session_resolution"]["resolved"], 0)
+            self.assertEqual(snapshot["pi_session_resolution"]["unresolved"], 0)
+            self.assertEqual(snapshot["pi_session_resolution"]["warnings"], [])
+
+            planned = module["plan"](snapshot)
+            op = planned["operations"][0]
+            self.assertIsNone(op["command"])
+            self.assertIn("unknown command 'node' not replayed", op["warning"])
+            self.assertEqual(op["label"], "node")
+            self.assertEqual(len(planned["warnings"]), 1)
+            self.assertIn("unknown command 'node' not replayed", planned["warnings"][0])
+
+            planned_continue = module["plan"](snapshot, allow_continue=True)
+            self.assertIsNone(planned_continue["operations"][0]["command"])
+            self.assertIn(
+                "unknown command 'node' not replayed",
+                planned_continue["operations"][0]["warning"],
+            )
+
+    def test_linux_node_pane_remains_unchanged(self):
+        namespace = module["tmux_snapshot"].__globals__
+        with patch.dict(
+            namespace,
+            {
+                "run": self.fake_tmux_snapshot_run(command="node"),
+                "resolve_pi_session": lambda *a, **k: self.fail(
+                    "resolve_pi_session should not be called for node on Linux"
+                ),
+            },
+        ):
+            snapshot = module["tmux_snapshot"](
+                "pilot", resolve_pi_sessions=True, platform="linux"
+            )
+
+        pane = snapshot["tabs"][0]["panes"][0]
+        self.assertEqual(pane["command"], "node")
+        self.assertEqual(pane["application"]["kind"], "unknown")
+        self.assertEqual(snapshot["pi_session_resolution"]["resolved"], 0)
+        self.assertEqual(snapshot["pi_session_resolution"]["unresolved"], 0)
+        self.assertEqual(snapshot["pi_session_resolution"]["warnings"], [])
+
+        planned = module["plan"](snapshot)
+        op = planned["operations"][0]
+        self.assertIsNone(op["command"])
+        self.assertIn("unknown command 'node' not replayed", op["warning"])
+
+    def test_explicit_pi_unresolved_behavior_preserved(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            namespace = module["tmux_snapshot"].__globals__
+            resolver = module["resolve_pi_session"]
+
+            def missing_runner(action, request):
+                return json.dumps({"ok": False, "reason": "beacon_missing"})
+
+            with patch.dict(
+                namespace,
+                {
+                    "run": self.fake_tmux_snapshot_run(command="pi", pane_tty="/dev/ttys001"),
+                    "resolve_pi_session": lambda *args, **kwargs: resolver(
+                        *args,
+                        **{
+                            **kwargs,
+                            "home": tmp,
+                            "environ": {},
+                            "helper_runner": missing_runner,
+                        },
+                    ),
+                },
+            ):
+                snapshot = module["tmux_snapshot"](
+                    "pilot", resolve_pi_sessions=True, platform="darwin"
+                )
+
+            pane = snapshot["tabs"][0]["panes"][0]
+            self.assertEqual(pane["command"], "pi")
+            self.assertEqual(pane["application"]["kind"], "pi")
+            self.assertIsNone(pane["application"]["session_ref"])
+            self.assertEqual(snapshot["pi_session_resolution"]["resolved"], 0)
+            self.assertEqual(snapshot["pi_session_resolution"]["unresolved"], 1)
+            self.assertEqual(
+                snapshot["pi_session_resolution"]["warnings"],
+                [{"window_index": 1, "pane_index": 0, "code": "beacon_missing"}],
+            )
+
+            planned = module["plan"](snapshot)
+            op = planned["operations"][0]
+            self.assertIsNone(op["command"])
+            self.assertIn("pi_session_unknown", op["warning"])
+
+            planned_continue = module["plan"](snapshot, allow_continue=True)
+            self.assertEqual(
+                planned_continue["operations"][0]["command"],
+                ["tmux-herdr", "continue-pi"],
+            )
+
+    def test_darwin_literal_pi_with_valid_beacon_resolves(self):
+        session_id = "550e8400-e29b-41d4-a716-446655440000"
+        with tempfile.TemporaryDirectory() as tmp:
+            self.write_beacon(
+                tmp,
+                pid=101,
+                pane_id="%1",
+                start_time="123.000456",
+                session_ref={"kind": "id", "value": session_id},
+            )
+
+            def valid_runner(action, request):
+                return json.dumps(
+                    {
+                        "ok": True,
+                        "kind": "id",
+                        "value": "mac-id",
+                        "pid": 101,
+                        "start_time": "123.000456",
+                    }
+                )
+
+            namespace = module["tmux_snapshot"].__globals__
+            resolver = module["resolve_pi_session"]
+            with patch.dict(
+                namespace,
+                {
+                    "run": self.fake_tmux_snapshot_run(command="pi", pane_tty="/dev/ttys001"),
+                    "resolve_pi_session": lambda *args, **kwargs: resolver(
+                        *args,
+                        **{
+                            **kwargs,
+                            "home": tmp,
+                            "environ": {},
+                            "helper_runner": valid_runner,
+                        },
+                    ),
+                },
+            ):
+                snapshot = module["tmux_snapshot"](
+                    "pilot", resolve_pi_sessions=True, platform="darwin"
+                )
+
+            pane = snapshot["tabs"][0]["panes"][0]
+            self.assertEqual(pane["command"], "pi")
+            self.assertEqual(pane["application"]["kind"], "pi")
+            self.assertEqual(
+                pane["application"]["session_ref"],
+                {"kind": "id", "value": session_id},
+            )
+            self.assertEqual(snapshot["pi_session_resolution"]["resolved"], 1)
+            self.assertEqual(snapshot["pi_session_resolution"]["unresolved"], 0)
+
+    def test_darwin_node_pane_without_resolve_flag_skips_resolution(self):
+        namespace = module["tmux_snapshot"].__globals__
+        with patch.dict(
+            namespace,
+            {
+                "run": self.fake_tmux_snapshot_run(command="node"),
+                "resolve_pi_session": lambda *a, **k: self.fail(
+                    "resolve_pi_session should not be called when resolve_pi_sessions is False"
+                ),
+            },
+        ):
+            snapshot = module["tmux_snapshot"]("pilot", platform="darwin")
+
+        pane = snapshot["tabs"][0]["panes"][0]
+        self.assertEqual(pane["command"], "node")
+        self.assertEqual(pane["application"]["kind"], "unknown")
+        self.assertFalse(snapshot["pi_session_resolution"]["enabled"])
 
     def test_safe_classification_and_unknown_fallback(self):
         self.assertEqual(module["classify"]("npm"), {"kind": "unknown"})
@@ -1173,9 +1387,7 @@ class TmuxHerdrTests(unittest.TestCase):
                 )
             snap["tabs"][0]["panes"][0]["application"]["session_ref"] = None
             self.assertIsNone(module["plan"](snap)["operations"][0]["command"])
-            self.assertIn(
-                "pi_session_unknown", module["plan"](snap)["operations"][0]["warning"]
-            )
+            self.assertIn("pi_session_unknown", module["plan"](snap)["operations"][0]["warning"])
 
     def test_positional_pi_launcher_revalidates_and_execs(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -1187,9 +1399,7 @@ class TmuxHerdrTests(unittest.TestCase):
                 patch.object(os, "execvp") as execvp,
             ):
                 self.assertEqual(
-                    module["launch_pi"](
-                        ["resume-pi", "path", str(session_file.resolve())]
-                    ),
+                    module["launch_pi"](["resume-pi", "path", str(session_file.resolve())]),
                     0,
                 )
                 execvp.assert_called_once_with(
@@ -1551,9 +1761,7 @@ class TmuxHerdrTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "missing fields"):
                 module["apply"](snapshot, "malformed-snapshot")
             self.assertEqual(calls, [("malformed-snapshot", "workspace", "list")])
-            self.assertFalse(
-                self.marker_path(tmp, "malformed-snapshot", snapshot).exists()
-            )
+            self.assertFalse(self.marker_path(tmp, "malformed-snapshot", snapshot).exists())
 
     def test_non_positive_geometry_refused_before_marker_or_mutation(self):
         for key, value in (("width", 0), ("height", 0), ("width", -1), ("height", -1)):
@@ -1588,9 +1796,7 @@ class TmuxHerdrTests(unittest.TestCase):
                         [(f"geometry-{key}-{value}", "workspace", "list")],
                     )
                     self.assertFalse(
-                        self.marker_path(
-                            tmp, f"geometry-{key}-{value}", snapshot
-                        ).exists()
+                        self.marker_path(tmp, f"geometry-{key}-{value}", snapshot).exists()
                     )
 
     def test_unknown_server_status_refused_before_workspace_list(self):
@@ -1653,9 +1859,7 @@ class TmuxHerdrTests(unittest.TestCase):
         ):
             with self.assertRaisesRegex(RuntimeError, "imported focus failed"):
                 module["apply"](snapshot, "focus-failure")
-            self.assertEqual(
-                calls[-1], ("focus-failure", "tab", "focus", "existing-tab")
-            )
+            self.assertEqual(calls[-1], ("focus-failure", "tab", "focus", "existing-tab"))
             self.assertTrue(self.marker_path(tmp, "focus-failure", snapshot).exists())
 
     def test_duplicate_desired_labels_refused(self):
@@ -1710,9 +1914,7 @@ class TmuxHerdrTests(unittest.TestCase):
                         "id": "cli:workspace:list",
                         "result": {
                             "type": "workspace_list",
-                            "workspaces": [
-                                {"workspace_id": "dots", "label": "tmux:dots"}
-                            ],
+                            "workspaces": [{"workspace_id": "dots", "label": "tmux:dots"}],
                         },
                     }
                 raise AssertionError("legacy no-op allowed mutation")
@@ -1821,9 +2023,7 @@ class TmuxHerdrTests(unittest.TestCase):
                     calls.append((session, *args))
                     if args[:2] == ("workspace", "list"):
                         return response
-                    raise AssertionError(
-                        "malformed workspace response allowed mutation"
-                    )
+                    raise AssertionError("malformed workspace response allowed mutation")
 
                 with (
                     patch.object(pathlib.Path, "home", return_value=pathlib.Path(tmp)),
@@ -1835,9 +2035,7 @@ class TmuxHerdrTests(unittest.TestCase):
                     with self.assertRaisesRegex(ValueError, "unrecognized response"):
                         module["apply"](self.apply_snapshot(), target)
                 self.assertEqual(calls, [(target, "workspace", "list")])
-                self.assertFalse(
-                    self.marker_path(tmp, target, self.apply_snapshot()).exists()
-                )
+                self.assertFalse(self.marker_path(tmp, target, self.apply_snapshot()).exists())
 
     def test_mutation_envelopes_require_exact_ids_types_objects_and_ids(self):
         fixtures = [
@@ -1907,9 +2105,7 @@ class TmuxHerdrTests(unittest.TestCase):
         ]
         for response, command_id, result_type, objects in fixtures:
             with self.subTest(command_id=command_id):
-                result = module["_command_result"](
-                    response, command_id, result_type, objects
-                )
+                result = module["_command_result"](response, command_id, result_type, objects)
                 self.assertIsInstance(result, dict)
                 for malformed in (
                     {**response, "id": "wrong"},
@@ -1919,9 +2115,7 @@ class TmuxHerdrTests(unittest.TestCase):
                     {**response, "extra": True},
                 ):
                     with self.assertRaises(ValueError):
-                        module["_command_result"](
-                            malformed, command_id, result_type, objects
-                        )
+                        module["_command_result"](malformed, command_id, result_type, objects)
                 for object_name in objects:
                     for invalid_id in (None, "", " ", 0, []):
                         malformed = copy.deepcopy(response)
@@ -1935,18 +2129,14 @@ class TmuxHerdrTests(unittest.TestCase):
                             malformed, command_id, result_type, objects
                         )
                         with self.assertRaises(ValueError):
-                            module["_object_id"](
-                                result, object_name, id_name, malformed
-                            )
+                            module["_object_id"](result, object_name, id_name, malformed)
 
         wrong_object = {
             "id": "cli:pane:rename",
             "result": {"type": "pane_info", "tab": {"tab_id": "tab-1"}},
         }
         with self.assertRaises(ValueError):
-            module["_command_result"](
-                wrong_object, "cli:pane:rename", "pane_info", {"pane"}
-            )
+            module["_command_result"](wrong_object, "cli:pane:rename", "pane_info", {"pane"})
 
     def test_pane_run_accepts_empty_stdout_without_json_parsing(self):
         calls = []
@@ -1956,9 +2146,7 @@ class TmuxHerdrTests(unittest.TestCase):
             return ""
 
         with patch.dict(module["herdr"].__globals__, {"run": fake_run}):
-            self.assertEqual(
-                module["herdr"]("pilot", "pane", "run", "pane-1", "lazygit"), ""
-            )
+            self.assertEqual(module["herdr"]("pilot", "pane", "run", "pane-1", "lazygit"), "")
         self.assertEqual(
             calls,
             [["herdr", "--session", "pilot", "pane", "run", "pane-1", "lazygit"]],
@@ -2005,9 +2193,7 @@ class TmuxHerdrTests(unittest.TestCase):
                 "id": "cli:workspace:list",
                 "result": {
                     "type": "workspace_list",
-                    "workspaces": [
-                        {"workspace_id": "existing", "label": "tmux:pilot-source"}
-                    ],
+                    "workspaces": [{"workspace_id": "existing", "label": "tmux:pilot-source"}],
                 },
             }
 
@@ -2022,9 +2208,7 @@ class TmuxHerdrTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "exists without a matching"):
                 module["apply"](self.apply_snapshot(), "occupied")
             self.assertEqual(calls, [("occupied", "workspace", "list")])
-            self.assertFalse(
-                self.marker_path(tmp, "occupied", self.apply_snapshot()).exists()
-            )
+            self.assertFalse(self.marker_path(tmp, "occupied", self.apply_snapshot()).exists())
 
     def test_empty_source_snapshot_refused_before_marker_or_mutation(self):
         calls = []
@@ -2159,9 +2343,9 @@ class TmuxHerdrTests(unittest.TestCase):
                 ),
                 calls,
             )
-            identity = json.loads(
-                (self.marker_path(tmp, "pi-continue", snapshot)).read_text()
-            )["identity"]
+            identity = json.loads((self.marker_path(tmp, "pi-continue", snapshot)).read_text())[
+                "identity"
+            ]
             self.assertIn('"allow_pi_continue": true', identity)
 
     def test_real_concurrent_creators_share_exclusive_marker(self):
@@ -2212,9 +2396,7 @@ class TmuxHerdrTests(unittest.TestCase):
             for thread in threads:
                 thread.join(timeout=10)
             self.assertTrue(all(not thread.is_alive() for thread in threads))
-            self.assertTrue(
-                self.marker_path(tmp, "concurrent-target", snapshot).exists()
-            )
+            self.assertTrue(self.marker_path(tmp, "concurrent-target", snapshot).exists())
 
         self.assertEqual(len(results), 2)
         self.assertEqual(sum(result is None for result in results), 1)
@@ -2261,9 +2443,7 @@ class TmuxHerdrTests(unittest.TestCase):
                     },
                 },
             ),
-            patch.object(
-                module["apply"].__globals__["os"], "open", side_effect=FileExistsError
-            ),
+            patch.object(module["apply"].__globals__["os"], "open", side_effect=FileExistsError),
         ):
             with self.assertRaisesRegex(ValueError, "already reserved"):
                 module["apply"](snapshot, "race-lock")
