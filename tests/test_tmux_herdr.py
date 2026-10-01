@@ -309,9 +309,7 @@ class TmuxHerdrTests(unittest.TestCase):
                 {"XDG_RUNTIME_DIR": str(tmp_path / "absent"), "HOME": str(home)},
                 platform="darwin",
             )
-            self.assertEqual(
-                fallback_dir, home.resolve() / ".cache/pi-herdr-sessions"
-            )
+            self.assertEqual(fallback_dir, home.resolve() / ".cache/pi-herdr-sessions")
 
             # Broken symlink falls back to HOME/.cache/pi-herdr-sessions
             fallback_dir = module["_beacon_directory"](
@@ -319,9 +317,7 @@ class TmuxHerdrTests(unittest.TestCase):
                 {"XDG_RUNTIME_DIR": str(broken_symlink), "HOME": str(home)},
                 platform="darwin",
             )
-            self.assertEqual(
-                fallback_dir, home.resolve() / ".cache/pi-herdr-sessions"
-            )
+            self.assertEqual(fallback_dir, home.resolve() / ".cache/pi-herdr-sessions")
 
             # If HOME is also invalid/relative, returns None (never uncanonicalized path)
             no_dir = module["_beacon_directory"](
