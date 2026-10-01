@@ -107,6 +107,96 @@ test("fallback selection agrees on absolute XDG runtime and HOME rules", () => {
   );
 });
 
+test("Darwin XDG canonicalization resolves symlinked ancestors and matches canonical target", () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "pi-darwin-canon-"));
+  try {
+    const realRun = path.join(tmp, "real_run");
+    fs.mkdirSync(realRun, { mode: 0o700 });
+    const symRun = path.join(tmp, "sym_run");
+    fs.symlinkSync(realRun, symRun);
+
+    const canonicalExpected = path.join(
+      (fs.realpathSync.native ?? fs.realpathSync)(symRun),
+      "pi-herdr-sessions",
+    );
+    const result = beaconDirectory(
+      { XDG_RUNTIME_DIR: symRun, HOME: path.join(tmp, "home") },
+      "darwin",
+    );
+    assert.equal(result, canonicalExpected);
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+test("Darwin XDG failed realpath falls back to HOME cache and never uses uncanonicalized fallback", () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "pi-darwin-fallback-"));
+  try {
+    const home = path.join(tmp, "home");
+    fs.mkdirSync(home, { mode: 0o700 });
+    const brokenSymlink = path.join(tmp, "broken_symlink");
+    fs.symlinkSync(path.join(tmp, "nonexistent"), brokenSymlink);
+
+    // Non-existent path
+    assert.equal(
+      beaconDirectory(
+        { XDG_RUNTIME_DIR: path.join(tmp, "does_not_exist"), HOME: home },
+        "darwin",
+      ),
+      path.join(home, ".cache", "pi-herdr-sessions"),
+    );
+
+    // Broken symlink
+    assert.equal(
+      beaconDirectory(
+        { XDG_RUNTIME_DIR: brokenSymlink, HOME: home },
+        "darwin",
+      ),
+      path.join(home, ".cache", "pi-herdr-sessions"),
+    );
+
+    // Both XDG broken and HOME invalid -> undefined
+    assert.equal(
+      beaconDirectory(
+        { XDG_RUNTIME_DIR: brokenSymlink, HOME: "relative" },
+        "darwin",
+      ),
+      undefined,
+    );
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+test("Linux XDG behavior remains unchanged without canonicalizing symlinked base", () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "pi-linux-canon-"));
+  try {
+    const realRun = path.join(tmp, "real_run");
+    fs.mkdirSync(realRun, { mode: 0o700 });
+    const symRun = path.join(tmp, "sym_run");
+    fs.symlinkSync(realRun, symRun);
+
+    // On Linux, the uncanonicalized symlink path is retained
+    const result = beaconDirectory(
+      { XDG_RUNTIME_DIR: symRun, HOME: path.join(tmp, "home") },
+      "linux",
+    );
+    assert.equal(result, path.join(symRun, "pi-herdr-sessions"));
+
+    // Non-existent XDG on Linux is also retained directly
+    const absent = path.join(tmp, "absent");
+    assert.equal(
+      beaconDirectory(
+        { XDG_RUNTIME_DIR: absent, HOME: path.join(tmp, "home") },
+        "linux",
+      ),
+      path.join(absent, "pi-herdr-sessions"),
+    );
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
 test("lifecycle and command publish private minimal beacon with atomic replacement and private notification", () => {
   const f = fixture();
   const env = {
@@ -435,8 +525,11 @@ test("Darwin publisher reports a missing managed helper", () => {
 
 test("Darwin publisher sends bounded metadata on stdin to the helper", () => {
   const f = fixture();
+  const runtime = path.join(f.root, "runtime");
+  fs.mkdirSync(runtime, { mode: 0o700 });
+  const canonicalRuntime = (fs.realpathSync.native ?? fs.realpathSync)(runtime);
   const env = {
-    XDG_RUNTIME_DIR: path.join(f.root, "runtime"),
+    XDG_RUNTIME_DIR: runtime,
     HOME: f.root,
     TMUX_PANE: "%12",
   };
@@ -457,7 +550,7 @@ test("Darwin publisher sends bounded metadata on stdin to the helper", () => {
           request: {
             v: 1,
             op: "publish",
-            directory: path.join(f.root, "runtime", "pi-herdr-sessions"),
+            directory: path.join(canonicalRuntime, "pi-herdr-sessions"),
             publisher_pid: process.pid,
             pane_id: "%12",
             session_kind: "id",

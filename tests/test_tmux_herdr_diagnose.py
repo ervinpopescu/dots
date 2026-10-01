@@ -59,6 +59,114 @@ class TmuxHerdrDiagnoseTests(unittest.TestCase):
         self.assertEqual(base_type, "unavailable")
         self.assertIsNone(target)
 
+    def test_darwin_storage_canonicalization_with_symlink_ancestor(self):
+        real_run = self.base / "real_run"
+        real_run.mkdir(mode=0o700)
+        symlink_run = self.base / "symlink_run"
+        symlink_run.symlink_to(real_run)
+        home = self.base / "home"
+        home.mkdir(mode=0o700)
+
+        # 1. resolve_storage_target on Darwin resolves symlinked base
+        env = {"XDG_RUNTIME_DIR": str(symlink_run), "HOME": str(home)}
+        base_type, target = module["resolve_storage_target"](env, platform="darwin")
+        canonical_expected = real_run.resolve() / "pi-herdr-sessions"
+        self.assertEqual(base_type, "xdg_runtime_dir")
+        self.assertEqual(target, canonical_expected)
+
+        # 2. diagnose on Darwin uses the canonical path and does not report resolved symlink as unsafe
+        results = module["diagnose"](
+            environ=env, platform="darwin", skip_fsync_probe=True
+        )
+        self.assertEqual(results["storage_base_type"], "xdg_runtime_dir")
+        self.assertEqual(results["storage_path_symlinks"], "none")
+        self.assertEqual(results["storage_leaf_status"], "missing_creatable")
+        self.assertEqual(results["storage_path_status"], "missing_creatable")
+
+        # 3. Create leaf directory and verify clean ok status
+        canonical_expected.mkdir(mode=0o700)
+        results = module["diagnose"](
+            environ=env, platform="darwin", skip_fsync_probe=True
+        )
+        self.assertEqual(results["storage_path_symlinks"], "none")
+        self.assertEqual(results["storage_leaf_status"], "ok")
+        self.assertEqual(results["storage_path_status"], "ok")
+
+    def test_darwin_storage_failed_realpath_fallback(self):
+        home = self.base / "home"
+        home.mkdir(mode=0o700)
+        broken_symlink = self.base / "broken_symlink"
+        broken_symlink.symlink_to(self.base / "nonexistent")
+
+        # 1. Non-existent path on Darwin falls back to home_fallback
+        env = {
+            "XDG_RUNTIME_DIR": str(self.base / "absent"),
+            "HOME": str(home),
+        }
+        base_type, target = module["resolve_storage_target"](env, platform="darwin")
+        self.assertEqual(base_type, "home_fallback")
+        self.assertEqual(target, home.resolve() / ".cache/pi-herdr-sessions")
+
+        # 2. Broken symlink on Darwin falls back to home_fallback
+        env = {
+            "XDG_RUNTIME_DIR": str(broken_symlink),
+            "HOME": str(home),
+        }
+        base_type, target = module["resolve_storage_target"](env, platform="darwin")
+        self.assertEqual(base_type, "home_fallback")
+        self.assertEqual(target, home.resolve() / ".cache/pi-herdr-sessions")
+
+        # 3. Both unresolvable XDG and invalid HOME -> unavailable
+        env = {
+            "XDG_RUNTIME_DIR": str(broken_symlink),
+            "HOME": "relative/home",
+        }
+        base_type, target = module["resolve_storage_target"](env, platform="darwin")
+        self.assertEqual(base_type, "unavailable")
+        self.assertIsNone(target)
+
+    def test_darwin_storage_untrusted_canonical_target_rejection(self):
+        untrusted_run = self.base / "untrusted_run"
+        untrusted_run.mkdir(mode=0o775)
+        untrusted_run.chmod(0o775)
+        symlink_run = self.base / "symlink_run"
+        symlink_run.symlink_to(untrusted_run)
+        home = self.base / "home"
+        home.mkdir(mode=0o700)
+
+        env = {"XDG_RUNTIME_DIR": str(symlink_run), "HOME": str(home)}
+        base_type, target = module["resolve_storage_target"](env, platform="darwin")
+        self.assertEqual(base_type, "xdg_runtime_dir")
+        self.assertEqual(target, untrusted_run.resolve() / "pi-herdr-sessions")
+
+        # Leaf creatable inside untrusted ancestor
+        results = module["diagnose"](
+            environ=env, platform="darwin", skip_fsync_probe=True
+        )
+        self.assertEqual(results["storage_path_permissions"], "untrusted_detected")
+        self.assertEqual(results["storage_path_status"], "untrusted_mode")
+
+    def test_linux_storage_unchanged_behavior(self):
+        real_run = self.base / "real_run"
+        real_run.mkdir(mode=0o700)
+        symlink_run = self.base / "symlink_run"
+        symlink_run.symlink_to(real_run)
+        home = self.base / "home"
+        home.mkdir(mode=0o700)
+
+        # Linux retains uncanonicalized path
+        env = {"XDG_RUNTIME_DIR": str(symlink_run), "HOME": str(home)}
+        base_type, target = module["resolve_storage_target"](env, platform="linux")
+        self.assertEqual(base_type, "xdg_runtime_dir")
+        self.assertEqual(target, symlink_run / "pi-herdr-sessions")
+
+        # Linux diagnose detects the symlink component
+        results = module["diagnose"](
+            environ=env, platform="linux", skip_fsync_probe=True
+        )
+        self.assertEqual(results["storage_path_symlinks"], "symlink_detected")
+        self.assertEqual(results["storage_path_status"], "symlink_detected")
+
     def test_helper_metadata_validation(self):
         parent = self.base / ".local/libexec"
         helper = parent / "tmux-herdr-darwin-helper"
@@ -142,7 +250,9 @@ class TmuxHerdrDiagnoseTests(unittest.TestCase):
         res = module["check_helper_selftest"](
             helper_path,
             "ok",
-            helper_runner=lambda act: json.dumps({"ok": False, "reason": "unsupported"}),
+            helper_runner=lambda act: json.dumps(
+                {"ok": False, "reason": "unsupported"}
+            ),
         )
         self.assertEqual(res, "unsupported")
 
@@ -158,7 +268,9 @@ class TmuxHerdrDiagnoseTests(unittest.TestCase):
         def raise_timeout(act):
             raise TimeoutError()
 
-        res = module["check_helper_selftest"](helper_path, "ok", helper_runner=raise_timeout)
+        res = module["check_helper_selftest"](
+            helper_path, "ok", helper_runner=raise_timeout
+        )
         self.assertEqual(res, "timeout")
 
         # 6. Real executable helper script
@@ -201,7 +313,9 @@ class TmuxHerdrDiagnoseTests(unittest.TestCase):
 
         # 2. Leaf directory with wrong mode (0755)
         sessions.chmod(0o755)
-        _, summary, leaf_fd = module["check_storage_path_components"](sessions, os.getuid())
+        _, summary, leaf_fd = module["check_storage_path_components"](
+            sessions, os.getuid()
+        )
         self.assertIsNone(leaf_fd)
         self.assertEqual(summary["storage_leaf_mode"], "untrusted_mode")
         self.assertEqual(summary["storage_leaf_status"], "untrusted_mode")
@@ -210,7 +324,9 @@ class TmuxHerdrDiagnoseTests(unittest.TestCase):
 
         # 3. Intermediate component with group-writable permissions (0775)
         cache.chmod(0o775)
-        _, summary, leaf_fd = module["check_storage_path_components"](sessions, os.getuid())
+        _, summary, leaf_fd = module["check_storage_path_components"](
+            sessions, os.getuid()
+        )
         self.assertIsNone(leaf_fd)
         self.assertEqual(summary["storage_path_permissions"], "untrusted_detected")
         self.assertEqual(summary["storage_path_status"], "untrusted_mode")
@@ -225,7 +341,9 @@ class TmuxHerdrDiagnoseTests(unittest.TestCase):
         real_sessions = real_cache / "pi-herdr-sessions"
         real_sessions.mkdir(mode=0o700)
 
-        _, summary, leaf_fd = module["check_storage_path_components"](sessions, os.getuid())
+        _, summary, leaf_fd = module["check_storage_path_components"](
+            sessions, os.getuid()
+        )
         self.assertIsNone(leaf_fd)
         self.assertEqual(summary["storage_path_symlinks"], "symlink_detected")
         self.assertEqual(summary["storage_path_status"], "symlink_detected")
@@ -235,7 +353,9 @@ class TmuxHerdrDiagnoseTests(unittest.TestCase):
         cache.mkdir(mode=0o700)
 
         # 5. Missing leaf directory (creatable)
-        _, summary, leaf_fd = module["check_storage_path_components"](sessions, os.getuid())
+        _, summary, leaf_fd = module["check_storage_path_components"](
+            sessions, os.getuid()
+        )
         self.assertIsNone(leaf_fd)
         self.assertFalse(summary["storage_leaf_exists"])
         self.assertEqual(summary["storage_leaf_status"], "missing_creatable")
@@ -244,7 +364,9 @@ class TmuxHerdrDiagnoseTests(unittest.TestCase):
     def test_existing_beacon_leaf_validation(self):
         sessions = self.base / "pi-herdr-sessions"
         sessions.mkdir(mode=0o700)
-        open_flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_CLOEXEC", 0)
+        open_flags = (
+            os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_CLOEXEC", 0)
+        )
         dir_fd = os.open(sessions, open_flags)
         try:
             # 1. No beacon files
@@ -298,11 +420,15 @@ class TmuxHerdrDiagnoseTests(unittest.TestCase):
     def test_fsync_probe_execution_and_cleanup(self):
         sessions = self.base / "pi-herdr-sessions"
         sessions.mkdir(mode=0o700)
-        open_flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_CLOEXEC", 0)
+        open_flags = (
+            os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_CLOEXEC", 0)
+        )
         dir_fd = os.open(sessions, open_flags)
         try:
             # 1. Normal safe probe run
-            res = module["check_fsync_probe"](dir_fd, skip_probe=False, platform="linux")
+            res = module["check_fsync_probe"](
+                dir_fd, skip_probe=False, platform="linux"
+            )
             self.assertEqual(res["fsync_directory"], "ok")
             self.assertEqual(res["fsync_file"], "ok")
             self.assertEqual(res["fsync_temp_cleanup"], "ok")
@@ -386,7 +512,13 @@ class TmuxHerdrDiagnoseTests(unittest.TestCase):
         )
         cli_json_stdout = cli_json_result.stdout
 
-        all_outputs = [text_output, json_output, cli_stdout, cli_stderr, cli_json_stdout]
+        all_outputs = [
+            text_output,
+            json_output,
+            cli_stdout,
+            cli_stderr,
+            cli_json_stdout,
+        ]
 
         # Verify that NONE of the sentinels appear in any output
         for out in all_outputs:
