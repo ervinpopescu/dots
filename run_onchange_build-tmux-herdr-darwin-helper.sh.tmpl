@@ -1,0 +1,117 @@
+#!/bin/bash
+set -euo pipefail
+
+{{ if not .is_macbook -}}
+exit 0
+{{- end }}
+
+# Source content is part of this rendered onchange hook so edits retrigger chezmoi.
+SOURCE_HASH="{{ printf "%s%s" (include "private_dot_local/private_share/tmux-herdr/tmux-herdr-darwin-helper.c") (include "private_dot_local/private_share/tmux-herdr/tmux-herdr-darwin-installer.c") | sha256sum }}"
+SOURCE="$HOME/.local/share/tmux-herdr/tmux-herdr-darwin-helper.c"
+INSTALLER_SOURCE="$HOME/.local/share/tmux-herdr/tmux-herdr-darwin-installer.c"
+DEST_DIR="$HOME/.local/libexec"
+DEST="$DEST_DIR/tmux-herdr-darwin-helper"
+validate_source() {
+  local path="$1" mode type owner
+  [[ -f "$path" && ! -L "$path" ]] || fail_untrusted "$path source"
+  type="$(stat -f '%HT' "$path" 2>/dev/null || true)"
+  owner="$(stat -f '%u' "$path" 2>/dev/null || true)"
+  mode="$(stat -f '%Lp' "$path" 2>/dev/null || true)"
+  [[ "$owner" == "$OWNER" && -n "$mode" ]] || fail_untrusted "$path source metadata"
+  (( (0$mode & 0022) == 0 )) || fail_untrusted "$path source is group/other writable"
+}
+
+OWNER="$(id -u)"
+fail_untrusted() {
+  echo "tmux-herdr: refusing unsafe Darwin helper path: $1" >&2
+  exit 1
+}
+validate_parent() {
+  local path="$1" mode type owner
+  [[ -L "$path" ]] && fail_untrusted "$path is a symlink"
+  [[ -d "$path" ]] || fail_untrusted "$path is not a directory"
+  type="$(stat -f '%HT' "$path" 2>/dev/null || true)"
+  owner="$(stat -f '%u' "$path" 2>/dev/null || true)"
+  mode="$(stat -f '%Lp' "$path" 2>/dev/null || true)"
+  [[ "$type" == "Directory" && "$owner" == "$OWNER" && -n "$mode" ]] || fail_untrusted "$path metadata"
+  (( (0$mode & 0022) == 0 )) || fail_untrusted "$path is group/other writable"
+}
+validate_private_directory() {
+  local path="$1" mode type owner
+  [[ -e "$path" ]] || return 0
+  [[ -L "$path" ]] && fail_untrusted "$path is a symlink"
+  type="$(stat -f '%HT' "$path" 2>/dev/null || true)"
+  owner="$(stat -f '%u' "$path" 2>/dev/null || true)"
+  mode="$(stat -f '%Lp' "$path" 2>/dev/null || true)"
+  [[ "$type" == "Directory" && "$owner" == "$OWNER" && "$mode" == "700" ]] || fail_untrusted "$path metadata"
+}
+validate_helper_leaf() {
+  local path="$1" required="${2:-0}" mode type owner
+  if [[ ! -e "$path" ]]; then
+    if (( required )); then
+      fail_untrusted "$path does not exist"
+    fi
+    return 0
+  fi
+  [[ -L "$path" ]] && fail_untrusted "$path is a symlink"
+  [[ -f "$path" ]] || fail_untrusted "$path is not a regular file"
+  type="$(stat -f '%HT' "$path" 2>/dev/null || true)"
+  owner="$(stat -f '%u' "$path" 2>/dev/null || true)"
+  mode="$(stat -f '%Lp' "$path" 2>/dev/null || true)"
+  [[ "$type" == "Regular File" && "$owner" == "$OWNER" && "$mode" == "700" ]] || fail_untrusted "$path metadata"
+}
+validate_source "$SOURCE"
+validate_source "$INSTALLER_SOURCE"
+if [[ ! -d "$HOME" || -L "$HOME" ]]; then
+  fail_untrusted "$HOME"
+fi
+validate_parent "$HOME"
+LOCAL_DIR="$HOME/.local"
+if [[ -e "$LOCAL_DIR" || -L "$LOCAL_DIR" ]]; then
+  validate_parent "$LOCAL_DIR"
+else
+  (umask 077 && mkdir "$LOCAL_DIR") || fail_untrusted "$LOCAL_DIR creation"
+  chmod 700 "$LOCAL_DIR"
+fi
+if [[ -e "$DEST_DIR" || -L "$DEST_DIR" ]]; then
+  validate_private_directory "$DEST_DIR"
+else
+  (umask 077 && mkdir "$DEST_DIR") || fail_untrusted "$DEST_DIR creation"
+  chmod 700 "$DEST_DIR"
+fi
+validate_private_directory "$DEST_DIR"
+validate_helper_leaf "$DEST"
+BUILD_DIR=""
+
+if command -v xcrun >/dev/null 2>&1; then
+  CC="$(xcrun --find clang 2>/dev/null || true)"
+elif command -v clang >/dev/null 2>&1; then
+  CC="$(command -v clang)"
+elif command -v cc >/dev/null 2>&1; then
+  CC="$(command -v cc)"
+else
+  CC=""
+fi
+if [[ -z "$CC" || ! -x "$CC" ]]; then
+  echo "tmux-herdr: Apple clang is unavailable (install Command Line Tools)" >&2
+  exit 1
+fi
+
+validate_private_directory "$DEST_DIR"
+BUILD_DIR="$(mktemp -d "${TMPDIR:-/tmp}/tmux-herdr-build.XXXXXX")"
+trap 'rm -rf "$BUILD_DIR"' EXIT
+chmod 700 "$BUILD_DIR"
+TMP="$BUILD_DIR/helper"
+INSTALLER="$BUILD_DIR/installer"
+validate_source "$SOURCE"
+validate_source "$INSTALLER_SOURCE"
+"$CC" -std=c11 -Wall -Wextra -Werror -O2 "$SOURCE" -o "$TMP" -lproc
+validate_source "$INSTALLER_SOURCE"
+"$CC" -std=c11 -Wall -Wextra -Werror -O2 "$INSTALLER_SOURCE" -o "$INSTALLER"
+chmod 700 "$TMP" "$INSTALLER"
+"$TMP" selftest </dev/null >/dev/null
+validate_private_directory "$DEST_DIR"
+validate_helper_leaf "$TMP" 1
+"$INSTALLER" "$TMP" "$DEST_DIR"
+validate_helper_leaf "$DEST" 1
+printf 'tmux-herdr: Darwin helper installed (source %s)\n' "$SOURCE_HASH"
