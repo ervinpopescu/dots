@@ -9,9 +9,12 @@ import math
 import os
 import pathlib
 import re
+import secrets
+import selectors
 import stat
 import subprocess
 import sys
+import time
 
 
 def run(argv, *, input_text=None):
@@ -30,9 +33,49 @@ def _proc_stat(path):
     if close < 0:
         raise ValueError("malformed proc stat")
     fields = text[close + 1 :].split()
-    if len(fields) < 6:
+    if len(fields) < 20:
         raise ValueError("short proc stat")
-    return {"ppid": int(fields[1]), "pgrp": int(fields[2]), "tpgid": int(fields[5])}
+    return {
+        "state": fields[0],
+        "ppid": int(fields[1]),
+        "pgrp": int(fields[2]),
+        "session": int(fields[3]),
+        "tty_nr": int(fields[4]),
+        "tpgid": int(fields[5]),
+        "start_time": fields[19],
+    }
+
+
+def _proc_chain(proc_root, pid, root_pid):
+    """Capture the complete root-to-process identity/topology chain."""
+    chain = []
+    seen = set()
+    current = int(pid)
+    while True:
+        if current in seen or len(chain) >= 512:
+            raise ValueError("process ancestry cycle")
+        seen.add(current)
+        info = _proc_stat(proc_root / str(current) / "stat")
+        chain.append((current, tuple(sorted(info.items()))))
+        if current == root_pid:
+            chain.reverse()
+            return tuple(chain)
+        parent = info["ppid"]
+        if parent <= 0:
+            raise ValueError("process ancestry escaped pane root")
+        current = parent
+
+
+def _same_proc_chain(proc_root, chain):
+    if not chain:
+        return False
+    try:
+        return tuple(
+            (pid, tuple(sorted(_proc_stat(proc_root / str(pid) / "stat").items())))
+            for pid, _identity in chain
+        ) == chain
+    except (FileNotFoundError, OSError, UnicodeError, ValueError):
+        return False
 
 
 def _proc_children(proc_root, pid):
@@ -107,7 +150,12 @@ def _read_pi_environment(path):
 
 
 def _valid_pi_session_path(value, home=None):
-    if not value or "\x00" in value:
+    if (
+        not value
+        or "\x00" in value
+        or any(ord(char) < 0x20 or ord(char) == 0x7F for char in value)
+        or len(value.encode("utf-8")) > SESSION_PATH_MAX_BYTES
+    ):
         return None
     candidate = pathlib.Path(value)
     if not candidate.is_absolute() or candidate.suffix != ".jsonl":
@@ -120,18 +168,23 @@ def _valid_pi_session_path(value, home=None):
         )
         resolved = candidate.resolve(strict=True)
         resolved.relative_to(base)
+        resolved_value = str(resolved)
+        if len(resolved_value.encode("utf-8")) > SESSION_PATH_MAX_BYTES:
+            return None
         info = resolved.stat()
         if not stat.S_ISREG(info.st_mode) or info.st_uid != os.getuid():
             return None
     except (OSError, ValueError, RuntimeError):
         return None
-    return str(resolved)
+    return resolved_value
 
 
 def _valid_pi_session_id(value):
     # Pi requires alphanumeric endpoints and allows letters, digits, dot, underscore, hyphen.
-    if isinstance(value, str) and re.fullmatch(
-        r"[A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?", value
+    if (
+        isinstance(value, str)
+        and len(value.encode("utf-8")) <= SESSION_ID_MAX_BYTES
+        and re.fullmatch(r"[A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?", value)
     ):
         return value
     return None
@@ -189,8 +242,237 @@ def _beacon_directory(home=None, environ=None):
     return None
 
 
+DARWIN_HELPER_NAME = "tmux-herdr-darwin-helper"
+SESSION_ID_MAX_BYTES = 256
+SESSION_PATH_MAX_BYTES = 4096
+DARWIN_HELPER_INPUT_LIMIT = 16 * 1024
+DARWIN_HELPER_OUTPUT_LIMIT = 16 * 1024
+DARWIN_HELPER_RESOLVE_FAILURE_REASONS = frozenset(
+    {
+        "ambiguous_beacons",
+        "beacon_missing",
+        "denied",
+        "invalid",
+        "io",
+        "no_tty",
+        "process_disappeared",
+        "process_tree_too_large",
+        "stale",
+        "unsupported",
+    }
+)
+
+
+def _darwin_helper_path(home=None, environ=None):
+    environ = os.environ if environ is None else environ
+    home_path = environ.get("HOME") or home
+    if not home_path or not pathlib.Path(home_path).is_absolute():
+        return None
+    return pathlib.Path(home_path) / ".local/libexec" / DARWIN_HELPER_NAME
+
+
+def _validate_darwin_helper(path):
+    try:
+        info = path.lstat()
+        parent = path.parent.lstat()
+    except OSError as exc:
+        raise ValueError("helper_missing") from exc
+    if (
+        not stat.S_ISDIR(parent.st_mode)
+        or parent.st_uid != os.getuid()
+        or stat.S_IMODE(parent.st_mode) != 0o700
+        or not stat.S_ISREG(info.st_mode)
+        or info.st_uid != os.getuid()
+        or info.st_nlink != 1
+        or stat.S_IMODE(info.st_mode) != 0o700
+    ):
+        raise ValueError("helper_build_failure")
+
+
+def _stop_darwin_process(process):
+    if process is None:
+        return
+    try:
+        if process.poll() is None:
+            process.kill()
+    except (OSError, ProcessLookupError):
+        pass
+    try:
+        process.wait(timeout=0.5)
+    except (OSError, subprocess.TimeoutExpired):
+        pass
+
+
+def _run_darwin_helper(request, home=None, environ=None, helper_path=None, runner=None):
+    """Run the managed helper with bounded stdin/stdout and no sensitive argv."""
+    encoded = request.encode("utf-8")
+    if len(encoded) > DARWIN_HELPER_INPUT_LIMIT:
+        return None, "helper_process_failure"
+    if runner is not None:
+        try:
+            output = runner("resolve", request)
+        except TimeoutError:
+            return None, "helper_process_failure"
+        except OSError:
+            return None, "helper_process_failure"
+        return _parse_darwin_helper_output(output)
+    path = pathlib.Path(helper_path) if helper_path else _darwin_helper_path(home, environ)
+    if path is None:
+        return None, "helper_missing"
+    process = None
+    selector = None
+    try:
+        _validate_darwin_helper(path)
+        process = subprocess.Popen(
+            [str(path), "resolve"],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            close_fds=True,
+            env={"PATH": "/usr/bin:/bin"},
+        )
+        assert process.stdin is not None and process.stdout is not None
+        selector = selectors.DefaultSelector()
+        stdin_fd = process.stdin.fileno()
+        stdout_fd = process.stdout.fileno()
+        os.set_blocking(stdin_fd, False)
+        os.set_blocking(stdout_fd, False)
+        selector.register(stdin_fd, selectors.EVENT_WRITE, "stdin")
+        selector.register(stdout_fd, selectors.EVENT_READ, "stdout")
+        pending = memoryview(encoded)
+        stdin_open = True
+        stdout_open = True
+        deadline = time.monotonic() + 1.5
+        output = bytearray()
+        while stdin_open or stdout_open:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise subprocess.TimeoutExpired([str(path), "resolve"], 1.5)
+            events = selector.select(remaining)
+            if not events:
+                raise subprocess.TimeoutExpired([str(path), "resolve"], 1.5)
+            for key, mask in events:
+                if key.data == "stdin" and mask & selectors.EVENT_WRITE:
+                    try:
+                        count = os.write(stdin_fd, pending[:4096])
+                    except BlockingIOError:
+                        continue
+                    except BrokenPipeError:
+                        raise OSError("helper closed stdin")
+                    pending = pending[count:]
+                    if not pending:
+                        selector.unregister(stdin_fd)
+                        process.stdin.close()
+                        stdin_open = False
+                elif key.data == "stdout" and mask & selectors.EVENT_READ:
+                    chunk = os.read(
+                        stdout_fd,
+                        min(4096, DARWIN_HELPER_OUTPUT_LIMIT + 1 - len(output)),
+                    )
+                    if not chunk:
+                        selector.unregister(stdout_fd)
+                        stdout_open = False
+                    else:
+                        output.extend(chunk)
+                        if len(output) > DARWIN_HELPER_OUTPUT_LIMIT:
+                            raise OSError("helper output overflow")
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise subprocess.TimeoutExpired([str(path), "resolve"], 1.5)
+        returncode = process.wait(timeout=remaining)
+        output_text = bytes(output).decode("utf-8")
+    except subprocess.TimeoutExpired:
+        return None, "helper_process_failure"
+    except (UnicodeError, ValueError) as exc:
+        if str(exc) in {"helper_missing", "helper_build_failure"}:
+            return None, str(exc)
+        return None, "helper_process_failure"
+    except OSError:
+        return None, "helper_process_failure"
+    finally:
+        if selector is not None:
+            selector.close()
+        if process is not None:
+            if process.stdin is not None:
+                try:
+                    process.stdin.close()
+                except OSError:
+                    pass
+            if process.stdout is not None:
+                try:
+                    process.stdout.close()
+                except OSError:
+                    pass
+            _stop_darwin_process(process)
+    parsed, reason = _parse_darwin_helper_output(output_text)
+    if returncode == 0:
+        if parsed is None:
+            return None, "helper_process_failure"
+        return parsed, None
+    if parsed is not None:
+        return None, "helper_process_failure"
+    return None, reason or "helper_process_failure"
+
+
+def _map_darwin_helper_reason(reason):
+    if not isinstance(reason, str):
+        return None, "helper_process_failure"
+    return None, {
+        "beacon_missing": "beacon_missing",
+        "stale": "beacon_stale_process",
+        "ambiguous_beacons": "ambiguous_beacons",
+        "process_disappeared": "process_disappeared",
+        "process_tree_too_large": "process_tree_too_large",
+        "denied": "proc_permission_denied",
+        "no_tty": "tty_unavailable",
+        "io": "secure_storage_unavailable",
+        "unsupported": "helper_build_failure",
+        "invalid": "beacon_malformed",
+        "oversized": "helper_process_failure",
+    }.get(reason, "helper_process_failure")
+
+
+def _parse_darwin_helper_output(output):
+    if not isinstance(output, str) or len(output.encode("utf-8")) > DARWIN_HELPER_OUTPUT_LIMIT:
+        return None, "helper_process_failure"
+    try:
+        response = _strict_json_load(output)
+    except (json.JSONDecodeError, TypeError, UnicodeError, ValueError):
+        return None, "helper_process_failure"
+    if not isinstance(response, dict) or type(response.get("ok")) is not bool:
+        return None, "helper_process_failure"
+    if not response["ok"]:
+        if set(response) != {"ok", "reason"}:
+            return None, "helper_process_failure"
+        if response["reason"] not in DARWIN_HELPER_RESOLVE_FAILURE_REASONS:
+            return None, "helper_process_failure"
+        return _map_darwin_helper_reason(response["reason"])
+    if set(response) != {"ok", "kind", "value", "pid", "start_time"}:
+        return None, "helper_process_failure"
+    if (
+        type(response.get("pid")) is not int
+        or response["pid"] <= 0
+        or not isinstance(response.get("start_time"), str)
+        or not re.fullmatch(r"[0-9]+\.[0-9]{6}", response["start_time"])
+        or not isinstance(response.get("kind"), str)
+        or not isinstance(response.get("value"), str)
+    ):
+        return None, "helper_process_failure"
+    return response, None
+
+
 class _UntrustedBeaconDirectory(Exception):
     pass
+
+
+def _trusted_directory_mode(info, uid):
+    """Allow private ancestors and the system sticky temporary root."""
+    mode = stat.S_IMODE(info.st_mode)
+    return (
+        stat.S_ISDIR(info.st_mode)
+        and info.st_uid in (0, uid)
+        and (not (mode & 0o022) or (info.st_uid == 0 and mode == 0o1777))
+    )
 
 
 def _open_beacon_directory(directory):
@@ -203,22 +485,37 @@ def _open_beacon_directory(directory):
         or os.stat not in os.supports_dir_fd
     ):
         raise _UntrustedBeaconDirectory
+    uid = os.getuid()
     flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0)
+    parts = pathlib.Path(directory).parts[1:]
     fd = os.open("/", flags)
     try:
-        for component in pathlib.Path(directory).parts[1:]:
+        for index, component in enumerate(parts):
             try:
                 next_fd = os.open(component, flags, dir_fd=fd)
             except OSError as exc:
                 if exc.errno in (errno.ELOOP, errno.ENOTDIR):
                     raise _UntrustedBeaconDirectory from exc
                 raise
+            next_info = os.fstat(next_fd)
+            final = index == len(parts) - 1
+            if final:
+                trusted = (
+                    stat.S_ISDIR(next_info.st_mode)
+                    and next_info.st_uid == uid
+                    and stat.S_IMODE(next_info.st_mode) == 0o700
+                )
+            else:
+                trusted = _trusted_directory_mode(next_info, uid)
+            if not trusted:
+                os.close(next_fd)
+                raise _UntrustedBeaconDirectory
             os.close(fd)
             fd = next_fd
         info = os.fstat(fd)
         if (
             not stat.S_ISDIR(info.st_mode)
-            or info.st_uid != os.getuid()
+            or info.st_uid != uid
             or stat.S_IMODE(info.st_mode) != 0o700
         ):
             raise _UntrustedBeaconDirectory
@@ -239,7 +536,11 @@ def _read_pi_beacon(pid, pane_id, proc_root, home=None, environ=None):
         dir_fd = _open_beacon_directory(directory)
         name = f"{pid}.json"
         info = os.stat(name, dir_fd=dir_fd, follow_symlinks=False)
-        if stat.S_ISLNK(info.st_mode) or not stat.S_ISREG(info.st_mode):
+        if (
+            stat.S_ISLNK(info.st_mode)
+            or not stat.S_ISREG(info.st_mode)
+            or info.st_nlink != 1
+        ):
             return None, "beacon_invalid_file_type"
         if info.st_uid != os.getuid():
             return None, "beacon_wrong_owner"
@@ -248,7 +549,11 @@ def _read_pi_beacon(pid, pane_id, proc_root, home=None, environ=None):
         flags = os.O_RDONLY | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0)
         file_fd = os.open(name, flags, dir_fd=dir_fd)
         opened = os.fstat(file_fd)
-        if not stat.S_ISREG(opened.st_mode) or opened.st_ino != info.st_ino:
+        if (
+            not stat.S_ISREG(opened.st_mode)
+            or opened.st_ino != info.st_ino
+            or opened.st_nlink != 1
+        ):
             return None, "beacon_invalid_file_type"
         if opened.st_uid != os.getuid():
             return None, "beacon_wrong_owner"
@@ -305,6 +610,85 @@ def _read_pi_beacon(pid, pane_id, proc_root, home=None, environ=None):
             os.close(dir_fd)
 
 
+def _read_darwin_beacon(pid, pane_id, start_time, home=None, environ=None):
+    """Re-read a Darwin beacon through a pinned Python directory descriptor."""
+    directory = _beacon_directory(home, environ)
+    if directory is None:
+        return None, "beacon_directory_unavailable"
+    dir_fd = None
+    file_fd = None
+    try:
+        dir_fd = _open_beacon_directory(directory)
+        name = f"{pid}.json"
+        info = os.stat(name, dir_fd=dir_fd, follow_symlinks=False)
+        if (
+            stat.S_ISLNK(info.st_mode)
+            or not stat.S_ISREG(info.st_mode)
+            or info.st_uid != os.getuid()
+            or info.st_nlink != 1
+            or stat.S_IMODE(info.st_mode) != 0o600
+        ):
+            return None, "beacon_invalid_file_type"
+        file_fd = os.open(
+            name,
+            os.O_RDONLY | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0),
+            dir_fd=dir_fd,
+        )
+        opened = os.fstat(file_fd)
+        if (
+            not stat.S_ISREG(opened.st_mode)
+            or opened.st_ino != info.st_ino
+            or opened.st_uid != os.getuid()
+            or opened.st_nlink != 1
+            or stat.S_IMODE(opened.st_mode) != 0o600
+            or opened.st_size < 0
+            or opened.st_size > 16384
+        ):
+            return None, "beacon_invalid_file_type"
+        with os.fdopen(file_fd, "rb", closefd=False) as stream:
+            raw = stream.read(16385)
+        if len(raw) > 16384:
+            return None, "beacon_malformed"
+
+        def unique_object(pairs):
+            result = {}
+            for key, value in pairs:
+                if key in result:
+                    raise ValueError("duplicate beacon field")
+                result[key] = value
+            return result
+
+        data = json.loads(raw, object_pairs_hook=unique_object)
+        if (
+            not isinstance(data, dict)
+            or set(data) != {"schema", "pid", "pane_id", "start_time", "session_ref"}
+            or type(data.get("schema")) is not int
+            or data["schema"] != 1
+            or type(data.get("pid")) is not int
+            or data["pid"] != int(pid)
+            or data.get("pane_id") != pane_id
+            or data.get("start_time") != start_time
+        ):
+            return None, "beacon_stale_process"
+        ref, _reason = validate_pi_session_ref(data.get("session_ref"), home)
+        if not ref:
+            return None, "beacon_invalid_session_reference"
+        return ref, None
+    except FileNotFoundError:
+        return None, "beacon_missing"
+    except _UntrustedBeaconDirectory:
+        return None, "beacon_untrusted_directory"
+    except PermissionError:
+        return None, "beacon_permission_denied"
+    except (OSError, ValueError, UnicodeError, json.JSONDecodeError):
+        return None, "beacon_malformed"
+    finally:
+        if file_fd is not None:
+            os.close(file_fd)
+        if dir_fd is not None:
+            os.close(dir_fd)
+
+
 def _proc_start_time(path):
     with path.open("rb") as stream:
         raw = stream.read(4097)
@@ -328,20 +712,53 @@ def resolve_pi_session(
     platform=None,
     pane_id=None,
     environ=None,
+    helper_path=None,
+    helper_runner=None,
 ):
     """Resolve exact Pi session metadata from one unambiguous foreground process."""
     platform = platform or sys.platform
     proc_root = pathlib.Path(proc_root)
+    if pane_pid is None or pane_tty is None:
+        return None, "tmux_pane_missing"
+    if not str(pane_pid).isdigit() or not pathlib.Path(pane_tty).is_absolute():
+        return None, "invalid_pane_metadata"
+    if platform == "darwin":
+        if not pane_id:
+            return None, "tmux_pane_missing"
+        directory = _beacon_directory(home, environ)
+        if directory is None:
+            return None, "secure_storage_unavailable"
+        request = json.dumps(
+            {
+                "v": 1,
+                "op": "resolve",
+                "directory": str(directory),
+                "pane_pid": int(pane_pid),
+                "pane_tty": str(pane_tty),
+                "pane_id": pane_id or "",
+            },
+            separators=(",", ":"),
+        )
+        response, reason = _run_darwin_helper(
+            request,
+            home=home,
+            environ=environ,
+            helper_path=helper_path,
+            runner=helper_runner,
+        )
+        if not response:
+            return None, reason
+        return _read_darwin_beacon(
+            response["pid"],
+            pane_id,
+            response["start_time"],
+            home=home,
+            environ=environ,
+        )
     if platform != "linux":
         return None, "unsupported_platform"
     if not proc_root.is_dir():
         return None, "proc_unavailable"
-    if (
-        not str(pane_pid).isdigit()
-        or not pane_tty
-        or not pathlib.Path(pane_tty).is_absolute()
-    ):
-        return None, "invalid_pane_metadata"
     root = proc_root / str(pane_pid)
     try:
         root_stat = _proc_stat(root / "stat")
@@ -352,6 +769,7 @@ def resolve_pi_session(
         visited = set()
         candidates = []
         foreground_pids = []
+        candidate_chains = {}
         vanished = False
         truncated_environment = False
         while queue and len(visited) < 512:
@@ -371,6 +789,10 @@ def resolve_pi_session(
                 if stdin_tty != tty:
                     continue
                 foreground_pids.append(pid)
+                try:
+                    candidate_chains[pid] = _proc_chain(proc_root, pid, int(pane_pid))
+                except (FileNotFoundError, OSError, UnicodeError, ValueError):
+                    vanished = True
             except FileNotFoundError:
                 vanished = True
             except PermissionError:
@@ -395,6 +817,15 @@ def resolve_pi_session(
             if len(beacon_candidates) > 1:
                 return None, "ambiguous_beacons"
             if beacon_candidates:
+                selected = [
+                    pid for pid in foreground_pids
+                    if _read_pi_beacon(pid, pane_id, proc_root, home, environ)[0]
+                ]
+                chain = candidate_chains.get(selected[0]) if len(selected) == 1 else None
+                if len(selected) != 1 or not chain or not _same_proc_chain(
+                    proc_root, chain
+                ):
+                    return None, "process_disappeared"
                 return beacon_candidates[0], None
         for foreground_pid in foreground_pids:
             try:
@@ -417,13 +848,16 @@ def resolve_pi_session(
                 return None, "environment_truncated"
             if beacon_failure:
                 return None, beacon_failure
-            return None, "process_disappeared" if vanished else "session_ref_missing"
+            return None, "process_disappeared" if vanished else "session_reference_missing"
         candidate_pid, env, truncated, duplicate = candidates[0]
         if duplicate:
             return None, "duplicate_session_environment"
         warning = "environment_truncated" if truncated else None
         if pane_id and beacon_failure:
             warning = beacon_failure
+        chain = candidate_chains.get(candidate_pid)
+        if not chain or not _same_proc_chain(proc_root, chain):
+            return None, "process_disappeared"
         if env.get("PI_SESSION_FILE"):
             file_ref, _ = validate_pi_session_ref(
                 {"kind": "path", "value": env["PI_SESSION_FILE"]}, home
@@ -442,7 +876,7 @@ def resolve_pi_session(
             return None, warning or "invalid_session_id"
         if env.get("PI_SESSION_FILE"):
             return None, warning or "invalid_session_file"
-        return None, warning or "session_ref_missing"
+        return None, warning or "session_reference_missing"
     except FileNotFoundError:
         return None, "process_disappeared"
     except PermissionError:
@@ -711,9 +1145,37 @@ def _pane_label(pane):
     return pane.get("title") or pane.get("command") or f"pane-{pane['index']}"
 
 
+def _strict_json_load(text):
+    def unique_object(pairs):
+        result = {}
+        for key, value in pairs:
+            if key in result:
+                raise ValueError(f"duplicate JSON key: {key}")
+            result[key] = value
+        return result
+
+    def reject_constant(value):
+        raise ValueError(f"non-standard JSON constant: {value}")
+
+    return json.loads(
+        text,
+        object_pairs_hook=unique_object,
+        parse_constant=reject_constant,
+    )
+
+
+def _load_snapshot(path):
+    try:
+        return _strict_json_load(pathlib.Path(path).read_text())
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
+        raise ValueError(f"snapshot JSON is invalid: {exc}") from exc
+
+
 def _validate_snapshot(snapshot):
     if not isinstance(snapshot, dict):
         raise ValueError("snapshot must be an object")
+    if type(snapshot.get("schema")) is not int or snapshot["schema"] != 1:
+        raise ValueError("snapshot schema is unsupported")
     _source_name(snapshot)
     attached = snapshot.get("attached", False)
     if not isinstance(attached, bool):
@@ -725,6 +1187,8 @@ def _validate_snapshot(snapshot):
         or any(not isinstance(tab, dict) for tab in tabs)
     ):
         raise ValueError("snapshot contains an empty tab list or malformed tab")
+    if sum(tab.get("active") is True for tab in tabs) != 1:
+        raise ValueError("snapshot must contain exactly one active tab")
     for tab_index, tab in enumerate(tabs):
         if not isinstance(tab.get("name"), str):
             raise ValueError(f"snapshot tab {tab_index} has an invalid name")
@@ -733,6 +1197,12 @@ def _validate_snapshot(snapshot):
         panes = tab.get("panes")
         if not isinstance(panes, list) or not panes:
             raise ValueError(f"snapshot tab {tab_index} has no panes")
+        if sum(
+            isinstance(pane, dict) and pane.get("active") is True for pane in panes
+        ) != 1:
+            raise ValueError(
+                f"snapshot tab {tab_index} must contain exactly one active pane"
+            )
         for pane_index, pane in enumerate(panes):
             if not isinstance(pane, dict):
                 raise ValueError(f"snapshot pane {tab_index}:{pane_index} is malformed")
@@ -837,6 +1307,21 @@ def _precompute_import(snapshot, allow_continue):
     return prepared
 
 
+def _recheck_cwd(cwd):
+    candidate = pathlib.Path(cwd)
+    try:
+        if candidate.is_symlink() or not candidate.is_dir():
+            raise ValueError(f"unavailable cwd(s); refusing apply: {cwd}")
+    except OSError as exc:
+        raise ValueError(f"unavailable cwd(s); refusing apply: {cwd}") from exc
+
+
+def _recheck_snapshot_cwds(snapshot):
+    for tab in snapshot["tabs"]:
+        for pane in tab["panes"]:
+            _recheck_cwd(pane["cwd"])
+
+
 def _source_name(snapshot):
     source = snapshot.get("name") if isinstance(snapshot, dict) else None
     if not isinstance(source, str) or not source or "\x00" in source:
@@ -881,6 +1366,90 @@ def _require_running_server(status):
         )
 
 
+def _atomic_marker_replace(marker_dir, marker_name, payload):
+    """Durably replace a reserved marker through one pinned directory fd."""
+    encoded = payload.encode("utf-8")
+    if len(encoded) > 1024 * 1024:
+        raise ValueError("marker is oversized; refusing apply")
+    flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0)
+    directory_fd = os.open(marker_dir, flags)
+    temp_fd = None
+    temp_name = None
+    try:
+        destination_fd = os.open(
+            marker_name, os.O_RDONLY | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0),
+            dir_fd=directory_fd,
+        )
+        try:
+            destination = os.fstat(destination_fd)
+            if (
+                not stat.S_ISREG(destination.st_mode)
+                or destination.st_uid != os.getuid()
+                or stat.S_IMODE(destination.st_mode) != 0o600
+                or destination.st_nlink != 1
+            ):
+                raise ValueError("marker reservation changed; refusing apply")
+        finally:
+            os.close(destination_fd)
+        for _ in range(32):
+            temp_name = f".{marker_name}.{secrets.token_hex(16)}.tmp"
+            try:
+                temp_fd = os.open(
+                    temp_name,
+                    os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,
+                    0o600,
+                    dir_fd=directory_fd,
+                )
+                break
+            except FileExistsError:
+                temp_name = None
+        if temp_fd is None or temp_name is None:
+            raise ValueError("marker temporary name unavailable")
+        written = 0
+        while written < len(encoded):
+            count = os.write(temp_fd, encoded[written:])
+            if count <= 0:
+                raise OSError("short marker write")
+            written += count
+        os.fchmod(temp_fd, 0o600)
+        os.fsync(temp_fd)
+        temp_info = os.fstat(temp_fd)
+        if (
+            not stat.S_ISREG(temp_info.st_mode)
+            or temp_info.st_uid != os.getuid()
+            or temp_info.st_nlink != 1
+            or stat.S_IMODE(temp_info.st_mode) != 0o600
+            or temp_info.st_size != len(encoded)
+        ):
+            raise ValueError("marker temporary changed; refusing apply")
+        os.close(temp_fd)
+        temp_fd = None
+        os.rename(temp_name, marker_name, src_dir_fd=directory_fd, dst_dir_fd=directory_fd)
+        temp_name = None
+        installed_fd = os.open(
+            marker_name, os.O_RDONLY | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0),
+            dir_fd=directory_fd,
+        )
+        try:
+            installed = os.fstat(installed_fd)
+            if (
+                installed.st_dev != temp_info.st_dev
+                or installed.st_ino != temp_info.st_ino
+                or installed.st_uid != os.getuid()
+                or installed.st_nlink != 1
+                or stat.S_IMODE(installed.st_mode) != 0o600
+                or installed.st_size != len(encoded)
+            ):
+                raise ValueError("installed marker changed; refusing apply")
+        finally:
+            os.close(installed_fd)
+        os.fsync(directory_fd)
+    finally:
+        if temp_fd is not None:
+            os.close(temp_fd)
+        os.close(directory_fd)
+
+
 def _legacy_marker_matches(marker, snapshot, target, allow_continue, label, workspaces):
     """Recognize only the original, already-applied dots import; never rewrite it."""
     if target != "pilot" or snapshot.get("name") != "dots":
@@ -909,6 +1478,7 @@ def apply(snapshot, target, allow_continue=False):
     ):
         raise ValueError("target --session must be a simple named Herdr session")
     source = _source_name(snapshot)
+    _recheck_snapshot_cwds(snapshot)
     label = "tmux:" + source
     marker_dir = pathlib.Path.home() / ".local/state/tmux-herdr"
     marker_dir.mkdir(parents=True, exist_ok=True, mode=0o700)
@@ -983,16 +1553,7 @@ def apply(snapshot, target, allow_continue=False):
         )
 
     prepared = _precompute_import(snapshot, allow_continue)
-    unavailable = [
-        pane["cwd"]
-        for tab in snapshot["tabs"]
-        for pane in tab["panes"]
-        if not pane["cwd_exists"]
-    ]
-    if unavailable:
-        raise ValueError(
-            "unavailable cwd(s); refusing apply: " + ", ".join(unavailable)
-        )
+    _recheck_snapshot_cwds(snapshot)
     fd = None
     try:
         fd = os.open(marker, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
@@ -1021,6 +1582,7 @@ def apply(snapshot, target, allow_continue=False):
             os.fsync(stream.fileno())
         first_tab = snapshot["tabs"][0]
         first = first_tab["panes"][0]
+        _recheck_cwd(first["cwd"])
         create_args = [
             "workspace",
             "create",
@@ -1045,6 +1607,7 @@ def apply(snapshot, target, allow_continue=False):
         tabs = [(first_tab, first_tab_id, root_id)]
         for tab in snapshot["tabs"][1:]:
             first_pane = tab["panes"][0]
+            _recheck_cwd(first_pane["cwd"])
             args = [
                 "tab",
                 "create",
@@ -1081,6 +1644,7 @@ def apply(snapshot, target, allow_continue=False):
                     pane_id = root_pane_id
                 else:
                     direction, ratio = split
+                    _recheck_cwd(pane["cwd"])
                     args = [
                         "pane",
                         "split",
@@ -1113,6 +1677,7 @@ def apply(snapshot, target, allow_continue=False):
                 )
                 _object_id(result, "pane", "pane_id", label_reply)
                 if app_plan["command"]:
+                    _recheck_cwd(pane["cwd"])
                     herdr(target, "pane", "run", pane_id, *app_plan["command"])
             if tab.get("active"):
                 focus_reply = herdr(target, "tab", "focus", tab_id)
@@ -1128,7 +1693,9 @@ def apply(snapshot, target, allow_continue=False):
                 restore_reply, "cli:tab:focus", "tab_info", {"tab"}
             )
             _object_id(result, "tab", "tab_id", restore_reply)
-        marker.write_text(
+        _atomic_marker_replace(
+            marker_dir,
+            marker.name,
             json.dumps(
                 {
                     "status": "applied",
@@ -1140,9 +1707,8 @@ def apply(snapshot, target, allow_continue=False):
                 },
                 indent=2,
             )
-            + "\n"
+            + "\n",
         )
-        marker.chmod(0o600)
         print(f"created workspace with {len(tabs)} tab(s); tmux unchanged")
     except Exception:
         if mutation_started and previous_focused_tab:
@@ -1150,8 +1716,8 @@ def apply(snapshot, target, allow_continue=False):
                 herdr(target, "tab", "focus", previous_focused_tab)
             except Exception:
                 pass
-        if not mutation_started:
-            marker.unlink(missing_ok=True)
+        # Preserve the reservation on every failure.  It is intentionally malformed
+        # until the durable final rename and therefore blocks unsafe retry/duplication.
         raise
 
 
@@ -1208,12 +1774,29 @@ def main():
             if args.output:
                 path = pathlib.Path(args.output)
                 path.parent.mkdir(parents=True, exist_ok=True)
-                path.write_text(text)
-                path.chmod(0o600)
+                flags = (
+                    os.O_WRONLY
+                    | os.O_CREAT
+                    | os.O_TRUNC
+                    | getattr(os, "O_NOFOLLOW", 0)
+                    | getattr(os, "O_CLOEXEC", 0)
+                )
+                fd = os.open(path, flags, 0o600)
+                try:
+                    os.fchmod(fd, 0o600)
+                    with open(fd, "w", encoding="utf-8") as handle:
+                        handle.write(text)
+                except BaseException:
+                    try:
+                        os.close(fd)
+                    except OSError:
+                        pass
+                    raise
             else:
                 print(text, end="")
         else:
-            snapshot = json.loads(pathlib.Path(args.dry_run or args.apply).read_text())
+            snapshot = _load_snapshot(args.dry_run or args.apply)
+            _validate_snapshot(snapshot)
             result = plan(snapshot, args.allow_pi_continue)
             if args.apply:
                 if not args.session:
