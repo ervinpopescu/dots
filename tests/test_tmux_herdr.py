@@ -1084,7 +1084,9 @@ class TmuxHerdrTests(unittest.TestCase):
         self.assertNotIn(private_path, output)
         self.assertNotIn(invalid_id, output)
 
-    def test_darwin_node_pane_with_valid_beacon_promotes_to_pi_and_resumes_in_plan(self):
+    def test_darwin_node_pane_with_valid_beacon_promotes_to_pi_and_resumes_in_plan(
+        self,
+    ):
         session_id = "550e8400-e29b-41d4-a716-446655440000"
         with tempfile.TemporaryDirectory() as tmp:
             self.write_beacon(
