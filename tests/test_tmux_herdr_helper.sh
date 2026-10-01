@@ -47,14 +47,26 @@ HOOK_TMPL="$REPO_ROOT/run_onchange_build-tmux-herdr-darwin-helper.sh.tmpl"
 if ! grep -q "trap 'rm -rf \"\$BUILD_DIR\"' EXIT" "$HOOK_TMPL" ||
    grep -q '%M' "$HOOK_TMPL" ||
    ! grep -q 'validate_helper_leaf "\$TMP" 1' "$HOOK_TMPL" ||
-   ! grep -q 'validate_helper_leaf "\$DEST" 1' "$HOOK_TMPL"; then
-  echo "Darwin build hook template contains stat formatting error or lacks trap cleanup" >&2
+   ! grep -q 'validate_helper_leaf "\$DEST" 1' "$HOOK_TMPL" ||
+   ! grep -q 'xcrun --sdk macosx --show-sdk-path' "$HOOK_TMPL" ||
+   ! grep -q 'errno.h' "$HOOK_TMPL" ||
+   ! grep -q '"\$CC" -isysroot "\$SDKROOT" -std=c11 .* "\$SOURCE"' "$HOOK_TMPL" ||
+   ! grep -q '"\$CC" -isysroot "\$SDKROOT" -std=c11 .* "\$INSTALLER_SOURCE"' "$HOOK_TMPL"; then
+  echo "Darwin build hook template contains stat formatting error, lacks SDK discovery, or omits -isysroot" >&2
   exit 1
 fi
 
 if [[ "$(uname -s)" == "Darwin" ]]; then
-  "$CC_BIN" -std=c11 -Wall -Wextra -Werror -pedantic "$SOURCE" -o "$TMP_DIR/helper-darwin"
-  "$CC_BIN" -std=c11 -Wall -Wextra -Werror -pedantic "$INSTALLER_SOURCE" -o "$TMP_DIR/installer-darwin"
+  DARWIN_SDKROOT=""
+  if command -v xcrun >/dev/null 2>&1; then
+    DARWIN_SDKROOT="$(xcrun --sdk macosx --show-sdk-path 2>/dev/null || true)"
+  fi
+  DARWIN_SYSROOT_FLAGS=()
+  if [[ -n "$DARWIN_SDKROOT" && -d "$DARWIN_SDKROOT" ]]; then
+    DARWIN_SYSROOT_FLAGS=(-isysroot "$DARWIN_SDKROOT")
+  fi
+  "$CC_BIN" "${DARWIN_SYSROOT_FLAGS[@]}" -std=c11 -Wall -Wextra -Werror -pedantic "$SOURCE" -o "$TMP_DIR/helper-darwin"
+  "$CC_BIN" "${DARWIN_SYSROOT_FLAGS[@]}" -std=c11 -Wall -Wextra -Werror -pedantic "$INSTALLER_SOURCE" -o "$TMP_DIR/installer-darwin"
   valid='{"v":1,"op":"publish","directory":"/tmp/a b\\\\c\\\"é","publisher_pid":1,"pane_id":"%1","session_kind":"path","session_value":"/tmp/a b\\\\c\\\"é.jsonl"}'
   printf '%s\0' '{"v":1,"op":"publish","directory":"/tmp/x","publisher_pid":1,"pane_id":"%1","session_kind":"id","session_value":"x"}' >"$TMP_DIR/nul-input"
   nul_output="$($TMP_DIR/helper-darwin publish <"$TMP_DIR/nul-input" || true)"
