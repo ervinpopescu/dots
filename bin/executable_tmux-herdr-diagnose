@@ -1,0 +1,841 @@
+#!/usr/bin/env python3
+"""Privacy-safe diagnostic tool for troubleshooting tmux Herdr beacon storage."""
+
+import argparse
+import errno
+import fcntl
+import json
+import os
+import pathlib
+import secrets
+import stat
+import subprocess
+import sys
+
+HELPER_RELATIVE_PATH = pathlib.Path(".local/libexec/tmux-herdr-darwin-helper")
+HELPER_PARENT_RELATIVE_PATH = pathlib.Path(".local/libexec")
+BEACON_DIR_NAME = "pi-herdr-sessions"
+DARWIN_HELPER_TIMEOUT = 1.5
+DARWIN_HELPER_MAX_OUTPUT = 16384
+
+
+def _map_errno(err_code):
+    if err_code in (errno.EACCES, errno.EPERM):
+        return "permission_denied"
+    if err_code == errno.ENOENT:
+        return "not_found"
+    if err_code == errno.ELOOP:
+        return "symlink_loop"
+    if err_code == errno.ENOTDIR:
+        return "not_a_directory"
+    if err_code == errno.EEXIST:
+        return "already_exists"
+    if err_code == errno.EINVAL:
+        return "invalid_argument"
+    if err_code in (errno.ENOTSUP, getattr(errno, "EOPNOTSUPP", errno.ENOTSUP)):
+        return "operation_not_supported"
+    if err_code in (errno.EIO, errno.EROFS, errno.ENOSPC, errno.EDQUOT):
+        return "io_error"
+    if err_code == errno.EBADF:
+        return "bad_file_descriptor"
+    if err_code == errno.ETIMEDOUT:
+        return "timeout"
+    return "unknown_error"
+
+
+def resolve_storage_target(environ):
+    runtime = environ.get("XDG_RUNTIME_DIR")
+    if runtime and pathlib.Path(runtime).is_absolute():
+        return "xdg_runtime_dir", pathlib.Path(runtime) / BEACON_DIR_NAME
+    home = environ.get("HOME")
+    if home and pathlib.Path(home).is_absolute():
+        return "home_fallback", pathlib.Path(home) / ".cache" / BEACON_DIR_NAME
+    return "unavailable", None
+
+
+def resolve_helper_paths(environ):
+    home = environ.get("HOME")
+    if home and pathlib.Path(home).is_absolute():
+        base = pathlib.Path(home)
+        return base / HELPER_PARENT_RELATIVE_PATH, base / HELPER_RELATIVE_PATH
+    return None, None
+
+
+def check_helper_metadata(parent_path, helper_path, current_uid):
+    results = {
+        "helper_parent_exists": False,
+        "helper_parent_type": "missing",
+        "helper_parent_owner": "unavailable",
+        "helper_parent_mode": "unavailable",
+        "helper_file_exists": False,
+        "helper_file_type": "missing",
+        "helper_file_owner": "unavailable",
+        "helper_file_mode": "unavailable",
+        "helper_file_link_count": "unavailable",
+        "helper_file_executable": False,
+        "helper_overall_status": "missing",
+    }
+    if parent_path is None or helper_path is None:
+        return results
+
+    try:
+        parent_stat = parent_path.lstat()
+        results["helper_parent_exists"] = True
+        if stat.S_ISLNK(parent_stat.st_mode):
+            results["helper_parent_type"] = "symlink"
+        elif stat.S_ISDIR(parent_stat.st_mode):
+            results["helper_parent_type"] = "directory"
+        else:
+            results["helper_parent_type"] = "other"
+
+        if parent_stat.st_uid == current_uid:
+            results["helper_parent_owner"] = "trusted_self"
+        elif parent_stat.st_uid == 0:
+            results["helper_parent_owner"] = "root"
+        else:
+            results["helper_parent_owner"] = "other"
+
+        if (parent_stat.st_mode & 0o777) == 0o700:
+            results["helper_parent_mode"] = "exact_0700"
+        else:
+            results["helper_parent_mode"] = "untrusted_mode"
+    except OSError:
+        pass
+
+    try:
+        helper_stat = helper_path.lstat()
+        results["helper_file_exists"] = True
+        if stat.S_ISLNK(helper_stat.st_mode):
+            results["helper_file_type"] = "symlink"
+        elif stat.S_ISREG(helper_stat.st_mode):
+            results["helper_file_type"] = "regular"
+        elif stat.S_ISDIR(helper_stat.st_mode):
+            results["helper_file_type"] = "directory"
+        else:
+            results["helper_file_type"] = "other"
+
+        if helper_stat.st_uid == current_uid:
+            results["helper_file_owner"] = "trusted_self"
+        elif helper_stat.st_uid == 0:
+            results["helper_file_owner"] = "root"
+        else:
+            results["helper_file_owner"] = "other"
+
+        if (helper_stat.st_mode & 0o777) == 0o700:
+            results["helper_file_mode"] = "exact_0700"
+        else:
+            results["helper_file_mode"] = "untrusted_mode"
+
+        if helper_stat.st_nlink == 1:
+            results["helper_file_link_count"] = "single"
+        else:
+            results["helper_file_link_count"] = "multiple"
+
+        results["helper_file_executable"] = os.access(helper_path, os.X_OK)
+    except OSError:
+        pass
+
+    if not results["helper_file_exists"]:
+        results["helper_overall_status"] = "missing"
+    elif (
+        results["helper_parent_type"] == "directory"
+        and results["helper_parent_owner"] == "trusted_self"
+        and results["helper_parent_mode"] == "exact_0700"
+        and results["helper_file_type"] == "regular"
+        and results["helper_file_owner"] == "trusted_self"
+        and results["helper_file_mode"] == "exact_0700"
+        and results["helper_file_link_count"] == "single"
+        and results["helper_file_executable"]
+    ):
+        results["helper_overall_status"] = "ok"
+    else:
+        results["helper_overall_status"] = "build_failure"
+
+    return results
+
+
+def check_helper_selftest(helper_path, helper_overall_status, helper_runner=None):
+    if helper_overall_status == "missing":
+        return "skipped_helper_missing"
+    if helper_overall_status != "ok":
+        return "skipped_helper_invalid"
+
+    if helper_runner is not None:
+        try:
+            output = helper_runner("selftest")
+        except TimeoutError:
+            return "timeout"
+        except OSError:
+            return "process_failure"
+        if not isinstance(output, str) or len(output) > DARWIN_HELPER_MAX_OUTPUT:
+            return "malformed"
+        try:
+            data = json.loads(output)
+            if isinstance(data, dict) and data.get("ok") is True:
+                return "ok"
+            if isinstance(data, dict) and data.get("ok") is False:
+                return "unsupported" if data.get("reason") == "unsupported" else "process_failure"
+            return "malformed"
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            return "malformed"
+
+    try:
+        proc = subprocess.Popen(
+            [str(helper_path), "selftest"],
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            close_fds=True,
+            env={"PATH": "/usr/bin:/bin"},
+        )
+        try:
+            raw_stdout, _ = proc.communicate(timeout=DARWIN_HELPER_TIMEOUT)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            proc.wait()
+            return "timeout"
+
+        if proc.returncode != 0:
+            return "process_failure"
+
+        if len(raw_stdout) > DARWIN_HELPER_MAX_OUTPUT:
+            return "malformed"
+
+        try:
+            data = json.loads(raw_stdout.decode("utf-8"))
+            if isinstance(data, dict) and data.get("ok") is True:
+                return "ok"
+            if isinstance(data, dict) and data.get("ok") is False:
+                reason = data.get("reason")
+                if reason == "unsupported":
+                    return "unsupported"
+                return "process_failure"
+            return "malformed"
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            return "malformed"
+    except OSError:
+        return "process_failure"
+
+
+def check_storage_path_components(target_path, current_uid):
+    """Walk every component from root '/' down to target_path leaf according to Darwin helper rules."""
+    components = []
+    summary = {
+        "storage_path_symlinks": "none",
+        "storage_path_owners": "trusted",
+        "storage_path_permissions": "trusted",
+        "storage_path_status": "ok",
+        "storage_leaf_exists": False,
+        "storage_leaf_type": "missing",
+        "storage_leaf_symlink": False,
+        "storage_leaf_owner": "missing",
+        "storage_leaf_mode": "missing",
+        "storage_leaf_status": "missing",
+    }
+
+    if (
+        target_path is None
+        or not target_path.is_absolute()
+        or os.name != "posix"
+        or not hasattr(os, "O_DIRECTORY")
+        or not hasattr(os, "O_NOFOLLOW")
+        or os.open not in os.supports_dir_fd
+        or os.stat not in os.supports_dir_fd
+    ):
+        summary["storage_path_status"] = "storage_unavailable"
+        summary["storage_leaf_status"] = "skipped_storage_unavailable"
+        return components, summary, None
+
+    parts = pathlib.PurePosixPath(target_path).parts
+    if not parts or parts[0] != "/":
+        summary["storage_path_status"] = "storage_unavailable"
+        summary["storage_leaf_status"] = "skipped_storage_unavailable"
+        return components, summary, None
+
+    open_flags = (
+        os.O_RDONLY
+        | getattr(os, "O_DIRECTORY", 0)
+        | getattr(os, "O_NOFOLLOW", 0)
+        | getattr(os, "O_CLOEXEC", 0)
+    )
+
+    current_fd = None
+    leaf_fd = None
+    try:
+        try:
+            current_fd = os.open("/", open_flags)
+            root_stat = os.fstat(current_fd)
+        except OSError as exc:
+            summary["storage_path_status"] = _map_errno(exc.errno)
+            summary["storage_leaf_status"] = "skipped_storage_unavailable"
+            return components, summary, None
+
+        # Component 0: root '/'
+        root_owner = (
+            "trusted_root"
+            if root_stat.st_uid == 0
+            else ("trusted_self" if root_stat.st_uid == current_uid else "untrusted")
+        )
+        if (root_stat.st_mode & 0o022) != 0:
+            if root_stat.st_uid == 0 and (root_stat.st_mode & 0o7777) == 0o1777:
+                root_mode = "trusted_sticky_root"
+            else:
+                root_mode = "untrusted_writable"
+        else:
+            root_mode = (
+                "trusted_private" if (root_stat.st_mode & 0o777) == 0o700 else "trusted_shared"
+            )
+
+        root_status = (
+            "ok"
+            if root_owner in ("trusted_root", "trusted_self")
+            and root_mode != "untrusted_writable"
+            else "untrusted"
+        )
+        if root_owner == "untrusted":
+            summary["storage_path_owners"] = "untrusted_detected"
+        if root_mode == "untrusted_writable":
+            summary["storage_path_permissions"] = "untrusted_detected"
+
+        components.append(
+            {
+                "index": 0,
+                "symlink": False,
+                "type": "directory",
+                "owner": root_owner,
+                "mode": root_mode,
+                "status": root_status,
+            }
+        )
+
+        if root_status != "ok":
+            summary["storage_path_status"] = "untrusted_root"
+            return components, summary, None
+
+        missing_mode = False
+        missing_creatable = False
+
+        for idx, comp in enumerate(parts[1:], start=1):
+            is_leaf = idx == len(parts) - 1
+
+            if missing_mode:
+                if is_leaf:
+                    summary["storage_leaf_exists"] = False
+                    summary["storage_leaf_type"] = "missing"
+                    summary["storage_leaf_symlink"] = False
+                    summary["storage_leaf_owner"] = "missing"
+                    summary["storage_leaf_mode"] = "missing"
+                    leaf_status = (
+                        "missing_creatable" if missing_creatable else "missing_parent_unwritable"
+                    )
+                    summary["storage_leaf_status"] = leaf_status
+                    summary["storage_path_status"] = leaf_status
+                else:
+                    components.append(
+                        {
+                            "index": idx,
+                            "symlink": False,
+                            "type": "missing",
+                            "owner": "missing",
+                            "mode": "missing",
+                            "status": (
+                                "missing_creatable"
+                                if missing_creatable
+                                else "missing_parent_unwritable"
+                            ),
+                        }
+                    )
+                continue
+
+            try:
+                st = os.stat(comp, dir_fd=current_fd, follow_symlinks=False)
+            except FileNotFoundError:
+                missing_mode = True
+                try:
+                    p_stat = os.fstat(current_fd)
+                    missing_creatable = (
+                        p_stat.st_uid == current_uid and (p_stat.st_mode & 0o200) != 0
+                    )
+                except OSError:
+                    missing_creatable = False
+
+                if is_leaf:
+                    summary["storage_leaf_exists"] = False
+                    summary["storage_leaf_type"] = "missing"
+                    summary["storage_leaf_symlink"] = False
+                    summary["storage_leaf_owner"] = "missing"
+                    summary["storage_leaf_mode"] = "missing"
+                    leaf_status = (
+                        "missing_creatable" if missing_creatable else "missing_parent_unwritable"
+                    )
+                    summary["storage_leaf_status"] = leaf_status
+                    summary["storage_path_status"] = leaf_status
+                else:
+                    components.append(
+                        {
+                            "index": idx,
+                            "symlink": False,
+                            "type": "missing",
+                            "owner": "missing",
+                            "mode": "missing",
+                            "status": (
+                                "missing_creatable"
+                                if missing_creatable
+                                else "missing_parent_unwritable"
+                            ),
+                        }
+                    )
+                continue
+            except OSError as exc:
+                err_label = _map_errno(exc.errno)
+                summary["storage_path_status"] = err_label
+                if is_leaf:
+                    summary["storage_leaf_status"] = err_label
+                break
+
+            is_symlink = stat.S_ISLNK(st.st_mode)
+            is_dir = stat.S_ISDIR(st.st_mode)
+
+            if is_symlink:
+                summary["storage_path_symlinks"] = "symlink_detected"
+                summary["storage_path_status"] = "symlink_detected"
+                if is_leaf:
+                    summary["storage_leaf_exists"] = True
+                    summary["storage_leaf_type"] = "symlink"
+                    summary["storage_leaf_symlink"] = True
+                    summary["storage_leaf_owner"] = (
+                        "trusted_self" if st.st_uid == current_uid else "untrusted"
+                    )
+                    summary["storage_leaf_mode"] = "untrusted_mode"
+                    summary["storage_leaf_status"] = "symlink_detected"
+                else:
+                    components.append(
+                        {
+                            "index": idx,
+                            "symlink": True,
+                            "type": "symlink",
+                            "owner": "trusted_self" if st.st_uid == current_uid else "untrusted",
+                            "mode": "untrusted_mode",
+                            "status": "symlink_detected",
+                        }
+                    )
+                break
+
+            if not is_dir:
+                summary["storage_path_status"] = "not_a_directory"
+                if is_leaf:
+                    summary["storage_leaf_exists"] = True
+                    summary["storage_leaf_type"] = "non_directory"
+                    summary["storage_leaf_symlink"] = False
+                    summary["storage_leaf_owner"] = (
+                        "trusted_self" if st.st_uid == current_uid else "untrusted"
+                    )
+                    summary["storage_leaf_mode"] = "untrusted_mode"
+                    summary["storage_leaf_status"] = "not_a_directory"
+                else:
+                    components.append(
+                        {
+                            "index": idx,
+                            "symlink": False,
+                            "type": "non_directory",
+                            "owner": "trusted_self" if st.st_uid == current_uid else "untrusted",
+                            "mode": "untrusted_mode",
+                            "status": "not_a_directory",
+                        }
+                    )
+                break
+
+            if is_leaf:
+                if st.st_uid == current_uid:
+                    leaf_owner = "trusted_self"
+                elif st.st_uid == 0:
+                    leaf_owner = "untrusted_root"
+                else:
+                    leaf_owner = "untrusted"
+
+                if (st.st_mode & 0o777) == 0o700 and (st.st_mode & 0o6000) == 0:
+                    leaf_mode = "exact_0700"
+                else:
+                    leaf_mode = "untrusted_mode"
+
+                if leaf_owner == "trusted_self" and leaf_mode == "exact_0700":
+                    leaf_status = "ok"
+                elif leaf_owner != "trusted_self":
+                    leaf_status = "untrusted_owner"
+                    summary["storage_path_owners"] = "untrusted_detected"
+                else:
+                    leaf_status = "untrusted_mode"
+                    summary["storage_path_permissions"] = "untrusted_detected"
+
+                summary["storage_leaf_exists"] = True
+                summary["storage_leaf_type"] = "directory"
+                summary["storage_leaf_symlink"] = False
+                summary["storage_leaf_owner"] = leaf_owner
+                summary["storage_leaf_mode"] = leaf_mode
+                summary["storage_leaf_status"] = leaf_status
+                if leaf_status != "ok":
+                    summary["storage_path_status"] = leaf_status
+                else:
+                    summary["storage_path_status"] = "ok"
+
+                if leaf_status == "ok":
+                    try:
+                        leaf_fd = os.open(comp, open_flags, dir_fd=current_fd)
+                    except OSError:
+                        leaf_fd = None
+                break
+            else:
+                if st.st_uid == current_uid:
+                    c_owner = "trusted_self"
+                elif st.st_uid == 0:
+                    c_owner = "trusted_root"
+                else:
+                    c_owner = "untrusted"
+                    summary["storage_path_owners"] = "untrusted_detected"
+
+                if (st.st_mode & 0o022) != 0:
+                    if st.st_uid == 0 and (st.st_mode & 0o7777) == 0o1777:
+                        c_mode = "trusted_sticky_root"
+                    else:
+                        c_mode = "untrusted_writable"
+                        summary["storage_path_permissions"] = "untrusted_detected"
+                else:
+                    c_mode = (
+                        "trusted_private" if (st.st_mode & 0o777) == 0o700 else "trusted_shared"
+                    )
+
+                if c_owner in ("trusted_self", "trusted_root") and c_mode != "untrusted_writable":
+                    c_status = "ok"
+                elif c_owner == "untrusted":
+                    c_status = "untrusted_owner"
+                else:
+                    c_status = "untrusted_mode"
+
+                components.append(
+                    {
+                        "index": idx,
+                        "symlink": False,
+                        "type": "directory",
+                        "owner": c_owner,
+                        "mode": c_mode,
+                        "status": c_status,
+                    }
+                )
+
+                if c_status != "ok":
+                    summary["storage_path_status"] = c_status
+                    break
+
+                try:
+                    next_fd = os.open(comp, open_flags, dir_fd=current_fd)
+                    os.close(current_fd)
+                    current_fd = next_fd
+                except OSError as exc:
+                    summary["storage_path_status"] = _map_errno(exc.errno)
+                    break
+    finally:
+        if current_fd is not None:
+            try:
+                os.close(current_fd)
+            except OSError:
+                pass
+
+    return components, summary, leaf_fd
+
+
+def check_existing_beacon_leaf(leaf_fd, current_uid):
+    results = {
+        "beacon_leaf_present": False,
+        "beacon_leaf_type": "none_present",
+        "beacon_leaf_owner": "none_present",
+        "beacon_leaf_mode": "none_present",
+        "beacon_leaf_link_count": "none_present",
+        "beacon_leaf_status": "none_present",
+    }
+    if leaf_fd is None:
+        results["beacon_leaf_type"] = "skipped"
+        results["beacon_leaf_owner"] = "skipped"
+        results["beacon_leaf_mode"] = "skipped"
+        results["beacon_leaf_link_count"] = "skipped"
+        results["beacon_leaf_status"] = "skipped_storage_missing"
+        return results
+
+    try:
+        entries = [e for e in os.listdir(leaf_fd) if e.endswith(".json")]
+    except OSError:
+        results["beacon_leaf_status"] = "untrusted_beacon_file"
+        return results
+
+    if not entries:
+        return results
+
+    results["beacon_leaf_present"] = True
+    all_regular = True
+    all_symlink_free = True
+    all_self_owned = True
+    all_mode_0600 = True
+    all_single_link = True
+
+    for entry in entries:
+        try:
+            st = os.stat(entry, dir_fd=leaf_fd, follow_symlinks=False)
+            if stat.S_ISLNK(st.st_mode):
+                all_symlink_free = False
+                all_regular = False
+            elif not stat.S_ISREG(st.st_mode):
+                all_regular = False
+
+            if st.st_uid != current_uid:
+                all_self_owned = False
+
+            if (st.st_mode & 0o777) != 0o600 or (st.st_mode & 0o6000) != 0:
+                all_mode_0600 = False
+
+            if st.st_nlink != 1:
+                all_single_link = False
+        except OSError:
+            all_regular = False
+
+    if not all_symlink_free:
+        results["beacon_leaf_type"] = "symlink_detected"
+    elif all_regular:
+        results["beacon_leaf_type"] = "regular"
+    else:
+        results["beacon_leaf_type"] = "non_regular_file"
+
+    results["beacon_leaf_owner"] = "trusted_self" if all_self_owned else "untrusted_owner"
+    results["beacon_leaf_mode"] = "exact_0600" if all_mode_0600 else "untrusted_mode"
+    results["beacon_leaf_link_count"] = "single" if all_single_link else "multiple_links"
+
+    if all_regular and all_symlink_free and all_self_owned and all_mode_0600 and all_single_link:
+        results["beacon_leaf_status"] = "ok"
+    else:
+        results["beacon_leaf_status"] = "untrusted_beacon_file"
+
+    return results
+
+
+def check_fsync_probe(leaf_fd, skip_probe, platform):
+    results = {
+        "fsync_directory": "skipped_storage_not_ready",
+        "fsync_file": "skipped_storage_not_ready",
+        "fsync_fullfsync": "skipped_storage_not_ready",
+        "fsync_temp_cleanup": "skipped_storage_not_ready",
+        "fsync_probe_status": "skipped_storage_not_ready",
+    }
+    if skip_probe:
+        results["fsync_directory"] = "skipped_by_flag"
+        results["fsync_file"] = "skipped_by_flag"
+        results["fsync_fullfsync"] = "skipped_by_flag"
+        results["fsync_temp_cleanup"] = "skipped_by_flag"
+        results["fsync_probe_status"] = "skipped_by_flag"
+        return results
+
+    if leaf_fd is None:
+        return results
+
+    # Probe 1: Direct fsync on directory descriptor
+    try:
+        os.fsync(leaf_fd)
+        results["fsync_directory"] = "ok"
+    except OSError as exc:
+        results["fsync_directory"] = _map_errno(exc.errno)
+
+    # Probe 2: Temporary entry fsync probe
+    probe_name = f".tmux-herdr-diag-probe-{secrets.token_hex(8)}.tmp"
+    file_fd = None
+    file_created = False
+    open_flags = (
+        os.O_WRONLY
+        | os.O_CREAT
+        | os.O_EXCL
+        | getattr(os, "O_NOFOLLOW", 0)
+        | getattr(os, "O_CLOEXEC", 0)
+    )
+
+    try:
+        try:
+            file_fd = os.open(probe_name, open_flags, 0o600, dir_fd=leaf_fd)
+            file_created = True
+            os.write(file_fd, b"probe\n")
+            try:
+                os.fsync(file_fd)
+                results["fsync_file"] = "ok"
+            except OSError as exc:
+                results["fsync_file"] = _map_errno(exc.errno)
+
+            if platform == "darwin":
+                fullfsync_cmd = getattr(fcntl, "F_FULLFSYNC", 51)
+                try:
+                    fcntl.fcntl(file_fd, fullfsync_cmd)
+                    results["fsync_fullfsync"] = "ok"
+                except OSError as exc:
+                    results["fsync_fullfsync"] = _map_errno(exc.errno)
+            else:
+                results["fsync_fullfsync"] = "not_applicable"
+        except OSError as exc:
+            results["fsync_file"] = _map_errno(exc.errno)
+            results["fsync_fullfsync"] = (
+                _map_errno(exc.errno) if platform == "darwin" else "not_applicable"
+            )
+    finally:
+        if file_fd is not None:
+            try:
+                os.close(file_fd)
+            except OSError:
+                pass
+        if file_created:
+            try:
+                os.unlink(probe_name, dir_fd=leaf_fd)
+                results["fsync_temp_cleanup"] = "ok"
+            except OSError as exc:
+                results["fsync_temp_cleanup"] = _map_errno(exc.errno)
+        else:
+            results["fsync_temp_cleanup"] = "ok"
+
+    if (
+        results["fsync_directory"] == "ok"
+        and results["fsync_file"] == "ok"
+        and results["fsync_temp_cleanup"] == "ok"
+    ):
+        results["fsync_probe_status"] = "ok"
+    elif results["fsync_directory"] != "ok":
+        results["fsync_probe_status"] = "failed_dir_fsync"
+    elif results["fsync_file"] != "ok":
+        results["fsync_probe_status"] = "failed_file_fsync"
+    else:
+        results["fsync_probe_status"] = "failed_cleanup"
+
+    return results
+
+
+def diagnose(
+    environ=None,
+    platform=None,
+    current_uid=None,
+    skip_fsync_probe=False,
+    helper_runner=None,
+):
+    environ = os.environ if environ is None else environ
+    platform = sys.platform if platform is None else platform
+    current_uid = os.getuid() if current_uid is None else current_uid
+
+    output = {}
+
+    # Basic context
+    output["platform"] = platform
+    output["tmux_pane_present"] = bool(environ.get("TMUX_PANE"))
+
+    # Helper checks
+    helper_parent_path, helper_file_path = resolve_helper_paths(environ)
+    helper_meta = check_helper_metadata(helper_parent_path, helper_file_path, current_uid)
+    output.update(helper_meta)
+
+    helper_selftest_result = check_helper_selftest(
+        helper_file_path,
+        helper_meta["helper_overall_status"],
+        helper_runner=helper_runner,
+    )
+    output["helper_selftest"] = helper_selftest_result
+
+    # Storage checks
+    base_type, target_dir = resolve_storage_target(environ)
+    output["storage_base_type"] = base_type
+
+    components, path_summary, leaf_fd = check_storage_path_components(target_dir, current_uid)
+    output["storage_path_symlinks"] = path_summary["storage_path_symlinks"]
+    output["storage_path_owners"] = path_summary["storage_path_owners"]
+    output["storage_path_permissions"] = path_summary["storage_path_permissions"]
+
+    for comp in components:
+        idx = comp["index"]
+        output[f"storage_component_{idx}_symlink"] = comp["symlink"]
+        output[f"storage_component_{idx}_type"] = comp["type"]
+        output[f"storage_component_{idx}_owner"] = comp["owner"]
+        output[f"storage_component_{idx}_mode"] = comp["mode"]
+        output[f"storage_component_{idx}_status"] = comp["status"]
+
+    output["storage_leaf_exists"] = path_summary["storage_leaf_exists"]
+    output["storage_leaf_type"] = path_summary["storage_leaf_type"]
+    output["storage_leaf_symlink"] = path_summary["storage_leaf_symlink"]
+    output["storage_leaf_owner"] = path_summary["storage_leaf_owner"]
+    output["storage_leaf_mode"] = path_summary["storage_leaf_mode"]
+    output["storage_leaf_status"] = path_summary["storage_leaf_status"]
+    output["storage_path_status"] = path_summary["storage_path_status"]
+
+    # Leaf beacons & fsync
+    try:
+        beacon_results = check_existing_beacon_leaf(leaf_fd, current_uid)
+        output.update(beacon_results)
+
+        fsync_results = check_fsync_probe(leaf_fd, skip_fsync_probe, platform)
+        output.update(fsync_results)
+    finally:
+        if leaf_fd is not None:
+            try:
+                os.close(leaf_fd)
+            except OSError:
+                pass
+
+    # Overall summary status
+    storage_ok = output["storage_path_status"] == "ok"
+    storage_creatable = output["storage_path_status"] == "missing_creatable"
+    beacons_ok = output["beacon_leaf_status"] in ("ok", "none_present")
+    fsync_ok = output["fsync_probe_status"] in (
+        "ok",
+        "skipped_storage_not_ready",
+        "skipped_by_flag",
+    )
+
+    if platform == "darwin":
+        helper_ok = output["helper_overall_status"] == "ok" and output["helper_selftest"] == "ok"
+    else:
+        helper_ok = output["helper_overall_status"] in ("ok", "missing")
+
+    if helper_ok and storage_ok and beacons_ok and fsync_ok:
+        output["overall_status"] = "ok"
+    elif helper_ok and storage_creatable and beacons_ok:
+        output["overall_status"] = "ready_to_create"
+    else:
+        output["overall_status"] = "action_required"
+
+    return output
+
+
+def format_diagnostic_text(data):
+    lines = []
+    for key, value in data.items():
+        if isinstance(value, bool):
+            val_str = "true" if value else "false"
+        else:
+            val_str = str(value)
+        lines.append(f"{key}: {val_str}")
+    return "\n".join(lines) + "\n"
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(
+        description="Privacy-safe diagnostic tool for troubleshooting tmux Herdr beacon storage."
+    )
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="output diagnostic findings as structured JSON",
+    )
+    parser.add_argument(
+        "--no-fsync-probe",
+        action="store_true",
+        help="skip the safe temporary-entry fsync capability probe",
+    )
+    args = parser.parse_args(argv)
+
+    findings = diagnose(skip_fsync_probe=args.no_fsync_probe)
+    if args.json:
+        print(json.dumps(findings, indent=2))
+    else:
+        print(format_diagnostic_text(findings), end="")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
