@@ -43,3 +43,143 @@ customCommands:
         read -n 1 -s -r -p "Push failed. Press any key to return to lazygit..." || true;
         exit 1;
       fi'
+  - key: "r"
+    description: "Rebase local branch(es) (multi-select with fzf)"
+    context: "localBranches"
+    output: "terminal"
+    prompts:
+      - type: "menu"
+        title: "Rebase onto which base branch?"
+        key: "Base"
+        options:
+          - value: "{{ `{{.SelectedLocalBranch.Name}}` }}"
+            name: "{{ `{{.SelectedLocalBranch.Name}}` }}"
+            description: "Selected branch under cursor"
+            key: "s"
+          - value: "main"
+            name: "main"
+            description: "Default branch"
+            key: "m"
+          - value: "origin/main"
+            name: "origin/main"
+            description: "Remote tracking branch (origin/main)"
+            key: "u"
+          - value: "CHOOSE"
+            name: "Choose base branch..."
+            description: "Select target branch with fzf"
+            key: "c"
+      - type: "menu"
+        title: "How to rebase?"
+        key: "RebaseMode"
+        options:
+          - value: "rebase --autostash"
+            name: "autostash"
+            description: "git rebase --autostash <base> <branch> (safe, stashes dirty changes)"
+            key: "a"
+          - value: "rebase"
+            name: "standard"
+            description: "git rebase <base> <branch>"
+            key: "s"
+          - value: "rebase --autostash --update-refs"
+            name: "update-refs"
+            description: "git rebase --autostash --update-refs (update stacked branches)"
+            key: "u"
+          - value: "rebase -i --autostash"
+            name: "interactive"
+            description: "git rebase -i --autostash (interactive rebase per branch)"
+            key: "i"
+    command: >-
+      bash -c '
+      base="{{ `{{.Form.Base}}` }}";
+      if [ "$base" = "CHOOSE" ]; then
+        base=$(git for-each-ref --format="%(refname:short)" refs/heads/ refs/remotes/ | grep -v "/HEAD$" | fzf --prompt="Select base ref > " --header="ENTER: select | ESC: cancel");
+        if [ -z "$base" ]; then
+          echo "No base branch selected.";
+          exit 0;
+        fi;
+      fi;
+      if [ "$base" = "main" ]; then
+        if ! git show-ref --verify --quiet refs/heads/main && git show-ref --verify --quiet refs/heads/master; then
+          base="master";
+        fi;
+      elif [ "$base" = "origin/main" ]; then
+        if ! git show-ref --verify --quiet refs/remotes/origin/main && git show-ref --verify --quiet refs/remotes/origin/master; then
+          base="origin/master";
+        fi;
+      fi;
+      selected="{{ `{{.SelectedLocalBranch.Name}}` }}";
+      mapfile -t branches < <(
+        {
+          if [ -n "$selected" ] && [ "$selected" != "$base" ]; then
+            echo "$selected";
+            git for-each-ref --format="%(refname:short)" refs/heads/ | grep -vFx -e "$base" -e "$selected" || true;
+          else
+            git for-each-ref --format="%(refname:short)" refs/heads/ | grep -vFx "$base" || true;
+          fi;
+        } | fzf --multi --bind="ctrl-a:select-all" --prompt="Rebase onto $base > " --header="TAB: toggle | Ctrl-A: all | ENTER: rebase | ESC: cancel"
+      );
+      if [ ${#branches[@]} -eq 0 ] || [ -z "${branches[0]}" ]; then
+        echo "No branch selected.";
+        exit 0;
+      fi;
+      orig_branch=$(git symbolic-ref --short HEAD 2>/dev/null || git rev-parse --short HEAD 2>/dev/null || true);
+      echo "Rebasing ${#branches[@]} branch(es) onto $base (git {{ `{{.Form.RebaseMode}}` }})...";
+      printf "  • %s\n" "${branches[@]}";
+      echo "";
+      get_wt_path() {
+        local target_branch="refs/heads/$1";
+        local current_wt="";
+        local line;
+        while IFS= read -r line; do
+          case "$line" in
+            "worktree "*) current_wt="${line#worktree }" ;;
+            "branch "*)
+              if [ "${line#branch }" = "$target_branch" ]; then
+                echo "$current_wt";
+                return 0;
+              fi ;;
+          esac;
+        done < <(git worktree list --porcelain);
+        return 1;
+      };
+      current_repo=$(git rev-parse --show-toplevel 2>/dev/null || echo "$PWD");
+      failed=0;
+      for b in "${branches[@]}"; do
+        echo "==> Rebasing $b onto $base...";
+        wt_path=$(get_wt_path "$b" || true);
+        if [ -n "$wt_path" ]; then
+          echo "    (Branch is checked out in worktree: $wt_path)";
+          if ! (cd "$wt_path" && git {{ `{{.Form.RebaseMode}}` }} "$base"); then
+            failed=1;
+            echo "";
+            echo "Rebase failed or encountered conflicts while rebasing $b onto $base.";
+            if [ "$wt_path" != "$current_repo" ]; then
+              echo "Note: Conflicts occurred in worktree at: $wt_path";
+            fi;
+            break;
+          fi;
+        else
+          if ! git {{ `{{.Form.RebaseMode}}` }} "$base" "$b"; then
+            failed=1;
+            echo "";
+            echo "Rebase failed or encountered conflicts while rebasing $b onto $base.";
+            break;
+          fi;
+        fi;
+        echo "";
+      done;
+      if [ "$failed" -eq 0 ]; then
+        curr_branch=$(git symbolic-ref --short HEAD 2>/dev/null || git rev-parse --short HEAD 2>/dev/null || true);
+        if [ -n "$orig_branch" ] && [ "$curr_branch" != "$orig_branch" ]; then
+          echo "Restoring original branch ($orig_branch)...";
+          git checkout "$orig_branch" --quiet 2>/dev/null || git switch "$orig_branch" --quiet 2>/dev/null || true;
+        fi;
+        echo "";
+        read -t 3 -n 1 -s -r -p "All selected branch(es) rebased successfully. Press any key to return (or wait 3s)..." || true;
+        echo "";
+      else
+        echo "";
+        read -n 1 -s -r -p "Rebase failed or has conflicts. Press any key to return to lazygit to resolve..." || true;
+        echo "";
+        exit 1;
+      fi'
