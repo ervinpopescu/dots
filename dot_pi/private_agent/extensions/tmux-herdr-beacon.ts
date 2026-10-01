@@ -92,10 +92,26 @@ const piProcess = (globalThis as typeof globalThis & { process: PiProcess })
 
 export function beaconDirectory(
   env: Record<string, string | undefined>,
+  platform?: string,
 ): string | undefined {
+  const plat = platform ?? piProcess.platform;
   const runtime = env.XDG_RUNTIME_DIR;
-  if (runtime && path.isAbsolute(runtime))
-    return path.join(runtime, "pi-herdr-sessions");
+  if (runtime && path.isAbsolute(runtime)) {
+    if (plat === "darwin") {
+      try {
+        const canonicalRuntime = (fs.realpathSync.native ?? fs.realpathSync)(
+          runtime,
+        );
+        if (canonicalRuntime && path.isAbsolute(canonicalRuntime)) {
+          return path.join(canonicalRuntime, "pi-herdr-sessions");
+        }
+      } catch {
+        // Fall back to HOME/.cache
+      }
+    } else {
+      return path.join(runtime, "pi-herdr-sessions");
+    }
+  }
   const home = env.HOME;
   if (home && path.isAbsolute(home))
     return path.join(home, ".cache", "pi-herdr-sessions");
@@ -285,7 +301,10 @@ function publishDarwinBeacon(
   sessionRef: { kind: "path" | "id"; value: string },
   options: BeaconOptions,
 ): PublishResult {
-  const directory = beaconDirectory(piProcess.env);
+  const directory = beaconDirectory(
+    piProcess.env,
+    options.platform ?? piProcess.platform,
+  );
   if (!directory)
     return { published: false, reason: "secure_storage_unavailable" };
   const request = JSON.stringify({
@@ -545,7 +564,7 @@ export function publishBeacon(
   const sessionRef = sessionReference(ctx);
   if (!sessionRef)
     return { published: false, reason: "session_reference_missing" };
-  const directory = beaconDirectory(piProcess.env);
+  const directory = beaconDirectory(piProcess.env, platform);
   const startTime = (options.processStartIdentity ?? processStartIdentity)(
     piProcess.pid,
   );

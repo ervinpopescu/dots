@@ -230,6 +230,192 @@ class TmuxHerdrTests(unittest.TestCase):
             )
         )
 
+    def test_darwin_beacon_directory_canonicalization_with_symlink_ancestor(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            real_run = tmp_path / "real_run"
+            real_run.mkdir(mode=0o700)
+            symlink_run = tmp_path / "symlink_run"
+            symlink_run.symlink_to(real_run)
+            home = tmp_path / "home"
+            home.mkdir(mode=0o700)
+
+            darwin_dir = module["_beacon_directory"](
+                home,
+                {"XDG_RUNTIME_DIR": str(symlink_run), "HOME": str(home)},
+                platform="darwin",
+            )
+            canonical_expected = real_run.resolve() / "pi-herdr-sessions"
+            self.assertEqual(darwin_dir, canonical_expected)
+
+            # Helper runner in resolve_pi_session receives the exact canonical directory
+            calls = []
+
+            def record_runner(action, request):
+                calls.append((action, json.loads(request)))
+                return json.dumps(
+                    {
+                        "ok": True,
+                        "kind": "id",
+                        "value": "sess-1",
+                        "pid": 200,
+                        "start_time": "123.456000",
+                    }
+                )
+
+            self.write_beacon(home, pid=200, pane_id="%1", start_time="123.456000")
+            # Create beacon in canonical directory too
+            canonical_dir = canonical_expected
+            canonical_dir.mkdir(parents=True, mode=0o700)
+            beacon_file = canonical_dir / "200.json"
+            beacon_file.write_text(
+                json.dumps(
+                    {
+                        "schema": 1,
+                        "pid": 200,
+                        "pane_id": "%1",
+                        "start_time": "123.456000",
+                        "session_ref": {"kind": "id", "value": "sess-1"},
+                    }
+                )
+            )
+            beacon_file.chmod(0o600)
+
+            ref, warning = module["resolve_pi_session"](
+                "200",
+                "/dev/ttys001",
+                tmp_path,
+                home=home,
+                platform="darwin",
+                pane_id="%1",
+                environ={"XDG_RUNTIME_DIR": str(symlink_run), "HOME": str(home)},
+                helper_runner=record_runner,
+            )
+            self.assertEqual(ref, {"kind": "id", "value": "sess-1"})
+            self.assertIsNone(warning)
+            self.assertEqual(calls[0][1]["directory"], str(canonical_expected))
+
+    def test_darwin_beacon_directory_failed_realpath_fallback(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            home = tmp_path / "home"
+            home.mkdir(mode=0o700)
+            broken_symlink = tmp_path / "broken_symlink"
+            broken_symlink.symlink_to(tmp_path / "nonexistent")
+
+            # Non-existent path falls back to HOME/.cache/pi-herdr-sessions
+            fallback_dir = module["_beacon_directory"](
+                home,
+                {"XDG_RUNTIME_DIR": str(tmp_path / "absent"), "HOME": str(home)},
+                platform="darwin",
+            )
+            self.assertEqual(
+                fallback_dir, home.resolve() / ".cache/pi-herdr-sessions"
+            )
+
+            # Broken symlink falls back to HOME/.cache/pi-herdr-sessions
+            fallback_dir = module["_beacon_directory"](
+                home,
+                {"XDG_RUNTIME_DIR": str(broken_symlink), "HOME": str(home)},
+                platform="darwin",
+            )
+            self.assertEqual(
+                fallback_dir, home.resolve() / ".cache/pi-herdr-sessions"
+            )
+
+            # If HOME is also invalid/relative, returns None (never uncanonicalized path)
+            no_dir = module["_beacon_directory"](
+                None,
+                {"XDG_RUNTIME_DIR": str(broken_symlink), "HOME": "relative"},
+                platform="darwin",
+            )
+            self.assertIsNone(no_dir)
+
+    def test_darwin_untrusted_canonical_target_rejection(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            untrusted_run = tmp_path / "untrusted_run"
+            untrusted_run.mkdir(mode=0o777)
+            untrusted_run.chmod(0o777)
+            symlink_run = tmp_path / "symlink_run"
+            symlink_run.symlink_to(untrusted_run)
+            home = tmp_path / "home"
+
+            darwin_dir = module["_beacon_directory"](
+                home,
+                {"XDG_RUNTIME_DIR": str(symlink_run), "HOME": str(home)},
+                platform="darwin",
+            )
+            self.assertEqual(darwin_dir, untrusted_run.resolve() / "pi-herdr-sessions")
+
+            # _open_beacon_directory descriptor walk must reject untrusted canonical target permissions
+            target_sessions = darwin_dir
+            target_sessions.mkdir(mode=0o700)
+            with self.assertRaises(module["_UntrustedBeaconDirectory"]):
+                module["_open_beacon_directory"](target_sessions)
+
+    def test_linux_beacon_directory_unchanged_behavior(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            real_run = tmp_path / "real_run"
+            real_run.mkdir(mode=0o700)
+            symlink_run = tmp_path / "symlink_run"
+            symlink_run.symlink_to(real_run)
+            home = tmp_path / "home"
+
+            # Linux does not canonicalize symlink base
+            linux_dir = module["_beacon_directory"](
+                home,
+                {"XDG_RUNTIME_DIR": str(symlink_run), "HOME": str(home)},
+                platform="linux",
+            )
+            self.assertEqual(linux_dir, symlink_run / "pi-herdr-sessions")
+
+            # Linux non-existent XDG path is preserved directly
+            absent = tmp_path / "absent"
+            linux_absent = module["_beacon_directory"](
+                home,
+                {"XDG_RUNTIME_DIR": str(absent), "HOME": str(home)},
+                platform="linux",
+            )
+            self.assertEqual(linux_absent, absent / "pi-herdr-sessions")
+
+            # Passing symlinked base on Linux to _open_beacon_directory fails
+            target_sessions = linux_dir
+            real_sessions = real_run / "pi-herdr-sessions"
+            real_sessions.mkdir(mode=0o700)
+            with self.assertRaises(module["_UntrustedBeaconDirectory"]):
+                module["_open_beacon_directory"](target_sessions)
+
+    def test_canonical_path_parity_publisher_importer(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = pathlib.Path(tmp)
+            real_run = tmp_path / "real_run"
+            real_run.mkdir(mode=0o700)
+            symlink_run = tmp_path / "symlink_run"
+            symlink_run.symlink_to(real_run)
+            home = tmp_path / "home"
+            home.mkdir(mode=0o700)
+
+            # Test 1: Symlinked ancestor Darwin path
+            env1 = {"XDG_RUNTIME_DIR": str(symlink_run), "HOME": str(home)}
+            importer_path1 = str(
+                module["_beacon_directory"](home, env1, platform="darwin")
+            )
+            expected1 = str(real_run.resolve() / "pi-herdr-sessions")
+            self.assertEqual(importer_path1, expected1)
+
+            # Test 2: Fallback path when XDG unresolvable
+            env2 = {
+                "XDG_RUNTIME_DIR": str(tmp_path / "nonexistent"),
+                "HOME": str(home),
+            }
+            importer_path2 = str(
+                module["_beacon_directory"](home, env2, platform="darwin")
+            )
+            expected2 = str(home.resolve() / ".cache/pi-herdr-sessions")
+            self.assertEqual(importer_path2, expected2)
+
     def test_beacon_reader_stays_bound_to_open_directory_after_path_replacement(self):
         with tempfile.TemporaryDirectory() as tmp:
             home = pathlib.Path(tmp) / "home"
