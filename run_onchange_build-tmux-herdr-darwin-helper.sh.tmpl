@@ -85,15 +85,45 @@ BUILD_DIR=""
 
 if command -v xcrun >/dev/null 2>&1; then
   CC="$(xcrun --find clang 2>/dev/null || true)"
-elif command -v clang >/dev/null 2>&1; then
-  CC="$(command -v clang)"
-elif command -v cc >/dev/null 2>&1; then
-  CC="$(command -v cc)"
-else
-  CC=""
 fi
 if [[ -z "$CC" || ! -x "$CC" ]]; then
-  echo "tmux-herdr: Apple clang is unavailable (install Command Line Tools)" >&2
+  if command -v clang >/dev/null 2>&1; then
+    CC="$(command -v clang)"
+  elif command -v cc >/dev/null 2>&1; then
+    CC="$(command -v cc)"
+  fi
+fi
+if [[ -z "$CC" || ! -x "$CC" ]]; then
+  echo "tmux-herdr: Apple clang is unavailable (run 'xcode-select --install' or install Command Line Tools)" >&2
+  exit 1
+fi
+
+validate_sdk() {
+  local candidate="$1"
+  [[ -n "$candidate" && -d "$candidate" ]] || return 1
+  [[ -f "$candidate/usr/include/errno.h" && -f "$candidate/usr/include/libproc.h" ]] || return 1
+  return 0
+}
+
+SDKROOT=""
+if command -v xcrun >/dev/null 2>&1; then
+  SDKROOT="$(xcrun --sdk macosx --show-sdk-path 2>/dev/null || true)"
+fi
+
+if ! validate_sdk "$SDKROOT"; then
+  SDKROOT=""
+  for candidate in \
+    /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk \
+    /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk; do
+    if validate_sdk "$candidate"; then
+      SDKROOT="$candidate"
+      break
+    fi
+  done
+fi
+
+if [[ -z "$SDKROOT" ]] || ! validate_sdk "$SDKROOT"; then
+  echo "tmux-herdr: active macOS SDK or standard headers (errno.h, libproc.h) unavailable (run 'xcode-select --install' or activate Xcode)" >&2
   exit 1
 fi
 
@@ -105,9 +135,9 @@ TMP="$BUILD_DIR/helper"
 INSTALLER="$BUILD_DIR/installer"
 validate_source "$SOURCE"
 validate_source "$INSTALLER_SOURCE"
-"$CC" -std=c11 -Wall -Wextra -Werror -O2 "$SOURCE" -o "$TMP" -lproc
+"$CC" -isysroot "$SDKROOT" -std=c11 -Wall -Wextra -Werror -O2 "$SOURCE" -o "$TMP" -lproc
 validate_source "$INSTALLER_SOURCE"
-"$CC" -std=c11 -Wall -Wextra -Werror -O2 "$INSTALLER_SOURCE" -o "$INSTALLER"
+"$CC" -isysroot "$SDKROOT" -std=c11 -Wall -Wextra -Werror -O2 "$INSTALLER_SOURCE" -o "$INSTALLER"
 chmod 700 "$TMP" "$INSTALLER"
 "$TMP" selftest </dev/null >/dev/null
 validate_private_directory "$DEST_DIR"
