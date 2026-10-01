@@ -230,12 +230,21 @@ def launch_pi(argv):
     raise ValueError("unknown Pi launcher command")
 
 
-def _beacon_directory(home=None, environ=None):
+def _beacon_directory(home=None, environ=None, platform=None):
     """Return the same absolute beacon directory used by the Pi extension."""
     environ = os.environ if environ is None else environ
+    platform = platform or sys.platform
     runtime = environ.get("XDG_RUNTIME_DIR")
     if runtime and pathlib.Path(runtime).is_absolute():
-        return pathlib.Path(runtime) / "pi-herdr-sessions"
+        if platform == "darwin":
+            try:
+                canonical = os.path.realpath(runtime, strict=True)
+                if canonical and pathlib.Path(canonical).is_absolute():
+                    return pathlib.Path(canonical) / "pi-herdr-sessions"
+            except OSError:
+                pass
+        else:
+            return pathlib.Path(runtime) / "pi-herdr-sessions"
     home_path = environ.get("HOME") or home
     if home_path and pathlib.Path(home_path).is_absolute():
         return pathlib.Path(home_path) / ".cache/pi-herdr-sessions"
@@ -527,7 +536,7 @@ def _open_beacon_directory(directory):
 
 def _read_pi_beacon(pid, pane_id, proc_root, home=None, environ=None):
     """Read and validate the minimal private beacon relative to a pinned directory fd."""
-    directory = _beacon_directory(home, environ)
+    directory = _beacon_directory(home, environ, platform="linux")
     if directory is None:
         return None, "beacon_directory_unavailable"
     dir_fd = None
@@ -612,7 +621,7 @@ def _read_pi_beacon(pid, pane_id, proc_root, home=None, environ=None):
 
 def _read_darwin_beacon(pid, pane_id, start_time, home=None, environ=None):
     """Re-read a Darwin beacon through a pinned Python directory descriptor."""
-    directory = _beacon_directory(home, environ)
+    directory = _beacon_directory(home, environ, platform="darwin")
     if directory is None:
         return None, "beacon_directory_unavailable"
     dir_fd = None
@@ -725,7 +734,7 @@ def resolve_pi_session(
     if platform == "darwin":
         if not pane_id:
             return None, "tmux_pane_missing"
-        directory = _beacon_directory(home, environ)
+        directory = _beacon_directory(home, environ, platform=platform)
         if directory is None:
             return None, "secure_storage_unavailable"
         request = json.dumps(

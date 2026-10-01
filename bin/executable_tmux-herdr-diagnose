@@ -43,10 +43,19 @@ def _map_errno(err_code):
     return "unknown_error"
 
 
-def resolve_storage_target(environ):
+def resolve_storage_target(environ, platform=None):
+    platform = sys.platform if platform is None else platform
     runtime = environ.get("XDG_RUNTIME_DIR")
     if runtime and pathlib.Path(runtime).is_absolute():
-        return "xdg_runtime_dir", pathlib.Path(runtime) / BEACON_DIR_NAME
+        if platform == "darwin":
+            try:
+                canonical = os.path.realpath(runtime, strict=True)
+                if canonical and pathlib.Path(canonical).is_absolute():
+                    return "xdg_runtime_dir", pathlib.Path(canonical) / BEACON_DIR_NAME
+            except OSError:
+                pass
+        else:
+            return "xdg_runtime_dir", pathlib.Path(runtime) / BEACON_DIR_NAME
     home = environ.get("HOME")
     if home and pathlib.Path(home).is_absolute():
         return "home_fallback", pathlib.Path(home) / ".cache" / BEACON_DIR_NAME
@@ -739,7 +748,7 @@ def diagnose(
     output["helper_selftest"] = helper_selftest_result
 
     # Storage checks
-    base_type, target_dir = resolve_storage_target(environ)
+    base_type, target_dir = resolve_storage_target(environ, platform=platform)
     output["storage_base_type"] = base_type
 
     components, path_summary, leaf_fd = check_storage_path_components(target_dir, current_uid)
