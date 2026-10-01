@@ -1,5 +1,12 @@
+from typing import TYPE_CHECKING, Any
+
 from libqtile import bar
-from libqtile.config import Output, Screen
+from libqtile.config import Screen
+
+if TYPE_CHECKING:
+    from libqtile.config import Output  # type: ignore[attr-defined] # pyright: ignore
+else:
+    Output = Any
 
 from modules.settings import bar_bg, settings
 from modules.widgets import build_widget_lists
@@ -80,3 +87,11 @@ def generate_screens(outputs: list[Output]) -> list[Screen]:
         result.append(_primary_screen(w1))
 
     return result
+
+
+_w1, _w2, _w3 = build_widget_lists()
+screens = [
+    _primary_screen(_w1),
+    _secondary_screen(_w2),
+    _secondary_screen(_w3),
+]
