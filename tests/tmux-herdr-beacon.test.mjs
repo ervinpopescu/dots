@@ -501,6 +501,42 @@ test("Darwin publisher sends bounded metadata on stdin to the helper", () => {
   }
 });
 
+test("Darwin publisher maps helper failure reasons to user-safe reason codes without collapsing to generic process_identity_unavailable", () => {
+  // Note: Tests TypeScript failure mapping logic using synthetic helper replies;
+  // this fixture runs on any host and does not claim native Darwin runtime/PTY validation.
+  const f = fixture();
+  const env = {
+    XDG_RUNTIME_DIR: path.join(f.root, "runtime"),
+    HOME: f.root,
+    TMUX_PANE: "%12",
+  };
+  try {
+    withEnvironment(env, () => {
+      const reasonExpectations = [
+        ["no_tty", "tty_unavailable"],
+        ["denied", "proc_permission_denied"],
+        ["stale", "process_identity_stale"],
+        ["invalid", "invalid_request"],
+        ["io", "secure_storage_unavailable"],
+        ["unsupported", "helper_build_failure"],
+      ];
+      for (const [helperReason, expectedReason] of reasonExpectations) {
+        const result = publishBeacon(f.context("mac-id"), {
+          platform: "darwin",
+          darwinHelper: () =>
+            JSON.stringify({ ok: false, reason: helperReason }),
+        });
+        assert.deepEqual(result, {
+          published: false,
+          reason: expectedReason,
+        });
+      }
+    });
+  } finally {
+    fs.rmSync(f.root, { recursive: true, force: true });
+  }
+});
+
 test("Darwin descriptor storage rejects pathname fallbacks", () => {
   const f = fixture();
   const directory = path.join(f.root, "beacons");

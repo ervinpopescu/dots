@@ -593,18 +593,39 @@ static int sync_file(int fd) {
   return 0;
 }
 
+#ifndef NODEV
+#define NODEV ((dev_t)-1)
+#endif
+
 static int verify_current_tty(const process_record *self) {
+  if (self == NULL || self->sid <= 0 || self->tpgid <= 0 || self->pgid <= 0)
+    return -1;
+  if (self->tty_dev == (dev_t)-1 || self->tty_dev == NODEV)
+    return -1;
+#ifdef PROC_FLAG_CONTROLT
+  if ((self->flags & PROC_FLAG_CONTROLT) == 0)
+    return -1;
+#elif defined(PROC_FLAG_CTERM)
+  if ((self->flags & PROC_FLAG_CTERM) == 0)
+    return -1;
+#endif
+  if (self->pgid != self->tpgid)
+    return -1;
   int ttyfd = open("/dev/tty", O_RDONLY | O_NOCTTY | O_CLOEXEC | O_NOFOLLOW);
   if (ttyfd < 0)
     return -1;
   struct stat ttyinfo;
+  if (fstat(ttyfd, &ttyinfo) != 0 || !S_ISCHR(ttyinfo.st_mode)) {
+    close(ttyfd);
+    return -1;
+  }
   pid_t sid = tcgetsid(ttyfd);
   pid_t foreground = tcgetpgrp(ttyfd);
-  int valid = fstat(ttyfd, &ttyinfo) == 0 && S_ISCHR(ttyinfo.st_mode) &&
-              sid == self->sid && foreground == self->tpgid &&
-              self->pgid == self->tpgid && ttyinfo.st_rdev == self->tty_dev;
   close(ttyfd);
-  return valid ? 0 : -1;
+  if (sid <= 0 || foreground <= 0 || sid != self->sid ||
+      foreground != self->tpgid)
+    return -1;
+  return 0;
 }
 
 static int json_escape(const char *input, char *output, size_t capacity) {
