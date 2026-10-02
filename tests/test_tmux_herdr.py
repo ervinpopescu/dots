@@ -898,6 +898,17 @@ class TmuxHerdrTests(unittest.TestCase):
                     json.dumps({"ok": False, "reason": "process_tree_too_large"}),
                     "process_tree_too_large",
                 ),
+                *(
+                    (json.dumps({"ok": False, "reason": reason}), reason)
+                    for reason in (
+                        "tty_open_failed",
+                        "tty_stat_invalid",
+                        "tty_session_unavailable",
+                        "tty_foreground_unavailable",
+                        "pane_tty_mismatch",
+                        "pane_session_mismatch",
+                    )
+                ),
                 (
                     "x" * (module["DARWIN_HELPER_OUTPUT_LIMIT"] + 1),
                     "helper_process_failure",

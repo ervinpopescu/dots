@@ -201,6 +201,43 @@ EOF
 "$CC_BIN" -std=c11 -Wall -Wextra -Werror -pedantic "$TMP_DIR/test_verify_tty.c" -o "$TMP_DIR/test_verify_tty"
 "$TMP_DIR/test_verify_tty"
 
+# Resolver TTY protocol labels are a fixed, privacy-safe enum.  Exercise every
+# categorized rejection and the all-checks-passed path without opening a live
+# terminal or inspecting a live process.
+for reason in \
+  tty_open_failed \
+  tty_stat_invalid \
+  tty_session_unavailable \
+  tty_foreground_unavailable \
+  pane_tty_mismatch \
+  pane_session_mismatch; do
+  if ! grep -q "return \"$reason\"" "$SOURCE"; then
+    echo "Darwin resolver is missing fixed TTY reason code: $reason" >&2
+    exit 1
+  fi
+done
+cat << 'EOF' > "$TMP_DIR/test_resolve_tty_reason.c"
+#include <assert.h>
+#include <stddef.h>
+#include <string.h>
+
+EOF
+sed -n '/static const char \*resolve_tty_failure_reason/,/^}/p' "$SOURCE" >> "$TMP_DIR/test_resolve_tty_reason.c"
+cat << 'EOF' >> "$TMP_DIR/test_resolve_tty_reason.c"
+int main(void) {
+  assert(strcmp(resolve_tty_failure_reason(0, 1, 1, 1, 1, 1), "tty_open_failed") == 0);
+  assert(strcmp(resolve_tty_failure_reason(1, 0, 1, 1, 1, 1), "tty_stat_invalid") == 0);
+  assert(strcmp(resolve_tty_failure_reason(1, 1, 0, 1, 1, 1), "tty_session_unavailable") == 0);
+  assert(strcmp(resolve_tty_failure_reason(1, 1, 1, 0, 1, 1), "tty_foreground_unavailable") == 0);
+  assert(strcmp(resolve_tty_failure_reason(1, 1, 1, 1, 0, 1), "pane_tty_mismatch") == 0);
+  assert(strcmp(resolve_tty_failure_reason(1, 1, 1, 1, 1, 0), "pane_session_mismatch") == 0);
+  assert(resolve_tty_failure_reason(1, 1, 1, 1, 1, 1) == NULL);
+  return 0;
+}
+EOF
+"$CC_BIN" -std=c11 -Wall -Wextra -Werror -pedantic "$TMP_DIR/test_resolve_tty_reason.c" -o "$TMP_DIR/test_resolve_tty_reason"
+"$TMP_DIR/test_resolve_tty_reason"
+
 HOOK_TMPL="$REPO_ROOT/run_onchange_build-tmux-herdr-darwin-helper.sh.tmpl"
 if ! grep -q "trap 'rm -rf \"\$BUILD_DIR\"' EXIT" "$HOOK_TMPL" ||
    grep -q '%M' "$HOOK_TMPL" ||

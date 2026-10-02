@@ -788,6 +788,18 @@ static int read_bounded_file(int dirfd, const char *name, char *buffer,
 }
 
 
+static const char *resolve_tty_failure_reason(
+    int opened, int stat_valid, int session_valid, int foreground_valid,
+    int pane_tty_matches, int pane_session_matches) {
+  if (!opened) return "tty_open_failed";
+  if (!stat_valid) return "tty_stat_invalid";
+  if (!session_valid) return "tty_session_unavailable";
+  if (!foreground_valid) return "tty_foreground_unavailable";
+  if (!pane_tty_matches) return "pane_tty_mismatch";
+  if (!pane_session_matches) return "pane_session_mismatch";
+  return NULL;
+}
+
 static int resolve_beacon(const char *request, size_t request_length) {
   resolve_request parsed;
   memset(&parsed, 0, sizeof parsed);
@@ -806,21 +818,34 @@ static int resolve_beacon(const char *request, size_t request_length) {
   }
   int ttyfd = open(pane_tty, O_RDONLY | O_NOCTTY | O_CLOEXEC | O_NOFOLLOW);
   if (ttyfd < 0) {
-    result_error(errno == EACCES ? "denied" : "no_tty");
+    result_error(resolve_tty_failure_reason(0, 1, 1, 1, 1, 1));
     return 1;
   }
   struct stat ttyinfo;
-  pid_t tty_sid = -1, tty_pgid = -1;
-  if (fstat(ttyfd, &ttyinfo) < 0 || !S_ISCHR(ttyinfo.st_mode) ||
-      (tty_sid = tcgetsid(ttyfd)) < 0 ||
-      (tty_pgid = tcgetpgrp(ttyfd)) < 0) {
+  if (fstat(ttyfd, &ttyinfo) < 0 || !S_ISCHR(ttyinfo.st_mode)) {
     close(ttyfd);
-    result_error("no_tty");
+    result_error(resolve_tty_failure_reason(1, 0, 1, 1, 1, 1));
+    return 1;
+  }
+  pid_t tty_sid = tcgetsid(ttyfd);
+  if (tty_sid < 0) {
+    close(ttyfd);
+    result_error(resolve_tty_failure_reason(1, 1, 0, 1, 1, 1));
+    return 1;
+  }
+  pid_t tty_pgid = tcgetpgrp(ttyfd);
+  if (tty_pgid < 0) {
+    close(ttyfd);
+    result_error(resolve_tty_failure_reason(1, 1, 1, 0, 1, 1));
     return 1;
   }
   close(ttyfd);
-  if (root.tty_dev != ttyinfo.st_rdev || root.sid != tty_sid) {
-    result_error("no_tty");
+  if (root.tty_dev != ttyinfo.st_rdev) {
+    result_error(resolve_tty_failure_reason(1, 1, 1, 1, 0, 1));
+    return 1;
+  }
+  if (root.sid != tty_sid) {
+    result_error(resolve_tty_failure_reason(1, 1, 1, 1, 1, 0));
     return 1;
   }
   pid_t pids[MAX_PROCESSES];
