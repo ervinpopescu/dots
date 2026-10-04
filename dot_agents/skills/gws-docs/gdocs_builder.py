@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-gdocs_builder.py — Robust Markdown to Google Docs Renderer & Document Manager
+gdocs_builder.py - Robust Markdown to Google Docs Renderer & Document Manager
 Uses Google Workspace CLI (gws) with Google Docs API batchUpdate.
 Implements the Google Docs REST API v1 specification for rich rendering:
   - Document Title & Heading Hierarchy (Title, Heading 1-4)
@@ -18,12 +18,22 @@ Implements the Google Docs REST API v1 specification for rich rendering:
 import argparse
 import json
 import re
+import shutil
 import subprocess
 import sys
 import time
 
 # Monospace font family for code blocks and inline code runs
 CODE_FONT_FAMILY = "Consolas"
+
+# Google Docs API allows up to 60 write requests per minute per user; chunking
+# at 50 keeps each batchUpdate payload bounded while minimizing round-trips.
+BATCH_CHUNK_SIZE = 50
+MAX_READ_RETRIES = 5
+MAX_WRITE_RETRIES = 8
+# Base linear backoff delays (in seconds) to let per-minute quota windows reset.
+READ_RETRY_DELAY_SEC = 10
+WRITE_RETRY_DELAY_SEC = 15
 
 # Metadata prefixes matching consult reports
 METADATA_KEYS = (
@@ -62,8 +72,18 @@ INLINE_PATTERNS = [
 ]
 
 
+def ensure_gws_available():
+    if shutil.which("gws") is None:
+        print(
+            "[gdocs] Error: required 'gws' CLI is not installed or not in PATH.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+
 def get_doc(doc_id):
-    for attempt in range(5):
+    ensure_gws_available()
+    for attempt in range(MAX_READ_RETRIES):
         cmd = [
             "gws",
             "docs",
@@ -80,7 +100,7 @@ def get_doc(doc_id):
                 print(f"[gdocs] JSON parse error: {err}", file=sys.stderr)
                 sys.exit(1)
         elif "429" in res.stderr or "Quota exceeded" in res.stderr:
-            wait_time = (attempt + 1) * 10
+            wait_time = (attempt + 1) * READ_RETRY_DELAY_SEC
             print(
                 f"[gdocs] Rate limit encountered, waiting {wait_time}s...",
                 file=sys.stderr,
@@ -95,17 +115,17 @@ def get_doc(doc_id):
 def execute_batch(doc_id, requests):
     """
     Executes a list of batchUpdate requests on doc_id.
-    Groups requests into chunks of 50 to avoid request payload limits,
-    with exponential backoff retries on 429 quota limits.
+    Groups requests into chunks of BATCH_CHUNK_SIZE to avoid request payload limits,
+    with linear backoff retries on 429 quota limits.
     """
     if not requests:
         return {}
 
-    CHUNK_SIZE = 50
+    ensure_gws_available()
     responses = []
 
-    for i in range(0, len(requests), CHUNK_SIZE):
-        chunk = requests[i : i + CHUNK_SIZE]
+    for i in range(0, len(requests), BATCH_CHUNK_SIZE):
+        chunk = requests[i : i + BATCH_CHUNK_SIZE]
         body = {"requests": chunk}
         cmd = [
             "gws",
@@ -117,7 +137,7 @@ def execute_batch(doc_id, requests):
             "--json",
             json.dumps(body),
         ]
-        for attempt in range(8):
+        for attempt in range(MAX_WRITE_RETRIES):
             res = subprocess.run(cmd, capture_output=True, text=True)
             if res.returncode == 0:
                 try:
@@ -130,7 +150,7 @@ def execute_batch(doc_id, requests):
                     )
                     break
             elif "429" in res.stderr or "Quota exceeded" in res.stderr:
-                wait_time = (attempt + 1) * 15
+                wait_time = (attempt + 1) * WRITE_RETRY_DELAY_SEC
                 print(
                     f"[gdocs] Rate limit encountered during batchUpdate, waiting {wait_time}s...",
                     file=sys.stderr,
@@ -149,6 +169,7 @@ def execute_batch(doc_id, requests):
 
 
 def create_doc(title):
+    ensure_gws_available()
     cmd = ["gws", "docs", "documents", "create", "--json", json.dumps({"title": title})]
     res = subprocess.run(cmd, capture_output=True, text=True)
     if res.returncode != 0:
