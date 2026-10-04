@@ -1,122 +1,143 @@
 ---
 name: parallel-review-fix-swarm
-description: Use when you want to systematically find and fix issues across a codebase by running reviewer and fixer sub-agents concurrently, each isolated in their own git worktree under .claude/worktrees/
+description: Finds and fixes codebase issues concurrently by running isolated reviewer and fixer subagent swarms in dedicated git worktrees under .worktrees/ and merging fixes linearly with rebase and fast-forward. Use when performing systematic multi-module code reviews and parallel bug fixing across a repository.
 ---
 
-# Parallel Review-Fix Swarm
+# Parallel Review-Fix Swarm (`parallel-review-fix-swarm`)
 
 ## Overview
 
-Two swarms run simultaneously: reviewers file `issues/<7hex>-<slug>.md`, fixers pick them up and fix them. Each agent owns an isolated git worktree. All merges are linear — rebase-then-FF, no merge commits ever.
+Runs two concurrent subagent swarms across isolated git worktrees under `.worktrees/`:
+
+1. **Reviewer swarm:** Inspects assigned modules and writes structured issue files to `tmp/issues/<7hex>-<slug>.md`.
+2. **Fixer swarm:** Claims issue files, implements root-cause fixes with tests in dedicated `.worktrees/fix-<hex>` worktrees, and commits atomic fixes.
+3. **Linear integration:** Rebases each fix branch onto `HEAD` and merges with `git merge --ff-only` (no merge commits).
+
+---
+
+## Execution Checklist
+
+```text
+Swarm Progress:
+- [ ] Phase 0: Create tmp/issues/ directory and ensure .worktrees/ and tmp/ are ignored
+- [ ] Phase 1: Launch Reviewer Swarm in parallel across module groups
+- [ ] Phase 2: Launch Fixer Swarm in dedicated .worktrees/fix-<hex> worktrees
+- [ ] Phase 3: Rebase, verify tests, and fast-forward merge each fix branch linearly
+- [ ] Phase 4: Remove temporary worktrees, branches, and tmp/issues/ artifacts
+```
+
+---
 
 ## Setup
 
 ```bash
-# Add worktree dir to .gitignore (revert at cleanup)
-echo "/.claude/worktrees/" >> .gitignore
-mkdir -p issues/
+mkdir -p .worktrees tmp/issues
 ```
 
-Add `.gitignore` line to track in git if needed, or keep it local. **Warning:** `git reset --hard` silently reverts uncommitted `.gitignore` changes — re-add the line after any hard reset.
+Ensure `.worktrees/` and `tmp/` are listed in `.gitignore` (or `.git/info/exclude`).
 
-## Phase 1 — Reviewer Swarm
+---
 
-Launch all reviewers **in one parallel message** (`run_in_background: true`). One agent per module/file group.
+## Phase 1 - Reviewer Swarm
 
-**Worktree per reviewer:**
+Create one read-only worktree per module group (or review directly from the target branch) and launch all reviewers concurrently in the background:
 
 ```bash
-git worktree add .claude/worktrees/review-<module> -b review/<module>
+git worktree add .worktrees/review-<module> -b review/<module>
 ```
 
 **Reviewer prompt template:**
 
 ```text
-Review <file(s)> in the repo at <absolute-path>.
+Review <file(s)> in the repository at <absolute-path>.
 Do NOT invoke any Skill tool.
 
-For each real issue (bug, security hole, missing error handling, logic error):
-1. Generate a 7-char hex: $(openssl rand -hex 4 | head -c 7)
-2. Write issues/<hex>-<slug>.md using the format below
-3. One issue per file
+For each verified defect (bug, security vulnerability, missing error handling, or logic error):
+1. Generate a 7-char hex ID: $(openssl rand -hex 4 | head -c 7)
+2. Write tmp/issues/<hex>-<slug>.md using the template below
+3. Write one issue per file
 
-Skip style nits and hypothetical future concerns.
-Report: N issues filed, IDs listed.
+Skip style nits and speculative concerns.
+Report: total issues filed and their IDs.
 
 Issue file format:
 # <hex>-<slug>
 **Severity:** high|medium|low
-**File:** path/file:line
+**File:** path/to/file:line
 **Type:** bug|security|error-handling|logic
 ## Description
 ## Suggested Fix
 ```
 
-## Phase 2 — Fixer Swarm
+---
 
-Launch all fixers **in one parallel message** — either simultaneously with reviewers (they wait for issue files to appear) or immediately after reviewers complete.
+## Phase 2 - Fixer Swarm
 
-**Worktree per fixer:**
+For each filed issue in `tmp/issues/<hex>-<slug>.md`, create an isolated git worktree and launch fixers concurrently:
 
 ```bash
-git worktree add .claude/worktrees/fix-<hex> -b fix/<slug>
+git worktree add .worktrees/fix-<hex> -b fix/<slug>
 ```
 
 **Fixer prompt template:**
 
 ```text
-Read issues/<hex>-<slug>.md. Work in the repo at <absolute-path>.
+Read tmp/issues/<hex>-<slug>.md and work inside the worktree at <absolute-worktree-path>.
 Do NOT invoke any Skill tool.
 
 Steps:
-1. Read the issue; read the affected file at the noted line
-2. Fix the root cause, not the symptom
-3. Run tests if available
-4. Commit: fix(<module>): <description>
+1. Read the issue and inspect the target file around the noted lines
+2. Reproduce or verify the root cause and implement a minimal, robust fix
+3. Run the relevant unit/lint tests and confirm they pass
+4. Commit with Conventional Commits format (wrap body at 72 cols, no Co-authored-by, no em dashes):
+   fix(<module>): <concise imperative summary>
 
-Do NOT fix other issues you notice. Do NOT change unrelated code.
-Report: what changed and why.
+Do NOT modify unrelated files or bundle unrelated fixes.
+Report: what changed, why, and which tests passed.
 ```
 
-## Phase 3 — Merge (Linear History Only)
+---
 
-**Never `git merge` directly.** Always rebase first so `--ff-only` can apply cleanly.
+## Phase 3 - Linear Merge & Validation Loop
+
+**Never create merge commits.** Integrate each `fix/<slug>` branch sequentially (shortest diff first to minimize conflicts):
 
 ```bash
-# For each fix branch (one at a time, shortest diff first):
-git rebase <current-HEAD> fix/<slug>
+# 1. Rebase the fix branch onto the current target branch HEAD
+git rebase <target-branch> fix/<slug>
+
+# 2. Fast-forward the target branch
 git merge --ff-only fix/<slug>
-# Repeat — each subsequent branch rebases onto the updated HEAD
 ```
 
-If two fixers touched the same file, expect a rebase conflict. Resolve it, then `git rebase --continue`.
+- **Conflict & Test Loop:** If two fixers touched the same file and a rebase conflict occurs, resolve the conflict, run `git rebase --continue`, and re-run the affected test suite before advancing to the next branch.
 
-## Phase 4 — Cleanup
+---
+
+## Phase 4 - Cleanup
 
 ```bash
-# Remove issue files and commit (or just delete)
-rm -rf issues/
+# Remove temporary issue files
+rm -rf tmp/issues/
 
-# Remove all worktrees
+# Remove swarm worktrees
 git worktree list --porcelain \
   | awk '/^worktree /{print $2}' \
-  | grep "\.claude/worktrees" \
-  | xargs -I{} git worktree remove --force {}
+  | grep -E "\.worktrees/(fix|review)-" \
+  | xargs -r -I{} git worktree remove --force {}
 
-# Delete fix/* and review/* branches
-git branch | grep -E "^\s+(fix|review)/" | xargs git branch -D
-
-# Revert .gitignore (remove the /.claude/worktrees/ line)
+# Delete temporary fix/* and review/* branches
+git branch | grep -E "^\s+(fix|review)/" | xargs -r git branch -D
 ```
+
+---
 
 ## Key Pitfalls
 
-| Pitfall                                   | Fix                                                                         |
-| ----------------------------------------- | --------------------------------------------------------------------------- |
-| `git merge` creates merge commit          | Always rebase first, then `--ff-only`                                       |
-| Hard reset silently reverts .gitignore    | Re-add `/.claude/worktrees/` after every `reset --hard`                     |
-| Fixer invokes a Skill tool                | Add "Do NOT invoke any Skill tool" to prompt                                |
-| Two fixers edit same file                 | Rebase them sequentially; first one conflicts, resolve, continue            |
-| Pre-commit `fmt` hook reformats on commit | Re-stage reformatted files, re-commit                                       |
-| Reviewer files too many nits              | Constrain prompt: "only real bugs, not style"                               |
-| Cherry-pick order matters                 | Always rebase in chronological order; shortest diff first reduces conflicts |
+| Pitfall                             | Prevention                                                                                  |
+| :---------------------------------- | :------------------------------------------------------------------------------------------ |
+| `git merge` creates a merge commit  | Always run `git rebase <target-branch> fix/<slug>` followed by `git merge --ff-only`.       |
+| Subagent recursively invokes skills | Include `"Do NOT invoke any Skill tool."` in reviewer and fixer prompts.                    |
+| Two fixers edit the same file       | Merge shortest diffs first; resolve conflicts during `git rebase` before `--ff-only`.       |
+| Pre-commit hook reformats files     | Re-stage formatted files and amend before completing the fixer step.                        |
+| Reviewer files low-value style nits | Restrict prompt to verified bugs, security issues, missing error handling, and logic flaws. |

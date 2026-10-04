@@ -1,85 +1,91 @@
 ---
 name: incremental-squash
-description: Squash changes on a git feature branch into clean, atomic, incremental conventional commits (feat, fix, chore, docs, test, refactor) by logically grouping diffs, verifying tests, and preserving a clean Git history. Use when asked to squash changes on a branch into incremental commits, organize messy commit histories, or structure PR commits.
+description: Squashes a multi-commit git feature branch into clean, atomic, bisectable Conventional Commits (feat, fix, chore, docs, test, refactor, perf) with zero tree drift. Use when squashing branch commits into incremental commits, cleaning up WIP or fixup history, or structuring PR commits.
 user-invocable: true
 ---
 
-# Incremental Squash
+# Incremental Squash (`incremental-squash`)
 
-`incremental-squash` transforms a messy, multi-commit feature branch (containing fixups, WIP commits, test iterations, and merge noise) into a clean, bisectable sequence of logical, incremental **Conventional Commits** (`feat`, `fix`, `chore`, `docs`, `test`, `refactor`).
+Transforms a multi-commit feature branch (containing WIP commits, fixups, test iterations, or merge noise) into a clean, bisectable sequence of atomic **Conventional Commits** (`feat`, `fix`, `chore`, `docs`, `test`, `refactor`, `perf`).
 
 ---
 
 ## Core Principles
 
-1. **Zero Content Drift**: The final tree (`HEAD`) after squashing must be identical (`git diff HEAD backup_ref` is completely empty) to the tree before squashing.
-2. **Bisectability**: Every intermediate commit should build cleanly and pass relevant unit tests whenever possible.
-3. **Atomic Grouping**: Each commit must represent a single coherent concern (e.g. backend endpoint + backend test, frontend service + UI component, or documentation updates).
-4. **Safety First**: Always create an immutable backup ref/tag before performing any history rewrite.
+1. **Zero Content Drift:** The final tree (`HEAD`) after squashing must be byte-for-byte identical (`git diff HEAD "$BACKUP_REF"` is empty) to the tree before squashing.
+2. **Bisectability:** Every intermediate commit must build cleanly and pass its relevant tests.
+3. **Atomic Grouping:** Each commit represents one coherent concern (for example backend endpoint + unit test, frontend service + component, or documentation).
+4. **Safety First:** Always create a backup branch ref before rewriting history.
 
 ---
 
-## Step-by-Step Execution Workflow
+## Execution Workflow
+
+Copy this checklist and track progress:
+
+```text
+Incremental Squash Progress:
+- [ ] Step 1: Verify non-main feature branch, detect merge-base, and create backup ref
+- [ ] Step 2: Inspect full diff against merge-base and plan logical commit layers
+- [ ] Step 3: Soft reset to merge-base and unstage all changes
+- [ ] Step 4: Stage and commit each logical layer using Conventional Commits
+- [ ] Step 5: Verify zero tree drift (git diff HEAD "$BACKUP_REF") and run test suite
+```
 
 ### Step 1: Pre-Flight Safety & Base Detection
 
-1. **Verify Branch**: Ensure you are on a feature branch and **never directly on `main` or `master`**.
+#### 1. Verify Feature Branch (Never Run on `main` or `master`)
 
-   ```bash
-   CURRENT_BRANCH=$(git branch --show-current)
-   if [ "$CURRENT_BRANCH" = "main" ] || [ "$CURRENT_BRANCH" = "master" ]; then
-     echo "Error: Cannot squash directly on $CURRENT_BRANCH branch."
-     exit 1
-   fi
-   ```
+```bash
+CURRENT_BRANCH=$(git branch --show-current)
+if [ "$CURRENT_BRANCH" = "main" ] || [ "$CURRENT_BRANCH" = "master" ]; then
+  echo "Error: Cannot squash directly on $CURRENT_BRANCH branch."
+  exit 1
+fi
+```
 
-2. **Detect Merge Base**:
+#### 2. Detect Merge Base
 
-   ```bash
-   BASE_COMMIT=$(git merge-base origin/main HEAD 2>/dev/null || git merge-base main HEAD)
-   ```
+```bash
+BASE_COMMIT=$(git merge-base origin/main HEAD 2>/dev/null || git merge-base main HEAD)
+```
 
-3. **Create Safety Backup Ref**:
+#### 3. Create Backup Ref
 
-   ```bash
-   BACKUP_REF="backup/${CURRENT_BRANCH}-$(date +%s)"
-   git branch "$BACKUP_REF" HEAD
-   echo "Created backup ref: $BACKUP_REF"
-   ```
+```bash
+BACKUP_REF="backup/${CURRENT_BRANCH}-$(date +%s)"
+git branch "$BACKUP_REF" HEAD
+echo "Created backup ref: $BACKUP_REF"
+```
 
 ---
 
-### Step 2: Inspect & Analyze the Full Diff
+### Step 2: Inspect & Plan Logical Commit Layers
 
-Examine the aggregated changes between the merge base and `HEAD`:
+Examine all changes between `$BASE_COMMIT` and `HEAD`:
 
 ```bash
 git diff --stat "$BASE_COMMIT"..HEAD
 git diff --name-status "$BASE_COMMIT"..HEAD
 ```
 
-Group changed files into logical layers:
+Group changed files into ordered dependency layers:
 
-- **Layer 1: Backend / API Core (`feat(api)` or `fix(api)`)**: Data models, endpoints, database queries, server-side services, and their colocated unit tests.
-- **Layer 2: Frontend Services & State (`feat(ui)` or `fix(ui)`)**: Client services, API clients, state management, and service spec tests.
-- **Layer 3: Frontend UI Components (`feat(ui)` or `fix(ui)`)**: Angular/React components, templates, styling, and component spec tests.
-- **Layer 4: Infrastructure & Build (`chore(...)` or `infra(...)`)**: Terraform, Dockerfile, Makefile, package.json, scripts.
-- **Layer 5: End-to-End Tests (`test(...)` or `chore(tests)`)**: Playwright, Cypress, or integration test suites.
-- **Layer 6: Documentation (`docs(...)`)**: README, architecture docs, TODOs, API specs.
+- **Layer 1 - Backend / Core (`feat(api)` or `fix(api)`):** Data models, endpoints, database queries, backend services, and colocated unit tests.
+- **Layer 2 - Frontend Services & State (`feat(ui)` or `fix(ui)`):** Client services, API clients, state stores, and service unit tests.
+- **Layer 3 - Frontend UI Components (`feat(ui)` or `fix(ui)`):** UI components, templates, styles, and component tests.
+- **Layer 4 - Infrastructure & Build (`chore(...)`):** Terraform, Dockerfiles, Makefiles, `package.json`, scripts.
+- **Layer 5 - End-to-End Tests (`test(...)`):** Playwright, Cypress, or E2E test suites.
+- **Layer 6 - Documentation (`docs(...)`):** `README.md`, architecture docs, API specs.
 
 ---
 
 ### Step 3: Soft Reset to Merge Base
 
-Perform a soft reset to un-commit all changes while preserving all edits in the working index and working directory:
+Un-commit all branch commits while keeping every modification intact in the working tree:
 
 ```bash
 git reset --soft "$BASE_COMMIT"
-```
-
-Unstage all files so you can stage each logical group individually:
-
-```bash
 git reset
 ```
 
@@ -87,96 +93,61 @@ git reset
 
 ### Step 4: Incrementally Stage and Commit
 
-For each logical layer identified in Step 2:
-
-1. **Stage Related Files**:
-
-   ```bash
-   git add path/to/file1 path/to/file2 path/to/related_test.spec.ts
-   ```
-
-   _If a single file contains changes spanning multiple concerns, use patch staging:_
-
-   ```bash
-   git add -p path/to/file
-   ```
-
-2. **Commit with Conventional Commits Standard**:
-   Follow the format:
-
-   ```text
-   <type>(<scope>): <short imperative subject>
-
-   [optional body explaining motivation, context, and key decisions]
-   ```
-
-   **Allowed Types:**
-   - `feat`: New feature or user-facing capability.
-   - `fix`: Bug fix or error resolution.
-   - `chore`: Build scripts, dependencies, auxiliary tooling, maintenance.
-   - `docs`: Documentation changes, TODO updates, guides.
-   - `test`: Adding or refactoring tests without application code changes.
-   - `refactor`: Code changes that neither fix a bug nor add a feature.
-   - `perf`: Performance improvements.
-
-3. **Verify Intermediate Build / Tests** (if fast):
-   Run relevant local tests or lint checks for the staged files before proceeding to the next commit.
-
----
-
-### Step 5: Post-Squash Tree Equivalence Verification
-
-1. **Assert Zero Code Drift**:
-
-   ```bash
-   # Must produce NO output
-   git diff HEAD "$BACKUP_REF"
-   ```
-
-   If `git diff` produces any output, inspect why files or lines were missed and reconcile them before proceeding.
-
-2. **Run Full Test Suite**:
-   Execute repository test suites to ensure everything compiles and passes:
-
-   ```bash
-   # Run project test commands (e.g. backend + frontend tests)
-   pytest tests/unit/
-   npm test
-   ```
-
-3. **Display Clean Commit Log**:
-
-   ```bash
-   git log "$BASE_COMMIT"..HEAD --oneline
-   ```
-
-4. **Cleanup Backup (Optional)**:
-   Keep `$BACKUP_REF` available until the user confirms satisfaction or pushes the branch.
-
----
-
-## Example Execution
+#### 1. Stage Related Files (or Hunks)
 
 ```bash
-# 1. Check branch and create backup
-git branch backup/my-feature-branch HEAD
+git add path/to/module.py path/to/test_module.py
+# Or stage specific hunks when a file spans multiple logical commits:
+git add -p path/to/shared_file.py
+```
 
-# 2. Soft reset to base
-git reset --soft $(git merge-base main HEAD)
-git reset
+#### 2. Commit Following Conventional Commits & Formatting Rules
 
-# 3. Commit 1: Backend Endpoint & Test
-git add backend/api.py tests/unit/test_api.py
-git commit -m "feat(api): add export endpoint with format options"
+- Wrap commit body prose at **72 columns**.
+- Explain non-obvious trade-offs and rationale in the body.
+- Use plain hyphens (`-`), never em dashes.
+- Never add an agent as a commit co-author (`Co-authored-by:`).
 
-# 4. Commit 2: Frontend Service & Component
-git add src/app/services/export.service.ts src/app/components/export/
-git commit -m "feat(ui): add ExportButton component and export service integration"
+**Example 1:**
+Input: Added JWT login endpoint, token validation middleware, and unit tests
+Output:
 
-# 5. Commit 3: Documentation
-git add docs/API.md
-git commit -m "docs(api): document export endpoint schema and query parameters"
+```text
+feat(auth): implement JWT-based authentication
 
-# 6. Verify zero drift
-git diff HEAD backup/my-feature-branch
+Add the login endpoint and bearer token validation middleware. Verify
+token expiration and signature claims in unit tests before routing
+protected API requests.
+```
+
+**Example 2:**
+Input: Fixed timezone bug in report date formatting
+Output:
+
+```text
+fix(reports): normalize report timestamps to UTC
+
+Convert incoming client timestamps to UTC before date truncation so
+daily aggregation boundaries remain consistent across caller timezones.
+```
+
+---
+
+### Step 5: Validation Loop (Zero Drift & Test Suite)
+
+#### 1. Verify Zero Tree Drift
+
+```bash
+# Must produce empty output
+git diff HEAD "$BACKUP_REF"
+```
+
+If `git diff HEAD "$BACKUP_REF"` is non-empty or `git status --porcelain` shows untracked/unstaged files from the branch, stage and fold the missing changes into the appropriate commit (via `git commit --fixup=<sha>` and `GIT_SEQUENCE_EDITOR=true git rebase -i --autosquash "$BASE_COMMIT"`), then re-run `git diff HEAD "$BACKUP_REF"` until empty.
+
+#### 2. Run Repository Test Suite
+
+Execute the project's unit/lint verification commands and confirm the new commit log:
+
+```bash
+git log "$BASE_COMMIT"..HEAD --oneline
 ```

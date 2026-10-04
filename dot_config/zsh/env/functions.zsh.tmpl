@@ -224,10 +224,18 @@ function run_query() {
     echo "run_query <sql_file> [-j | --json | -f format] <extra_args>"
     return 1
   fi
-  filename="$1"
+  local filename="$1"
   shift
-  project_id="$(grep -i -A1 'from' $filename | grep '`' | tail -1 | cut -d "." -f1 | tr -d "[:blank:]" | sed 's/^`//')"
-  format="csv"
+  if [[ ! -f "$filename" ]]; then
+    echo "Error: SQL file not found: $filename" >&2
+    return 1
+  fi
+  local project_id="$(grep -i -A1 'from' "$filename" | grep '`' | tail -1 | sed -E 's/.*`([^.:`]+)[.:][^`]*`.*/\1/' | tr -d '[:blank:]')"
+  if [[ -z "$project_id" ]]; then
+    echo "Error: Could not extract project_id from backticked table reference in $filename" >&2
+    return 1
+  fi
+  local format="csv"
   local -a bq_args
   while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -266,7 +274,7 @@ function run_query() {
     -n 10000000 \
     -q \
     "${bq_args[@]}" \
-    <$filename
+    <"$filename"
 }
 
 function run_query_formats() {
