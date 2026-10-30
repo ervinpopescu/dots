@@ -61,6 +61,11 @@ export GRIPHOME="$XDG_CONFIG_HOME"/grip
 export MINIKUBE_HOME="$XDG_DATA_HOME"/minikube
 export SQLITE_HISTORY="$XDG_CACHE_HOME"/sqlite_history
 export XAUTHORITY="$XDG_RUNTIME_DIR"/Xauthority
+# Lavish review server: loopback only, reverse-proxied by nginx conf.d/lavish.conf at
+# https://aslan.archnet.lol/lavish behind the owner-only Cloudflare Access app "Lavish review".
+export LAVISH_AXI_ALLOWED_HOSTS=aslan.archnet.lol
+export LAVISH_AXI_HOST=127.0.0.1
+export LAVISH_AXI_NO_OPEN=1
 {{ end -}}
 export GDBHISTFILE="$XDG_DATA_HOME"/gdb/history
 export GNUPGHOME="$XDG_DATA_HOME"/gnupg
