@@ -30,6 +30,8 @@ encryption = "age"
   has_battery = {{ or (eq $machine "lenovo") (eq $machine "macbook") (eq $machine "hp") }}
   openweather_api_key = "{{ promptStringOnce . "openweather_api_key" "OpenWeather API key" }}"
   opensubtitles_api_key = "{{ promptStringOnce . "opensubtitles_api_key" "OpenSubtitles API key" }}"
+  opensubtitles_username = "{{ promptStringOnce . "opensubtitles_username" "OpenSubtitles username" }}"
+  opensubtitles_password = "{{ promptStringOnce . "opensubtitles_password" "OpenSubtitles password" }}"
   tstruct_token = "{{ promptStringOnce . "tstruct_token" "Tstruct token" }}"
   gemini_api_key = "{{ promptStringOnce . "gemini_api_key" "Gemini API key" }}"
 {{- if eq $machine "cloudtop" }}

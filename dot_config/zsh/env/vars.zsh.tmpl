@@ -42,6 +42,10 @@ export FZF_DEFAULT_OPTS='--color=bg+:#302D41,bg:#1E1E2E,spinner:#F8BD96,hl:#F28F
 export PAGER='less'
 export BROWSER='firefox'
 # export MOZ_ENABLE_WAYLAND=1
+{{ if hasKey . "opensubtitles_username" -}}
+export OPENSUBTITLES_USERNAME={{ .opensubtitles_username | squote }}
+export OPENSUBTITLES_PASSWORD={{ .opensubtitles_password | squote }}
+{{ end -}}
 export OPENSUBTITLES_API_KEY={{ .opensubtitles_api_key | quote }}
 export TF_CPP_MIN_LOG_LEVEL=2
 export TSTRUCT_TOKEN={{ .tstruct_token | quote }}
@@ -124,6 +128,10 @@ export BAT_PAGER='less -r'
 export BROWSER='firefox-developer-edition'
 {{ if .has_wayland -}}
 export MOZ_ENABLE_WAYLAND=1
+{{ end -}}
+{{ if hasKey . "opensubtitles_username" -}}
+export OPENSUBTITLES_USERNAME={{ .opensubtitles_username | squote }}
+export OPENSUBTITLES_PASSWORD={{ .opensubtitles_password | squote }}
 {{ end -}}
 export OPENSUBTITLES_API_KEY="{{ .opensubtitles_api_key }}"
 export TF_CPP_MIN_LOG_LEVEL=2

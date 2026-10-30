@@ -65,7 +65,8 @@ lives under `lua/`, and formatting uses `stylua.toml`.
 Files ending in `.tmpl` are Go templates rendered by chezmoi. Variables in
 `.chezmoi.toml.tmpl` include machine flags (`is_lenovo`, `is_cloudtop`,
 `is_macbook`, `is_hp`, `is_hetzner`, `is_server`, and `is_linux`) and secrets
-(`opensubtitles_api_key`, `tstruct_token`, and `openweather_api_key`). The
+(`opensubtitles_api_key`, `opensubtitles_username`, `opensubtitles_password`,
+`tstruct_token`, and `openweather_api_key`). The
 `encrypted_` prefix marks age-encrypted files; `private_` marks source
 directories deployed with mode 0700.
 
