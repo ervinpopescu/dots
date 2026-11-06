@@ -1,5 +1,7 @@
 # Solux Hosting Migration Runbook: Node Preview Daemon to Static Nginx
 
+> Historical note: web-serving Nginx configuration is server-local and is no longer deployed by chezmoi.
+
 ## Context
 
 Solux was previously hosted on Hetzner (`aslan`) via a reverse proxy in `/etc/nginx/conf.d/solux.conf` forwarding requests to a user-level Vite preview server (`127.0.0.1:4173`) managed by `solux.service`.

@@ -12,7 +12,6 @@ MAC_SYSTEM_DIR="$SYSTEM_DIR/macos"
 {{ end -}}
 DEST_ROOT="${SYSTEM_TARGET_DIR:-}"
 
-nginx_changed=0
 changed_files=0
 
 script_name="$(basename "$0")"
@@ -184,11 +183,6 @@ install_file() {
       echo "new file mode 100$mode ($owner:$group)"
       print_diff "$src" "$dest" "$display_path" 1
       changed_files=$((changed_files + 1))
-      case "$display_path" in
-        /etc/nginx/*)
-          nginx_changed=1
-          ;;
-      esac
     elif [ "$content_differs" -eq 1 ]; then
       echo "diff --git a$display_path b$display_path"
       if [ "$meta_differs" -eq 1 ]; then
@@ -201,11 +195,6 @@ install_file() {
       fi
       print_diff "$src" "$dest" "$display_path" 0
       changed_files=$((changed_files + 1))
-      case "$display_path" in
-        /etc/nginx/*)
-          nginx_changed=1
-          ;;
-      esac
     elif [ "$meta_differs" -eq 1 ]; then
       echo "diff --git a$display_path b$display_path"
       if [[ "$cur_mode" =~ ^[0-7]+$ ]] && [ "$((8#$cur_mode))" -ne "$((8#$mode))" ]; then
@@ -235,13 +224,7 @@ install_file() {
         fi
       fi
 
-      if [ "$install_ok" -eq 1 ]; then
-        case "$display_path" in
-          /etc/nginx/*)
-            nginx_changed=1
-            ;;
-        esac
-      else
+      if [ "$install_ok" -ne 1 ]; then
         echo "WARN: needs sudo or service account for $display_path"
       fi
     elif [ "$meta_differs" -eq 1 ]; then
@@ -294,9 +277,6 @@ if [ -d "$SERVER_DIR" ]; then
 
   # Clean up decommissioned server configurations only when absent from source
   decommissioned_configs=(
-    /etc/nginx/conf.d/transmission.conf
-    /etc/nginx/conf.d/cloudflare-realip.conf
-    /etc/nginx/conf.d/laura-gallery-aslan-api.conf
     /etc/systemd/system/transmission.service.d
     /etc/systemd/system/transmission-daemon.service.d
   )
@@ -310,18 +290,12 @@ if [ -d "$SERVER_DIR" ]; then
       if [ "$dry_run" -eq 1 ]; then
         echo "[dry-run] would remove decommissioned server config: $stale"
         changed_files=$((changed_files + 1))
-        if [[ "$stale" == /etc/nginx/* ]]; then
-          nginx_changed=1
-        fi
       else
         echo "Removing decommissioned server config: $stale"
         if [ -n "$DEST_ROOT" ]; then
           rm -rf "$target_stale" || echo "WARN: failed to remove $target_stale"
         else
           sudo rm -rf "$target_stale"
-        fi
-        if [[ "$stale" == /etc/nginx/* ]]; then
-          nginx_changed=1
         fi
       fi
     fi
@@ -360,34 +334,17 @@ if [ -d "$SERVER_DIR" ]; then
     )
   }
 
-  report_stale "$SERVER_DIR/etc/nginx/conf.d" /etc/nginx/conf.d
-  report_stale "$SERVER_DIR/etc/nginx/vhosts.d" /etc/nginx/vhosts.d
-  report_stale "$SERVER_DIR/etc/nginx/snippets" /etc/nginx/snippets
   report_stale "$SERVER_DIR/etc/fail2ban/jail.d" /etc/fail2ban/jail.d
   report_stale "$SERVER_DIR/etc/ssh/sshd_config.d" /etc/ssh/sshd_config.d
 fi
 {{ else -}}
 # These paths were previously in the common tree. Report them rather than
 # deleting them automatically if an older apply left them on a workstation.
-for stale in /etc/nginx/conf.d/solux.conf /www/data/index.html /www/data/index.css; do
+for stale in /www/data/index.html /www/data/index.css; do
   [ -e "$DEST_ROOT$stale" ] && echo "WARN: stale server file remains on non-hetzner host: $stale"
 done
 {{ end -}}
 {{ end -}}
-
-if [ "$nginx_changed" -eq 1 ]; then
-  if [ "$dry_run" -eq 1 ]; then
-    echo "[dry-run] Nginx configuration changed; service reload skipped"
-  else
-    if [ -n "$DEST_ROOT" ]; then
-      echo "Nginx configuration changed (custom target root; reload skipped)"
-    elif sudo nginx -t; then
-      sudo systemctl reload nginx || echo "WARN: Nginx reload failed"
-    else
-      echo "WARN: Nginx configuration test failed; reload skipped"
-    fi
-  fi
-fi
 
 if [ "$dry_run" -eq 1 ]; then
   if [ "$changed_files" -eq 0 ]; then
