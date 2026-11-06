@@ -39,9 +39,10 @@ System files under `system/` (e.g. `/etc/zsh/zshenv`) are deployed automatically
 via a post-apply script with `sudo`. The `system/arch/` subtree is applied only on
 Arch Linux systems, and the `system/hetzner/` subtree is applied only when the
 machine profile is `aslan`/`hetzner`; it contains monitoring, security, and
-service overrides. Web-serving Nginx configs are not managed here: they live
-only on the server in `/etc/nginx`; Laura's templates are in the `nginx/`
-directory of the `laura-web` repository.
+service overrides, including the fail2ban Nginx jail. Web-serving Nginx
+configs and the static pages in `/www/data` live in the private
+[archnet-cfg repository](https://github.com/ervinpopescu/archnet-cfg), not here;
+that repository deploys them with its own `deploy.sh`.
 
 To preview pending changes safely without mutating `/etc`, modifying files, or
 reloading services, run:

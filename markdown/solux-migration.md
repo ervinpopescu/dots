@@ -1,6 +1,8 @@
 # Solux Hosting Migration Runbook: Node Preview Daemon to Static Nginx
 
-> Historical note: web-serving Nginx configuration is server-local and is no longer deployed by chezmoi.
+> Historical runbook: web-serving Nginx configuration and `/www/data` static pages
+> are maintained in the private [archnet-cfg repository](https://github.com/ervinpopescu/archnet-cfg)
+> and deployed there with its own `deploy.sh`; they are not managed by this repository.
 
 ## Context
 
@@ -43,10 +45,8 @@ just deploy
 
 ### Step 3: Deploy Nginx Configurations and Reload
 
-```bash
-system-deploy.sh
-# Validates syntax via `nginx -t` and reloads Nginx safely
-```
+Use the private archnet-cfg repository's `deploy.sh` to deploy the Nginx
+configuration and reload Nginx safely.
 
 ### Step 4: Verify Deployment
 
