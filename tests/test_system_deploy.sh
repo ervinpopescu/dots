@@ -97,7 +97,7 @@ if [ "$profile_is_macbook" = "true" ]; then
   assert_contains "reports dry-run summary" "[dry-run] 1 system file(s) would be changed. No system changes applied." "$out"
   target_content="$(cat "$TARGET_DIR/etc/zshenv")"
   assert_eq "target remains unchanged" "same" "$target_content"
-  assert_not_contains "does not deploy Linux nginx files" "/etc/nginx/" "$out"
+  assert_not_contains "does not deploy Linux web-serving files" "/etc/nginx/" "$out"
 
   echo "Test 5: macOS live deployment updates zshenv"
   out="$(SYSTEM_SOURCE_DIR="$SOURCE_DIR" SYSTEM_TARGET_DIR="$TARGET_DIR" "$DEPLOY_BIN")"
@@ -121,45 +121,44 @@ SOURCE_DIR="$TEST_DIR/source"
 TARGET_DIR="$TEST_DIR/target"
 
 # Common fixtures: placed under system/etc to be portable across all Linux profiles
-mkdir -p "$SOURCE_DIR/system/etc/nginx/conf.d"
-mkdir -p "$TARGET_DIR/etc/nginx/conf.d"
+mkdir -p "$SOURCE_DIR/system/etc/test-config"
+mkdir -p "$TARGET_DIR/etc/test-config"
 
 # Test 3: Clean state reports no changes
 echo "Test 3: Identical files report no changes"
-echo "test-clean" > "$SOURCE_DIR/system/etc/nginx/conf.d/clean.conf"
-echo "test-clean" > "$TARGET_DIR/etc/nginx/conf.d/clean.conf"
+echo "test-clean" > "$SOURCE_DIR/system/etc/test-config/clean.conf"
+echo "test-clean" > "$TARGET_DIR/etc/test-config/clean.conf"
 
 out="$(SYSTEM_SOURCE_DIR="$SOURCE_DIR" SYSTEM_TARGET_DIR="$TARGET_DIR" "$DEPLOY_BIN" --dry-run)"
 assert_contains "clean reports no changes" "No system file changes detected." "$out"
 
 # Test 4: Modified file reports unified diff and zero mutations
 echo "Test 4: Modified file unified diff and zero mutations"
-echo -e "first line\nsecond line\nthird line" > "$TARGET_DIR/etc/nginx/conf.d/mod.conf"
-echo -e "first line\nmodified line\nthird line" > "$SOURCE_DIR/system/etc/nginx/conf.d/mod.conf"
+echo -e "first line\nsecond line\nthird line" > "$TARGET_DIR/etc/test-config/mod.conf"
+echo -e "first line\nmodified line\nthird line" > "$SOURCE_DIR/system/etc/test-config/mod.conf"
 
 out="$(SYSTEM_SOURCE_DIR="$SOURCE_DIR" SYSTEM_TARGET_DIR="$TARGET_DIR" "$DEPLOY_BIN" --dry-run)"
-assert_contains "shows diff header" "diff --git a/etc/nginx/conf.d/mod.conf b/etc/nginx/conf.d/mod.conf" "$out"
+assert_contains "shows diff header" "diff --git a/etc/test-config/mod.conf b/etc/test-config/mod.conf" "$out"
 assert_contains "shows removed line" "-second line" "$out"
 assert_contains "shows added line" "+modified line" "$out"
-assert_contains "reports nginx reload skipped" "[dry-run] Nginx configuration changed; service reload skipped" "$out"
 assert_contains "reports count of changed files" "[dry-run] 1 system file(s) would be changed. No system changes applied." "$out"
 
 # Verify target was NOT mutated
-target_content="$(cat "$TARGET_DIR/etc/nginx/conf.d/mod.conf")"
+target_content="$(cat "$TARGET_DIR/etc/test-config/mod.conf")"
 assert_contains "target file preserved unchanged" "second line" "$target_content"
 
 # Test 5: New file reports new file mode and full content diff without creating it
 echo "Test 5: New file shows diff from /dev/null and is not created"
-echo -e "new content line 1\nnew content line 2" > "$SOURCE_DIR/system/etc/nginx/conf.d/new.conf"
+echo -e "new content line 1\nnew content line 2" > "$SOURCE_DIR/system/etc/test-config/new.conf"
 
 out="$(SYSTEM_SOURCE_DIR="$SOURCE_DIR" SYSTEM_TARGET_DIR="$TARGET_DIR" "$DEPLOY_BIN" -n)"
-assert_contains "shows new file header" "diff --git a/etc/nginx/conf.d/new.conf b/etc/nginx/conf.d/new.conf" "$out"
+assert_contains "shows new file header" "diff --git a/etc/test-config/new.conf b/etc/test-config/new.conf" "$out"
 assert_contains "shows new file mode" "new file mode 100644 (root:root)" "$out"
 assert_contains "shows dev null diff" "--- /dev/null" "$out"
 assert_contains "shows new content in diff" "+new content line 1" "$out"
 
 # Verify target was NOT created
-if [ -f "$TARGET_DIR/etc/nginx/conf.d/new.conf" ]; then
+if [ -f "$TARGET_DIR/etc/test-config/new.conf" ]; then
   echo "  FAIL: new file should not exist in target after dry run"
   failures=$((failures + 1))
 else
@@ -168,19 +167,19 @@ else
 fi
 
 # Clean up new.conf from source for next tests
-rm -f "$SOURCE_DIR/system/etc/nginx/conf.d/new.conf"
+rm -f "$SOURCE_DIR/system/etc/test-config/new.conf"
 
 # Test 6: Permissions change diff
 echo "Test 6: File mode difference reported without mutating mode"
-echo "perm-test" > "$SOURCE_DIR/system/etc/nginx/conf.d/perm.conf"
-echo "perm-test" > "$TARGET_DIR/etc/nginx/conf.d/perm.conf"
-chmod 600 "$TARGET_DIR/etc/nginx/conf.d/perm.conf"
+echo "perm-test" > "$SOURCE_DIR/system/etc/test-config/perm.conf"
+echo "perm-test" > "$TARGET_DIR/etc/test-config/perm.conf"
+chmod 600 "$TARGET_DIR/etc/test-config/perm.conf"
 
 out="$(SYSTEM_SOURCE_DIR="$SOURCE_DIR" SYSTEM_TARGET_DIR="$TARGET_DIR" "$DEPLOY_BIN" --dry-run)"
 assert_contains "reports mode change" "mode: 600 -> 644" "$out"
 assert_contains "notes content unchanged" "(contents unchanged)" "$out"
 
-target_mode="$(stat -c "%a" "$TARGET_DIR/etc/nginx/conf.d/perm.conf")"
+target_mode="$(stat -c "%a" "$TARGET_DIR/etc/test-config/perm.conf")"
 assert_eq "target mode remains 600" "600" "$target_mode"
 
 # Test 7: DRY_RUN=1 environment variable activates dry-run
@@ -196,26 +195,30 @@ assert_contains "env var activates dry run" "No system changes applied." "$out"
 # Test 9: Live deploy applies changes when not in dry run
 echo "Test 9: Live deploy writes changes to target"
 out="$(SYSTEM_SOURCE_DIR="$SOURCE_DIR" SYSTEM_TARGET_DIR="$TARGET_DIR" "$DEPLOY_BIN")"
-assert_contains "reports system file changed" "System file changed: /etc/nginx/conf.d/mod.conf" "$out"
+assert_contains "reports system file changed" "System file changed: /etc/test-config/mod.conf" "$out"
 
-target_content_after="$(cat "$TARGET_DIR/etc/nginx/conf.d/mod.conf")"
+target_content_after="$(cat "$TARGET_DIR/etc/test-config/mod.conf")"
 assert_contains "target file was updated" "modified line" "$target_content_after"
 
-# Test 10: Stale unmanaged files reported (conditioned appropriately by machine profile)
-if grep -q "report_stale" <<< "$check_rendered"; then
-  echo "Test 10: Stale unmanaged server file warning (server profile)"
-  mkdir -p "$SOURCE_DIR/system/hetzner/etc/nginx/conf.d"
-  echo "stale content" > "$TARGET_DIR/etc/nginx/conf.d/unmanaged.conf"
-  out="$(SYSTEM_SOURCE_DIR="$SOURCE_DIR" SYSTEM_TARGET_DIR="$TARGET_DIR" "$DEPLOY_BIN" --dry-run)"
-  assert_contains "reports stale unmanaged file" "WARN: stale unmanaged server file remains: /etc/nginx/conf.d/unmanaged.conf" "$out"
-  rm -f "$TARGET_DIR/etc/nginx/conf.d/unmanaged.conf"
+# Test 10: Actual worktree dry-run mentions and writes no Nginx paths
+echo "Test 10: Worktree dry-run does not touch server-local web configuration"
+ACTUAL_TARGET="$TEST_DIR/actual_target"
+mkdir -p "$ACTUAL_TARGET"
+out="$(SYSTEM_TARGET_DIR="$ACTUAL_TARGET" "$DEPLOY_BIN" --dry-run)"
+assert_not_contains "actual deploy output contains no Nginx paths" "/etc/nginx" "$out"
+if find "$ACTUAL_TARGET" -path '*etc/nginx*' -print -quit | grep -q .; then
+  echo "  FAIL: dry-run created an Nginx target path"
+  failures=$((failures + 1))
 else
-  echo "Test 10: Stale workstation server file warning (workstation profile)"
-  mkdir -p "$TARGET_DIR/etc/nginx/conf.d"
-  echo "stale content" > "$TARGET_DIR/etc/nginx/conf.d/solux.conf"
-  out="$(SYSTEM_SOURCE_DIR="$SOURCE_DIR" SYSTEM_TARGET_DIR="$TARGET_DIR" "$DEPLOY_BIN" --dry-run)"
-  assert_contains "reports stale workstation file" "WARN: stale server file remains on non-hetzner host: /etc/nginx/conf.d/solux.conf" "$out"
-  rm -f "$TARGET_DIR/etc/nginx/conf.d/solux.conf"
+  echo "  PASS: dry-run created no Nginx target path"
+  passes=$((passes + 1))
+fi
+if [ -z "$(find "$ACTUAL_TARGET" -mindepth 1 -print -quit)" ]; then
+  echo "  PASS: actual worktree dry-run left its target empty"
+  passes=$((passes + 1))
+else
+  echo "  FAIL: actual worktree dry-run wrote to its target"
+  failures=$((failures + 1))
 fi
 
 # Test 11: bin/executable_system-deploy.sh honors SYSTEM_SOURCE_DIR
@@ -232,17 +235,17 @@ assert_contains "custom SYSTEM_SOURCE_DIR honored" "CUSTOM_SOURCE_DEPLOY_RUN" "$
 
 # Test 12: Avoid redundant chmod/chown on unchanged files when metadata is already correct
 echo "Test 12: Avoid redundant chmod/chown when metadata is already correct"
-chmod 644 "$TARGET_DIR/etc/nginx/conf.d/clean.conf"
-ctime_before="$(stat -c "%Z" "$TARGET_DIR/etc/nginx/conf.d/clean.conf")"
+chmod 644 "$TARGET_DIR/etc/test-config/clean.conf"
+ctime_before="$(stat -c "%Z" "$TARGET_DIR/etc/test-config/clean.conf")"
 sleep 1
 SYSTEM_SOURCE_DIR="$SOURCE_DIR" SYSTEM_TARGET_DIR="$TARGET_DIR" "$DEPLOY_BIN" >/dev/null
-ctime_after="$(stat -c "%Z" "$TARGET_DIR/etc/nginx/conf.d/clean.conf")"
+ctime_after="$(stat -c "%Z" "$TARGET_DIR/etc/test-config/clean.conf")"
 assert_eq "file ctime preserved when metadata already matches" "$ctime_before" "$ctime_after"
 
 # When metadata differs, live deploy updates permissions
-chmod 600 "$TARGET_DIR/etc/nginx/conf.d/clean.conf"
+chmod 600 "$TARGET_DIR/etc/test-config/clean.conf"
 SYSTEM_SOURCE_DIR="$SOURCE_DIR" SYSTEM_TARGET_DIR="$TARGET_DIR" "$DEPLOY_BIN" >/dev/null
-mode_after="$(stat -c "%a" "$TARGET_DIR/etc/nginx/conf.d/clean.conf")"
+mode_after="$(stat -c "%a" "$TARGET_DIR/etc/test-config/clean.conf")"
 assert_eq "file mode updated when metadata differed" "644" "$mode_after"
 
 # Test 13: Genuine decommissioned target is reported in dry run and removed in live mode
@@ -251,19 +254,15 @@ if grep -q "report_stale" <<< "$check_rendered"; then
   DECOM_SRC="$TEST_DIR/decom_src"
   DECOM_TGT="$TEST_DIR/decom_tgt"
   mkdir -p "$DECOM_SRC/system/hetzner" # No transmission configs in source
-  mkdir -p "$DECOM_TGT/etc/nginx/conf.d"
   mkdir -p "$DECOM_TGT/etc/systemd/system/transmission-daemon.service.d"
-  echo "stale nginx" > "$DECOM_TGT/etc/nginx/conf.d/transmission.conf"
   echo "stale daemon dropin" > "$DECOM_TGT/etc/systemd/system/transmission-daemon.service.d/override.conf"
 
   # Dry-run
   out_decom_dry="$(SYSTEM_SOURCE_DIR="$DECOM_SRC" SYSTEM_TARGET_DIR="$DECOM_TGT" "$DEPLOY_BIN" --dry-run)"
-  assert_contains "previews transmission nginx removal" "[dry-run] would remove decommissioned server config: /etc/nginx/conf.d/transmission.conf" "$out_decom_dry"
   assert_contains "previews transmission daemon dropin removal" "[dry-run] would remove decommissioned server config: /etc/systemd/system/transmission-daemon.service.d" "$out_decom_dry"
-  assert_contains "reports nginx reload skipped" "[dry-run] Nginx configuration changed; service reload skipped" "$out_decom_dry"
 
   # Target files must NOT be deleted in dry-run
-  if [ -f "$DECOM_TGT/etc/nginx/conf.d/transmission.conf" ] && [ -f "$DECOM_TGT/etc/systemd/system/transmission-daemon.service.d/override.conf" ]; then
+  if [ -f "$DECOM_TGT/etc/systemd/system/transmission-daemon.service.d/override.conf" ]; then
     echo "  PASS: transmission configs preserved during dry run"
     passes=$((passes + 1))
   else
@@ -273,9 +272,8 @@ if grep -q "report_stale" <<< "$check_rendered"; then
 
   # Live mode: files are deleted
   out_decom_live="$(SYSTEM_SOURCE_DIR="$DECOM_SRC" SYSTEM_TARGET_DIR="$DECOM_TGT" "$DEPLOY_BIN")"
-  assert_contains "reports live removal of nginx config" "Removing decommissioned server config: /etc/nginx/conf.d/transmission.conf" "$out_decom_live"
   assert_contains "reports live removal of daemon dropin" "Removing decommissioned server config: /etc/systemd/system/transmission-daemon.service.d" "$out_decom_live"
-  if [ ! -e "$DECOM_TGT/etc/nginx/conf.d/transmission.conf" ] && [ ! -e "$DECOM_TGT/etc/systemd/system/transmission-daemon.service.d" ]; then
+  if [ ! -e "$DECOM_TGT/etc/systemd/system/transmission-daemon.service.d" ]; then
     echo "  PASS: transmission configs removed during live deploy"
     passes=$((passes + 1))
   else
@@ -323,7 +321,7 @@ fi
 MOCK_BIN="$TEST_DIR/mock_bin"
 mkdir -p "$MOCK_BIN"
 LEGACY_SOURCE="$TEST_DIR/legacy_source"
-mkdir -p "$LEGACY_SOURCE/system/etc/nginx/conf.d"
+mkdir -p "$LEGACY_SOURCE/system/etc/test-config"
 cat << 'EOF' > "$LEGACY_SOURCE/run_after_system-deploy.sh.tmpl"
 {{ if .is_linux -}}
 #!/bin/bash
@@ -349,10 +347,10 @@ cp "$DEPLOY_BIN" "$INSTALLED_BIN/system-deploy.sh"
 chmod +x "$INSTALLED_BIN/system-deploy.sh"
 
 FEATURE_WT="$TEST_DIR/feature_wt"
-mkdir -p "$FEATURE_WT/system/etc/nginx/conf.d"
+mkdir -p "$FEATURE_WT/system/etc/test-config"
 git -C "$FEATURE_WT" init -q
 cp "$REPO_ROOT/run_after_system-deploy.sh.tmpl" "$FEATURE_WT/run_after_system-deploy.sh.tmpl"
-echo "feature-wt-content" > "$FEATURE_WT/system/etc/nginx/conf.d/feat-wt.conf"
+echo "feature-wt-content" > "$FEATURE_WT/system/etc/test-config/feat-wt.conf"
 
 # Test 16: Installed wrapper called inside a feature worktree resolves that worktree's source
 echo "Test 16: Installed wrapper inside worktree resolves worktree source instead of chezmoi source-path"

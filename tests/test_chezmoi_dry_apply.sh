@@ -35,6 +35,17 @@ assert_contains() {
   fi
 }
 
+assert_not_contains() {
+  local label="$1" needle="$2" haystack="$3"
+  if [[ "$haystack" != *"$needle"* ]]; then
+    echo "  PASS: $label"
+    passes=$((passes + 1))
+  else
+    echo "  FAIL: $label (unexpectedly found '$needle' in output)"
+    failures=$((failures + 1))
+  fi
+}
+
 echo "Running chezmoi-dry-apply tests..."
 
 # Test 1: --help displays usage
@@ -62,7 +73,7 @@ ISOLATED_SOURCE="$TEST_DIR/source"
 ISOLATED_DEST="$TEST_DIR/dest"
 ISOLATED_SYS_TARGET="$TEST_DIR/sys_target"
 
-mkdir -p "$ISOLATED_SOURCE" "$ISOLATED_DEST" "$ISOLATED_SYS_TARGET/etc/nginx/conf.d"
+mkdir -p "$ISOLATED_SOURCE" "$ISOLATED_DEST" "$ISOLATED_SYS_TARGET"
 
 profile_is_macbook="$(chezmoi -S "$REPO_ROOT" execute-template '{{ .is_macbook }}')"
 if [ "$profile_is_macbook" = "true" ]; then
@@ -75,9 +86,9 @@ if [ "$profile_is_macbook" = "true" ]; then
   system_target_file="$ISOLATED_SYS_TARGET/etc/zshenv"
   system_diff_header="diff --git a/etc/zshenv b/etc/zshenv"
 else
-  system_source_file="$ISOLATED_SOURCE/system/etc/nginx/conf.d/test.conf"
-  system_target_file="$ISOLATED_SYS_TARGET/etc/nginx/conf.d/test.conf"
-  system_diff_header="diff --git a/etc/nginx/conf.d/test.conf b/etc/nginx/conf.d/test.conf"
+  system_source_file="$ISOLATED_SOURCE/system/etc/test-config/test.conf"
+  system_target_file="$ISOLATED_SYS_TARGET/etc/test-config/test.conf"
+  system_diff_header="diff --git a/etc/test-config/test.conf b/etc/test-config/test.conf"
 fi
 
 # Configure minimal chezmoi source with both a user dotfile and system deploy template
@@ -112,6 +123,7 @@ assert_contains "shows dotfile diff addition" "+modified-dotfile" "$out"
 assert_contains "shows system diff header" "$system_diff_header" "$out"
 assert_contains "shows system diff addition" "+modified-sys" "$out"
 assert_contains "shows system dry-run summary" "[dry-run] 1 system file(s) would be changed. No system changes applied." "$out"
+assert_not_contains "dry-run output contains no Nginx paths" "/etc/nginx" "$out"
 
 # Verify neither user target nor system target was modified
 dest_content="$(cat "$ISOLATED_DEST/.config/testapp/config.txt")"

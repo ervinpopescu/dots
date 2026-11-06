@@ -38,8 +38,10 @@ chezmoi apply                # apply dotfiles and deploy system files
 System files under `system/` (e.g. `/etc/zsh/zshenv`) are deployed automatically
 via a post-apply script with `sudo`. The `system/arch/` subtree is applied only on
 Arch Linux systems, and the `system/hetzner/` subtree is applied only when the
-machine profile is `aslan`/`hetzner`; it contains the server's Nginx,
-monitoring, security, and service overrides.
+machine profile is `aslan`/`hetzner`; it contains monitoring, security, and
+service overrides. Web-serving Nginx configs are not managed here: they live
+only on the server in `/etc/nginx`; Laura's templates are in the `nginx/`
+directory of the `laura-web` repository.
 
 To preview pending changes safely without mutating `/etc`, modifying files, or
 reloading services, run:
@@ -73,9 +75,8 @@ Key dry-run safety features:
   lacks explicit dry-run capability headers (`SYSTEM_DEPLOY_CAPABILITIES`), execution
   aborts immediately with an error to prevent accidental live mutation.
 - **Guarded Destructive Cleanup:** Decommissioned configurations and service removals
-  are reported as `[dry-run] would remove ...` without deleting any files, and service
-  reloads (such as Nginx) are skipped. Setting `DRY_RUN=1` in the environment also
-  activates dry-run mode.
+  are reported as `[dry-run] would remove ...` without deleting any files. Setting
+  `DRY_RUN=1` in the environment also activates dry-run mode.
 
 The former `archnet-cfg` repository remains useful for destructive Hetzner
 installation, package bootstrap, and service-data migration. It must not also
