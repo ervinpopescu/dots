@@ -25,9 +25,9 @@ Lua files are formatted with **StyLua**: 2-space indentation, spaces (not tabs),
 - `disabled.lua` — explicitly disables flash.nvim and neo-tree
 - `conform.lua` — formatter config (stylua, shfmt, prettier, ruff_format, rustfmt, taplo, custom jqfmt)
 - `lspconfig.lua` — LSP opts overriding LazyVim defaults; servers: lua_ls, pyright, ruff, matlab_ls, ty; inlay hints enabled, codelens disabled, LSP folding enabled
-- `user.lua` — additional plugins: auto-save, lastplace, trim, zen-mode, vimtex (LaTeX), oil.nvim, nvim-surround, multicursor.nvim, nvim-colorizer, diffview, treesitter-context, Preview.nvim, codeium, vim-matlab (local plugin)
+- `user.lua` — additional plugins: auto-save, lastplace, trim, zen-mode, vimtex (LaTeX), oil.nvim, nvim-surround, multicursor.nvim, nvim-colorizer, diffview, treesitter-context, Preview.nvim, vim-matlab (local plugin)
 
-**LazyVim extras** (from `lazyvim.json`): codeium, nvim-cmp, outline, clangd, json, markdown, rust, toml, mini-animate
+**LazyVim extras** (from `lazyvim.json`): nvim-cmp, outline, clangd, json, markdown, rust, toml, mini-animate
 
 ## Key Design Decisions
 
