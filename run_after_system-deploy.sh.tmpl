@@ -337,12 +337,6 @@ if [ -d "$SERVER_DIR" ]; then
   report_stale "$SERVER_DIR/etc/fail2ban/jail.d" /etc/fail2ban/jail.d
   report_stale "$SERVER_DIR/etc/ssh/sshd_config.d" /etc/ssh/sshd_config.d
 fi
-{{ else -}}
-# These paths were previously in the common tree. Report them rather than
-# deleting them automatically if an older apply left them on a workstation.
-for stale in /www/data/index.html /www/data/index.css; do
-  [ -e "$DEST_ROOT$stale" ] && echo "WARN: stale server file remains on non-hetzner host: $stale"
-done
 {{ end -}}
 {{ end -}}
 
