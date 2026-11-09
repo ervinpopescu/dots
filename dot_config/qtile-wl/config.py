@@ -1,6 +1,3 @@
-import json
-import os
-
 from libqtile.backend.wayland.inputs import InputConfig
 
 from modules import (  # noqa: F401
@@ -17,7 +14,7 @@ from modules import (  # noqa: F401
     qalttab_hooks,
     window_rules_hooks,
 )
-from modules.settings import config_path, widget_defaults
+from modules.settings import config_path, load_runtime_config, widget_defaults
 
 assert qalttab_hooks
 assert apps_hooks
@@ -32,11 +29,10 @@ assert keys
 assert mouse
 assert groups
 
-with open(os.path.join(config_path, "json", "config.json")) as f:
-    config = json.load(f)
-    for key, val in config.items():
-        if key != "theme":
-            globals()[key] = val
+config = load_runtime_config(config_path)
+for key, val in config.items():
+    if key != "theme":
+        globals()[key] = val
 
 
 wl_input_rules = {
