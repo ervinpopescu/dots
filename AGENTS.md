@@ -81,3 +81,8 @@ directories deployed with mode 0700.
   and FZF.
 - Pre-commit hooks run Black, ruff, shellcheck, shfmt, stylua, and jq key
   sorting.
+- This repository is public on GitHub: never commit `@google.com` author emails
+  or internal Google skills (`ship-swarm`, `buganizer-taskflow`).
+- Never run `chezmoi add` on `.tmpl` files (it overwrites template logic with
+  static content); use `chezmoi edit`.
+- Validate Qtile config with `qtile check` before restarting or reloading Qtile.
