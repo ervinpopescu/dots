@@ -42,6 +42,11 @@
 - Never run `no-mistakes` on `main`/`master`, never pass `--no-verify` (use
   `SKIP=...`), and keep `@google.com` emails/names out of public OSS commits
   (`ervinpopescu`).
+- **Release-scope merge gate:** Only merge PRs/branches that belong to the
+  **active/current release milestone** onto `main`/`master`. Hold future-release
+  or backlog PRs open on their feature branches even when CI is green and the
+  user has already pre-approved / given `LGTM`, unless the user explicitly asks
+  to pull that specific PR into the current release.
 
 ## Cloudtop, Auth & Harness Traps
 
@@ -53,25 +58,36 @@
 - On `RPC_RESTRICTIONS_VIOLATION` from built-in `moma_search`, `code_search`,
   `skill_search`, or `search_marketplace`, switch immediately to `moma` MCP
   (`internal_search`), `yaqs` MCP (`yaqs_search`), or `duckie` `ask_duckie`
-  (argument `question`, not `query`).
-- Keep shell syntax simple (`agcis_rule_denied: ast_parse_failure`); never run
-  inline Python TCP sockets (`bind()`/`connect()`), `curl -k`/`--insecure`, or
-  `gcloud deploy rollouts approve` (hard security stop hook). Skip `~/memory/`
-  writes on `permission denied` / transport errors.
+  (argument `question`, not `query`). Use `rg` / `git grep` in local git
+  checkouts (`cs --corpus=local` works only inside CitC `/google/src/cloud/...`;
+  use `cs --corpus=google3` for Google3 lookups).
+- Keep shell syntax simple (`agcis_rule_denied: ast_parse_failure`) and use
+  `python3 - <<'PY'` heredocs instead of `python3 -c "..."` with escaped
+  quotes; never run inline Python TCP sockets (`bind()`/`connect()`),
+  `curl -k`/`--insecure`, or `gcloud deploy rollouts approve` (hard security
+  stop hook). Skip `~/memory/` writes on `permission denied` / transport
+  errors.
+- Tool & file traps: pass absolute paths and `StartLine <= EndLine` to
+  `read_file`/`edit_file`; never call `read_file` on >100 MB logs (such as
+  `transcript_full.jsonl` in long sessions) - stream via Python instead.
 - Orchestration tools: check `swarm status` is `waiting` before `swarm model`;
   never call `subagent` in bash; keep at most one active `schedule`
-  `TimerCondition="any"` (current-session task IDs only); transcode `video/webm`
-  before `read_file`.
-- Prefix `nvm` Node 24 / `~/.local/bin` / `~/.no-mistakes/bin` in
-  non-interactive shells (use `/usr/bin/go` if `/usr/local/go/bin/go` is absent);
-  `unset GIT_DIR GIT_WORK_TREE` across worktrees; never set `TMPDIR` inside a git
-  worktree.
-- `gcloud`: never run `gcloud projects list`; pass Project **ID** (not number)
-  to `gcloud builds describe --project`; use `--impersonate-service-account` for
-  `print-identity-token --audiences`; set
+  `TimerCondition="any"` (current-session task IDs only); check `manage_task`
+  `list` before `kill` (never `kill` already-`DONE` tasks); transcode
+  `video/webm` before `read_file`.
+- Prefix `nvm` Node 24 (`npm >= 12.0.0`) / `~/.local/bin` / `~/.no-mistakes/bin`
+  in non-interactive shells (use `/usr/bin/go` if `/usr/local/go/bin/go` is
+  absent); set `CGO_ENABLED=1` for `go test -race`; `unset GIT_DIR
+  GIT_WORK_TREE` across worktrees; never set `TMPDIR` inside a git worktree.
+- `gcloud`, `gws` & OneSupport: never run `gcloud projects list`; pass Project
+  **ID** (not number) to `gcloud builds describe --project`; use
+  `--impersonate-service-account` for `print-identity-token --audiences`; set
   `CLOUDSDK_CONTEXT_AWARE_USE_CLIENT_CERTIFICATE=false` for `gcloud app`; pass
   file paths or Python `stdin` instead of shell pipes to `secrets versions add
-  --data-file=-` and `api-keys create`.
+  --data-file=-` and `api-keys create`. On `gws` `"insufficient scopes"` after
+  re-consent, run `gws auth logout && gws auth login`. OneSupport requires
+  unrestricted `gcert` on Cloudtop (Google Admin UI -> `consult-handler gcp
+  import` is the `gcert`-free fallback).
 - Browser & shell safety: never kill `tmux`; **never** run `chrome-devtools-axi
   stop` on the `consult-handler` session or automate `:20` (use
   `CHROME_DEVTOOLS_AXI_SESSION=<name>` + `AUTO_CONNECT=1` / `Xvfb :100+`, no
@@ -80,8 +96,13 @@
 ## Responses & Docs
 
 - Always respond concisely in English; ask before acting on unfamiliar terms
-  or suspected STT typos; use `ask_question` for multi-choice trade-offs and
-  restate full context if an earlier decision went unanswered.
+  or suspected STT typos; whenever presenting decisions, proposed next actions,
+  or multi-item confirmations to the user, **always surface them via the native
+  interactive question UI tool** (`ask_question` in Jetski, or
+  `ask_user_question` / harness equivalent) instead of plain-text-only bullet
+  lists (reserve plain text strictly for status updates with no pending choice,
+  or fall back only when the runtime has no question tool). Restate full
+  context if an earlier decision went unanswered.
 - Surface availability/auth failure modes explicitly before removing fallback or
   break-glass paths; provide full clickable URLs; escape `<details>` tags.
 - Use Graphviz `.dot` -> `.svg`/`.png` instead of Mermaid; never generate
