@@ -11,7 +11,7 @@
 {{ else -}}
   - The main session runs on `gpt-5.6-sol` (thinking: `high`) and does not perform direct implementation or write code/tests. It designs the plan, frames the requirements, evaluates trade-offs, and delegates work.
 - **Subagents (Implementation & Work)**:
-  - All file changes, coding, test execution, debugging, and mechanical tasks are carried out by worker subagents using `openai-codex/gpt-5.6-luna:high` until Luna reaches its usage limit; then use the configured `google/gemini-3.8-flash:high` fallback.
+  - All file changes, coding, test execution, debugging, and mechanical tasks are carried out by worker subagents using `openai-codex/gpt-5.6-luna:high` until Luna reaches its usage limit; then use the configured `antigravity/gemini-4-hydrogen:high` fallback (then `antigravity/gemini-3-8-flash:high`).
 {{ end -}}
 
 ## Subagent Launch Policy
@@ -24,9 +24,9 @@
 ## Fallback Policy
 
 - When GPT / OpenAI Codex models (Sol or Luna) are unavailable, hit rate limits, or exhaust usage quotas:
-  - Fall back to `google/gemini-3.8-flash` with `high` thinking.
-  - Subagents automatically fall back to `google/gemini-3.8-flash:high` to complete delegated work.
-  - The main session switches to `gemini-3.8-flash:high` for continued planning.
+  - Check headroom with `npx -y quota-axi`. Switch new launches only; never switch a running worker or an in-flight no-mistakes run.
+  - Subagents fall back to `antigravity/gemini-4-hydrogen:high` (then `antigravity/gemini-3-8-flash:high`) when Codex is at or below 15%.
+  - The main session switches to `antigravity/claude-opus-4-6-thinking` (then `openai-codex/gpt-6-sol`) when its own quota is at or below 5%; write a handoff first.
 {{ end -}}
 
 ## Git Worktree Policy
