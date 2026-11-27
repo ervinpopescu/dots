@@ -16,6 +16,16 @@ Transforms a multi-commit feature branch (containing WIP commits, fixups, test i
 2. **Bisectability:** Every intermediate commit must build cleanly and pass its relevant tests.
 3. **Atomic Grouping:** Each commit represents one coherent concern (for example backend endpoint + unit test, frontend service + component, or documentation).
 4. **Safety First:** Always create a backup branch ref before rewriting history.
+5. **No In-Scope Fix Commits:** A branch must not carry `fix`, `docs`, `style`,
+   `test`, `chore` or `refactor` commits that correct, tidy, clean up, or
+   harden work within the branch's own scope, including pre-existing code the
+   feature reworks or removes. Fold each such change into the feature commit
+   it belongs to (for example, dropping obsolete objects lands with the commit
+   that replaces or re-homes them). A safeguard required by the feature (for
+   example tolerating a schema column the branch adds) lands with that
+   feature. Separate commits of these types are only for changes genuinely
+   outside the branch's scope; a `refactor` commit is only valid when the
+   branch's purpose is the refactor itself.
 
 ---
 
@@ -77,6 +87,24 @@ Group changed files into ordered dependency layers:
 - **Layer 4 - Infrastructure & Build (`chore(...)`):** Terraform, Dockerfiles, Makefiles, `package.json`, scripts.
 - **Layer 5 - End-to-End Tests (`test(...)`):** Playwright, Cypress, or E2E test suites.
 - **Layer 6 - Documentation (`docs(...)`):** `README.md`, architecture docs, API specs.
+
+Before committing, check every planned non-`feat` layer (`fix`, `docs`,
+`style`, `test`, `chore`, `refactor`) against Core Principle 5: if it touches
+code the branch introduces, reworks, or removes, merge it into the owning
+feature layer instead of committing it separately.
+
+**Example:**
+Input: A dashboard branch planned as `docs: English comment in view SQL`,
+`fix: pair dashboard turns correctly`, `feat: scope dashboard views to v3`,
+`fix: keep events when the new column lags the schema`, `feat: log tokens`
+Output: `feat: scope dashboard views to v3` (includes the comment and pairing
+corrections) and `feat: log tokens` (includes the schema-lag safeguard)
+
+Input: A branch moving dashboard views into Terraform planned as
+`refactor: drop unused dashboard views`, `feat: manage dashboard views in
+Terraform`
+Output: `feat: manage dashboard views in Terraform` (only the views the
+dashboard reads are adopted; the body explains why the rest are dropped)
 
 ---
 
