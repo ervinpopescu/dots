@@ -16,7 +16,8 @@
 {{- else }}
   "enabledModels": [
     "openai-codex/gpt-5.6-sol:high",
-    "google/gemini-3.8-flash:high"
+    "antigravity/gemini-4-hydrogen:high",
+    "antigravity/claude-opus-4-6-thinking:high"
   ],
 {{- end }}
 {{- if .is_cloudtop }}
@@ -39,6 +40,12 @@
     "npm:pi-interactive-shell",
     "npm:@trevonistrevon/pi-loop",
     "npm:pi-input-history"
+{{- if not .is_cloudtop }},
+    "npm:pi-claude-bridge",
+    "npm:pi-effort",
+    "git:github.com/DietrichGebert/ponytail",
+    "npm:@estebanforge/pi-antigravity-bridge"
+{{- end }}
   ],
   "quietStartup": true,
   "subagents": {
@@ -52,7 +59,7 @@
     "defaultThinking": "high",
     "agentOverrides": {
       "worker": {
-        "model": "openai-codex/gpt-5.6-luna:high"
+        "model": "openai-codex/gpt-6-luna:high"
       },
       "delegate": {
         "model": "openai-codex/gpt-5.6-luna:high"
@@ -70,7 +77,7 @@
     "agentOverridesByProvider": {
       "google": {
         "worker": {
-          "model": "google/gemini-3.8-flash",
+          "model": "antigravity/gemini-4-hydrogen",
           "thinking": "high"
         }
       }
@@ -78,4 +85,14 @@
 {{- end }}
   },
   "theme": "dark"
+{{- if not .is_cloudtop }},
+  "extensions": [
+    "-builtin:mcp"
+  ],
+  "pi-effort": {
+    "modelEffort": {
+      "claude-bridge/claude-opus-5-5": "medium"
+    }
+  }
+{{- end }}
 }
