@@ -4,8 +4,7 @@ return {
     cmd = { "DiffviewOpen", "DiffviewFileHistory" },
   },
   {
-    "romek-codes/lazygit.nvim",
-    branch = "feat/lazygit-worktree-switch",
+    "kdheepak/lazygit.nvim",
     lazy = true,
     cmd = {
       "LazyGit",
